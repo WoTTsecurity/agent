@@ -62,7 +62,15 @@ def generate_uuid():
             if 'Hardware' in line:
                 hardware = get_value(line, 'Hardware')
 
-    hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware)).hexdigest()[0:32]
+    if not (serial and revision and hardware):
+        print("Not a Raspberry Pi. Exiting.")
+        sys.exit(1)
+
+    hostname = hashlib.sha512('{}-{}-{}'.format(
+        serial.encode('utf-8'),
+        revision.encode('utf-8'),
+        hardware.encode('utf-8'))
+    ).hexdigest()[0:32]
 
     return '{}.d.wott.io'.format(hostname)
 

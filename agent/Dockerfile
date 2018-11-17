@@ -1,0 +1,41 @@
+## ghostunnel build environment
+FROM golang:1.11.2-stretch as ghostunnel
+
+WORKDIR /go/src/
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libltdl-dev && \
+    apt-get clean
+
+RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/square/ghostunnel && \
+    cd  $GOPATH/src/github.com/square/ghostunnel && \
+    make
+
+## cfssl build environment
+FROM golang:1.8-stretch as cfssl
+
+WORKDIR /go/src/
+
+RUN git clone https://github.com/cloudflare/cfssl.git $GOPATH/src/github.com/cloudflare/cfssl && \
+    cd $GOPATH/src/github.com/cloudflare/cfssl && \
+    make
+
+## Runtime container
+FROM python:3.7-slim-stretch
+WORKDIR /usr/src/app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libltdl-dev && \
+    apt-get clean
+
+COPY --from=ghostunnel /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
+COPY --from=cfssl /go/src/github.com/cloudflare/cfssl/bin/* /usr/local/bin/
+
+RUN mkdir -p /opt/wott/cert
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY agent.py .
+
+CMD ./agent.py

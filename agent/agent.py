@@ -1,20 +1,30 @@
+#!/usr/bin/env python3
+
 import cfssl
-import sh
-import json
-import sys
 import hashlib
-from datetime import datetime, timedelta
+import json
+import os
+import sh
+import sys
 import OpenSSL.crypto
+from pathlib import Path
+from time import sleep
+from datetime import datetime, timedelta
 
 
-CFSSL_SERVER = '192.168.202.52'
-CFSSL_PORT = 8888
-CERT_PATH = '/opt/wott/ssl'
+CFSSL_SERVER = os.getenv('CFSSL_SERVER', '192.168.202.52')
+CFSSL_PORT = int(os.getenv('CFSSL_PORT', 8888))
+CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/cert')
 RENEWAL_THRESHOLD = 15
 
 
 def time_for_certificate_renewal():
     """ Check if it's time for certificate renewal """
+    client_cert = Path(os.path.join(CERT_PATH, 'client.crt'))
+
+    # No cert is the same essentially.
+    if not client_cert.is_file():
+        return True
 
     with open('client.crt', 'rt') as f:
         cert = OpenSSL.crypto.load_certificate(
@@ -111,6 +121,7 @@ def main():
     with open('client.key', 'w') as f:
         f.write(gen_key['key'])
 
+    sleep(3600)
 
 if __name__ == "__main__":
     main()

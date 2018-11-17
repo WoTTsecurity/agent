@@ -44,13 +44,13 @@ def generate_uuid():
 
         for line in f.readlines():
             if 'Serial' in line:
-                 serial = get_value(line, 'Serial')
+                serial = get_value(line, 'Serial')
 
             if 'Revision' in line:
-                 revision = get_value(line, 'Revision')
+                revision = get_value(line, 'Revision')
 
             if 'Hardware' in line:
-                 hardware = get_value(line, 'Hardware')
+                hardware = get_value(line, 'Hardware')
 
     hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware)).hexdigest()[0:32]
 
@@ -98,7 +98,7 @@ def main():
         print("Certificate is valid. No need for renewal.")
         sys.exit(0)
 
-    device_uuid =  generate_uuid()
+    device_uuid = generate_uuid()
     gen_key = generate_cert(device_uuid)
     crt = sign_cert(gen_key['csr'], device_uuid)
 
@@ -112,8 +112,5 @@ def main():
         f.write(gen_key['key'])
 
 
-
-
 if __name__ == "__main__":
     main()
-

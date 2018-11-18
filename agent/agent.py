@@ -112,20 +112,28 @@ def main():
         print("Certificate is valid. No need for renewal.")
         sys.exit(0)
 
-    device_uuid = generate_uuid()
-    gen_key = generate_cert(device_uuid)
-    crt = sign_cert(gen_key['csr'], device_uuid)
+    else:
+        device_uuid = generate_uuid()
+        print('Got hostname: {}'.format(device_uuid))
 
-    with open('client.crt', 'w') as f:
-        f.write(crt['crt'])
+        print('Generating certificate...')
+        gen_key = generate_cert(device_uuid)
 
-    with open('ca.crt', 'w') as f:
-        f.write(crt['ca'])
+        print('Submitting CSR...')
+        crt = sign_cert(gen_key['csr'], device_uuid)
 
-    with open('client.key', 'w') as f:
-        f.write(gen_key['key'])
+        print('Writing certificate and key to disk...')
+        with open('client.crt', 'w') as f:
+            f.write(crt['crt'])
+
+        with open('ca.crt', 'w') as f:
+            f.write(crt['ca'])
+
+        with open('client.key', 'w') as f:
+            f.write(gen_key['key'])
 
     sleep(3600)
+
 
 if __name__ == "__main__":
     main()

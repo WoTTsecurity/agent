@@ -124,13 +124,17 @@ def main():
             crt = sign_cert(gen_key['csr'], device_uuid)
 
             print('Writing certificate and key to disk...')
-            with open('client.crt', 'w') as f:
+            client_cert = Path(os.path.join(CERT_PATH, 'client.crt'))
+            client_key = Path(os.path.join(CERT_PATH, 'client.key'))
+            ca_cert = Path(os.path.join(CERT_PATH, 'ca.crt'))
+
+            with open(client_cert, 'w') as f:
                 f.write(crt['crt'])
 
-            with open('ca.crt', 'w') as f:
+            with open(ca_cert, 'w') as f:
                 f.write(crt['ca'])
 
-            with open('client.key', 'w') as f:
+            with open(client_key, 'w') as f:
                 f.write(gen_key['key'])
 
         sleep(3600)

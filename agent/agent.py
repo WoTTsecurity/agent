@@ -111,8 +111,6 @@ def main():
     while True:
         if not time_for_certificate_renewal():
             print("Certificate is valid. No need for renewal.")
-            sys.exit(0)
-
         else:
             device_uuid = generate_uuid()
             print('Got hostname: {}'.format(device_uuid))

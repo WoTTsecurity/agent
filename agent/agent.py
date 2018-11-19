@@ -26,7 +26,7 @@ def time_for_certificate_renewal():
     if not client_cert.is_file():
         return True
 
-    with open('client.crt', 'rt') as f:
+    with open(client_cert, 'rt') as f:
         cert = OpenSSL.crypto.load_certificate(
                 OpenSSL.crypto.FILETYPE_PEM,
                 f.read()

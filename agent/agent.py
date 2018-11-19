@@ -34,7 +34,7 @@ def time_for_certificate_renewal():
         expiration_date = cert.get_notAfter()
 
     # Ugly workaround for date parsing
-    cert_expiration_time = datetime.strptime(expiration_date[0:-2].encode('utf-8'), '%Y%m%d%H%M%S')
+    cert_expiration_time = datetime.strptime(expiration_date[0:-2].decode(), '%Y%m%d%H%M%S')
     return datetime.utcnow() + timedelta(days=RENEWAL_THRESHOLD) > cert_expiration_time
 
 

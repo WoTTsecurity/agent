@@ -10,4 +10,4 @@ docker run \
     --name wott-agent \
     -v $(pwd):/usr/src/app \
     -v /opt/wott/cert:/opt/wott/cert \
-    bash
+    wott-agent bash

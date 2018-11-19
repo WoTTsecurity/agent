@@ -108,31 +108,32 @@ def sign_cert(csr, device_uuid):
 
 
 def main():
-    if not time_for_certificate_renewal():
-        print("Certificate is valid. No need for renewal.")
-        sys.exit(0)
+    while True:
+        if not time_for_certificate_renewal():
+            print("Certificate is valid. No need for renewal.")
+            sys.exit(0)
 
-    else:
-        device_uuid = generate_uuid()
-        print('Got hostname: {}'.format(device_uuid))
+        else:
+            device_uuid = generate_uuid()
+            print('Got hostname: {}'.format(device_uuid))
 
-        print('Generating certificate...')
-        gen_key = generate_cert(device_uuid)
+            print('Generating certificate...')
+            gen_key = generate_cert(device_uuid)
 
-        print('Submitting CSR...')
-        crt = sign_cert(gen_key['csr'], device_uuid)
+            print('Submitting CSR...')
+            crt = sign_cert(gen_key['csr'], device_uuid)
 
-        print('Writing certificate and key to disk...')
-        with open('client.crt', 'w') as f:
-            f.write(crt['crt'])
+            print('Writing certificate and key to disk...')
+            with open('client.crt', 'w') as f:
+                f.write(crt['crt'])
 
-        with open('ca.crt', 'w') as f:
-            f.write(crt['ca'])
+            with open('ca.crt', 'w') as f:
+                f.write(crt['ca'])
 
-        with open('client.key', 'w') as f:
-            f.write(gen_key['key'])
+            with open('client.key', 'w') as f:
+                f.write(gen_key['key'])
 
-    sleep(3600)
+        sleep(3600)
 
 
 if __name__ == "__main__":

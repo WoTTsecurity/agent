@@ -12,9 +12,9 @@ from time import sleep
 from datetime import datetime, timedelta
 
 
-CFSSL_SERVER = os.getenv('CFSSL_SERVER', '192.168.202.52')
+CFSSL_SERVER = os.getenv('CFSSL_SERVER')
 CFSSL_PORT = int(os.getenv('CFSSL_PORT', 8888))
-CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/cert')
+CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 RENEWAL_THRESHOLD = 15
 
 
@@ -63,10 +63,10 @@ def generate_uuid():
                 hardware = get_value(line, 'Hardware')
 
     if not (serial and revision and hardware):
-        print("Not a Raspberry Pi. Exiting.")
-        sys.exit(1)
-
-    hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware).encode('utf-8')).hexdigest()[0:32]
+        print("Not a Raspberry Pi. Setting temporary placeholder.")
+        hostname = 'dev-instance'
+    else:
+        hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware).encode('utf-8')).hexdigest()[0:32]
 
     return '{}.d.wott.io'.format(hostname)
 
@@ -101,8 +101,12 @@ def sign_cert(csr, device_uuid):
             ssl=False
     )
 
-    crt_req = cf.sign(certificate_request=csr, hosts=['{}'.format(device_uuid)])
     ca = cf.info(label='primary')
+
+    crt_req = cf.sign(
+        certificate_request=csr,
+        hosts=['{}'.format(device_uuid)]
+    )
 
     return {'crt': crt_req, 'ca': ca['certificate']}
 

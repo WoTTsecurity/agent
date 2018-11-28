@@ -6,7 +6,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 docker build . -t wott-google-mqtt
-docker run -ti \
+docker run -ti --rm \
     -v /opt/wott/cert/client.key:/opt/wott/cert/client.key:ro \
     -e DEVICE_ID=${DEVICE_ID-$(hostname)} \
     -e REGISTRY_ID=${REGISTRY_ID} \

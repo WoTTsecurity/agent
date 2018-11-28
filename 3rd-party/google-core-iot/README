@@ -9,7 +9,7 @@ Spin up one or more WoTT devices. Once done, you then need to extract the follow
  * `/opt/wott/cert/ca.crt` - This is CA certificate. This is needed to create the registry in Google Core IoT.
  * `/opt/wott/cert/client.key` - This is the device certificate that needs to be used when enrolling the device.
 
-With the that information, you can now create your registry as per [this guide](https://cloud.google.com/iot/docs/how-tos/devices). You can skip the certificate registration since we already have finished that part.
+With the that information, you can now create your registry as per [this guide](https://cloud.google.com/iot/docs/how-tos/devices). You can skip the certificate registration since we already have finished that part, but make sure to select "ES256_X509" as the certificate type.
 
 ### Running the demo agent
 
@@ -21,5 +21,5 @@ $ export PROJECT_ID=YourProjectId
 $ export DEVICE_ID=YourDeviceID
 $ export CLOUD_REGION=YourRegion
 $ export REGISTRY_ID=YourRegistry
-$ ./mqtt-example.sh
+$ sudo -E ./mqtt-example.sh
 ```

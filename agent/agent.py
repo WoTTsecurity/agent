@@ -23,12 +23,12 @@ def time_for_certificate_renewal():
     client_cert_path = os.path.join(CERT_PATH, 'client.crt')
     client_cert = Path(client_cert_path)
 
-    # Make sure there is no empty cert on disk
-    if os.path.getsize(client_cert_path) == 0:
-        return True
-
     # No cert is the same essentially.
     if not client_cert.is_file():
+        return True
+
+    # Make sure there is no empty cert on disk
+    if os.path.getsize(client_cert_path) == 0:
         return True
 
     with open(client_cert, 'rt') as f:

@@ -31,7 +31,7 @@ RUN apt-get update && \
 COPY --from=ghostunnel /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
 COPY --from=cfssl /go/src/github.com/cloudflare/cfssl/bin/* /usr/local/bin/
 
-RUN mkdir -p /opt/wott/cert
+RUN mkdir -p /opt/wott/certs
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

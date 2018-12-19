@@ -7,14 +7,14 @@ import os
 import sh
 import sys
 import OpenSSL.crypto
-import requests
 from pathlib import Path
 from time import sleep
 from datetime import datetime, timedelta
 
 
-WOTT_ENDPOINT = 'https://api.wott.io'
-CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/cert')
+CFSSL_SERVER = os.getenv('CFSSL_SERVER')
+CFSSL_PORT = int(os.getenv('CFSSL_PORT', 8888))
+CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 RENEWAL_THRESHOLD = 15
 
 
@@ -26,7 +26,7 @@ def time_for_certificate_renewal():
     if not client_cert.is_file():
         return True
 
-    with open('client.crt', 'rt') as f:
+    with open(client_cert, 'rt') as f:
         cert = OpenSSL.crypto.load_certificate(
                 OpenSSL.crypto.FILETYPE_PEM,
                 f.read()
@@ -34,7 +34,7 @@ def time_for_certificate_renewal():
         expiration_date = cert.get_notAfter()
 
     # Ugly workaround for date parsing
-    cert_expiration_time = datetime.strptime(expiration_date[0:-2], '%Y%m%d%H%M%S')
+    cert_expiration_time = datetime.strptime(expiration_date[0:-2].decode(), '%Y%m%d%H%M%S')
     return datetime.utcnow() + timedelta(days=RENEWAL_THRESHOLD) > cert_expiration_time
 
 
@@ -63,10 +63,10 @@ def generate_uuid():
                 hardware = get_value(line, 'Hardware')
 
     if not (serial and revision and hardware):
-        print("Not a Raspberry Pi. Exiting.")
-        sys.exit(1)
-
-    hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware).encode('utf-8')).hexdigest()[0:32]
+        print("Not a Raspberry Pi. Setting temporary placeholder.")
+        hostname = 'dev-instance'
+    else:
+        hostname = hashlib.sha512('{}-{}-{}'.format(serial, revision, hardware).encode('utf-8')).hexdigest()[0:32]
 
     return '{}.d.wott.io'.format(hostname)
 
@@ -95,34 +95,51 @@ def generate_cert(device_uuid):
 
 
 def sign_cert(csr, device_uuid):
-    payload = {'csr': csr}
-    crt_req = requests.post(
-            '{}/v0.1/sign/{}'.format(WOTT_ENDPOINT, device_uuid),
-            json=payload
-            )
-    ca = requests.get('{}/v0.1/ca'.format(WOTT_ENDPOINT))
-    return {'crt': crt_req, 'ca': ca}
+    cf = cfssl.cfssl.CFSSL(
+            host=CFSSL_SERVER,
+            port=CFSSL_PORT,
+            ssl=False
+    )
+
+    ca = cf.info(label='primary')
+
+    crt_req = cf.sign(
+        certificate_request=csr,
+        hosts=['{}'.format(device_uuid)]
+    )
+
+    return {'crt': crt_req, 'ca': ca['certificate']}
 
 
 def main():
-    if not time_for_certificate_renewal():
-        print("Certificate is valid. No need for renewal.")
-        sys.exit(0)
+    while True:
+        if not time_for_certificate_renewal():
+            print("Certificate is valid. No need for renewal.")
+        else:
+            device_uuid = generate_uuid()
+            print('Got hostname: {}'.format(device_uuid))
 
-    device_uuid = generate_uuid()
-    gen_key = generate_cert(device_uuid)
-    crt = sign_cert(gen_key['csr'], device_uuid)
+            print('Generating certificate...')
+            gen_key = generate_cert(device_uuid)
 
-    with open('client.crt', 'w') as f:
-        f.write(crt['crt'])
+            print('Submitting CSR...')
+            crt = sign_cert(gen_key['csr'], device_uuid)
 
-    with open('ca.crt', 'w') as f:
-        f.write(crt['ca'])
+            print('Writing certificate and key to disk...')
+            client_cert = Path(os.path.join(CERT_PATH, 'client.crt'))
+            client_key = Path(os.path.join(CERT_PATH, 'client.key'))
+            ca_cert = Path(os.path.join(CERT_PATH, 'ca.crt'))
 
-    with open('client.key', 'w') as f:
-        f.write(gen_key['key'])
+            with open(client_cert, 'w') as f:
+                f.write(crt['crt'])
 
-    sleep(3600)
+            with open(ca_cert, 'w') as f:
+                f.write(crt['ca'])
+
+            with open(client_key, 'w') as f:
+                f.write(gen_key['key'])
+
+        sleep(3600)
 
 
 if __name__ == "__main__":

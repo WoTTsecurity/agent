@@ -7,13 +7,13 @@ import os
 import sh
 import sys
 import OpenSSL.crypto
+import requests
 from pathlib import Path
 from time import sleep
 from datetime import datetime, timedelta
 
 
-CFSSL_SERVER = os.getenv('CFSSL_SERVER', '192.168.202.52')
-CFSSL_PORT = int(os.getenv('CFSSL_PORT', 8888))
+WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/cert')
 RENEWAL_THRESHOLD = 15
 
@@ -95,16 +95,13 @@ def generate_cert(device_uuid):
 
 
 def sign_cert(csr, device_uuid):
-    cf = cfssl.cfssl.CFSSL(
-            host=CFSSL_SERVER,
-            port=CFSSL_PORT,
-            ssl=False
-    )
-
-    crt_req = cf.sign(certificate_request=csr, hosts=['{}'.format(device_uuid)])
-    ca = cf.info(label='primary')
-
-    return {'crt': crt_req, 'ca': ca['certificate']}
+    payload = {'csr': csr}
+    crt_req = requests.post(
+            '{}/v0.1/sign/{}'.format(WOTT_ENDPOINT, device_uuid),
+            json=payload
+            )
+    ca = requests.get('{}/v0.1/ca'.format(WOTT_ENDPOINT))
+    return {'crt': crt_req, 'ca': ca}
 
 
 def main():
@@ -126,6 +123,7 @@ def main():
         f.write(gen_key['key'])
 
     sleep(3600)
+
 
 if __name__ == "__main__":
     main()

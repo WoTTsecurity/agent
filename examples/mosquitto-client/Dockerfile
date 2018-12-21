@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get install -y mosquitto-clients && \
     apt-get clean
 
-CMD mosquitto_sub \
+CMD mosquitto_sub -v \
     --cafile /opt/wott/certs/ca.crt \
     --cert /opt/wott/certs/client.crt \
     --key /opt/wott/certs/client.key \

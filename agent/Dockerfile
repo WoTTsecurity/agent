@@ -9,15 +9,17 @@ RUN apt-get update && \
 
 RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/square/ghostunnel && \
     cd  $GOPATH/src/github.com/square/ghostunnel && \
+    git checkout v1.3.0 && \
     make
 
 ## cfssl build environment
-FROM golang:1.8-stretch as cfssl
+FROM golang:1.11.2-stretch as cfssl
 
 WORKDIR /go/src/
 
 RUN git clone https://github.com/cloudflare/cfssl.git $GOPATH/src/github.com/cloudflare/cfssl && \
     cd $GOPATH/src/github.com/cloudflare/cfssl && \
+    git checkout -b 5d63dbd981b5c408effbb58c442d54761ff94fbd && \
     make
 
 ## Runtime container

@@ -9,7 +9,7 @@ RUN apt-get update && \
 
 RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/square/ghostunnel && \
     cd  $GOPATH/src/github.com/square/ghostunnel && \
-    git checkout v1.3.0 && \
+    git checkout -b v1.3.0 && \
     make
 
 RUN git clone https://github.com/cloudflare/cfssl.git $GOPATH/src/github.com/cloudflare/cfssl && \

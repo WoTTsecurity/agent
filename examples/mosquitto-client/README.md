@@ -12,7 +12,7 @@
 $ sudo docker build . -t wott-mqtt-client
 $ export MQTT_SERVER_WOTT_ID=abc.d.wott.local
 $ export MQTT_SERVER_IP=192.168.200.50
-$ sudo docker run --rm \
+$ sudo docker run -t --rm \
     -e MQTT_SERVER=$MQTT_SERVER_WOTT_ID \
     --add-host $MQTT_SERVER_WOTT_ID:$MQTT_SERVER_IP \
     -v /opt/wott/certs:/opt/wott/certs:ro \

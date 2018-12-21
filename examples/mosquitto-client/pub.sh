@@ -9,4 +9,4 @@ mosquitto_pub \
     -h ${MQTT_SERVER} \
     -p ${MQTT_PORT} \
     -t ${MQTT_TOPIC} \
-    -m ${MQTT_MESSAGE}
+    -m "$MQTT_MESSAGE"

@@ -2,7 +2,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # -*- sh-basic-offset: 4 -*-
 
-mosquitto_pub -v \
+mosquitto_pub \
     --cafile /opt/wott/certs/ca.crt \
     --cert /opt/wott/certs/client.crt \
     --key /opt/wott/certs/client.key \

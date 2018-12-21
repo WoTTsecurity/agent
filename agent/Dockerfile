@@ -1,5 +1,5 @@
-## ghostunnel build environment
-FROM golang:1.11.2-stretch as ghostunnel
+## Dependency build environment
+FROM golang:1.11.2-stretch as build
 
 WORKDIR /go/src/
 
@@ -11,11 +11,6 @@ RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/sq
     cd  $GOPATH/src/github.com/square/ghostunnel && \
     git checkout v1.3.0 && \
     make
-
-## cfssl build environment
-FROM golang:1.11.2-stretch as cfssl
-
-WORKDIR /go/src/
 
 RUN git clone https://github.com/cloudflare/cfssl.git $GOPATH/src/github.com/cloudflare/cfssl && \
     cd $GOPATH/src/github.com/cloudflare/cfssl && \
@@ -30,8 +25,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential libssl-dev libffi-dev libltdl-dev && \
     apt-get clean
 
-COPY --from=ghostunnel /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
-COPY --from=cfssl /go/src/github.com/cloudflare/cfssl/bin/* /usr/local/bin/
+COPY --from=build /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
+COPY --from=build /go/src/github.com/cloudflare/cfssl/bin/* /usr/local/bin/
 
 RUN mkdir -p /opt/wott/certs
 

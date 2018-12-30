@@ -121,6 +121,7 @@ def main():
             print('Writing certificate and key to disk...')
             client_cert = Path(os.path.join(CERT_PATH, 'client.crt'))
             client_key = Path(os.path.join(CERT_PATH, 'client.key'))
+            client_combined = Path(os.path.join(CERT_PATH, 'combined.pem'))
             ca_cert = Path(os.path.join(CERT_PATH, 'ca.crt'))
 
             with open(client_cert, 'w') as f:
@@ -131,6 +132,10 @@ def main():
 
             with open(client_key, 'w') as f:
                 f.write(gen_key['key'])
+
+            with open(client_combined, 'w') as f:
+                f.write(gen_key['key'])
+                f.write(crt['crt'])
 
         print('Going to sleep...')
         sleep(3600)

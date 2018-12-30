@@ -6,7 +6,7 @@ To build the docker container, simply run:
 
 ```
 $ cd agent
-$ docker create network wott
+$ docker network create wott
 $ ./run.sh
 ```
 

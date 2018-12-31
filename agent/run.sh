@@ -6,7 +6,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 docker build . -t wott-agent
-docker run -d \
+docker run -dt \
     --net wott \
     --name wott-agent \
     -v /opt/wott/certs:/opt/wott/certs \

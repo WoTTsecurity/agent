@@ -1,11 +1,19 @@
 # WoTT IoT Agent
 
+## Pre-requisites
+
+* A Raspberry Pi 2 or newer with Raspbian
+* [Docker CE installed](https://docs.docker.com/install/linux/docker-ce/debian/)
+
 ## Building
 
 To build the docker container, simply run:
 
 ```
-$ cd agent
+$ mkdir -p ~/src
+$ cd ~/src
+$ git clone https://github.com/WoTTsecurity/agent.git
+$ cd agent/agent
 $ docker network create wott
 $ ./run.sh
 ```

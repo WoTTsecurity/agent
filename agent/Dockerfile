@@ -35,4 +35,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY agent.py .
 
-CMD ./agent.py
+CMD python -u ./agent.py

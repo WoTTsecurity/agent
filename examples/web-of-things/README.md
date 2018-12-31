@@ -34,9 +34,64 @@ $ docker run -td \
     webofthings
 ```
 
+We can now extract the API token by running:
+
+```
+$ docker logs wott-wot | grep Token
+My API Token is: Y
+```
+
+Let's verify that we're able to connect to the end point locally:
+
+```
+$ curl -w "\n" -H "Authorization: Bearer Y" localhost:8484
+[...]
+```
+
+
 Expose the Web of Things service over a secure port:
 
 ```
 $ cd ~/src/agent/web-of-things
-$ ./tunnel.sh
+$ ./tunnel-server.sh
+```
+
+We can now verify the mTLS connection locally using OpenSSL:
+
+```
+$ openssl s_client \
+    -connect localhost:8443 \
+    -cert /opt/wott/certs/client.crt \
+    -key /opt/wott/certs/client.key \
+    -CAfile /opt/wott/certs/ca.crt
+[...]
+```
+
+We can now connect to the remote server using `curl`. However, in order to run it locally, you need to add an entry to your `/etc/hosts` file to map the remote device hostname (xyx.d.wott.local to the local IP. Once you've done this, you can run:
+
+```
+$ curl -w "\n"
+    --cacert /opt/wott/certs/ca.crt
+    --cert /opt/wott/certs/client.crt
+    --key /opt/wott/certs/client.key
+    https://x.d.wott.local:8443
+```
+
+Alternatively, if you do not want to alter your hosts file, you can do accomplish the same thing in a Docker container:
+```
+$ docker run -ti --rm \
+    --add-host x.d.wott.local:192.168.10.10 \
+    -v /opt/wott/certs:/opt/wott/certs:ro \
+    wott-agent bash
+```
+
+Once inside the container, you can now run the same `curl` command as above.
+
+The third way to accomplish the same thing is to establish a permanent tunnel between the two nodes. This allows you to offload the mTLS to this tunnel and talk plain text to a local service. To get started with this, we first need to export a few environment variables:
+
+```
+$ export WOTT_SERVER_ID=x.d.wott.local
+$ export WOTT_SERVER_PORT=8443
+$ export WOTT_SERVER_IP=192.168.10.10
+$ ./examples/web-of-things/tunnel-client.sh
 ```

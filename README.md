@@ -4,7 +4,7 @@
 
 * A Raspberry Pi 2 or newer with Raspbian
 * [Docker CE installed](https://docs.docker.com/install/linux/docker-ce/debian/)
-
+  * It is advised that you also run `sudo usermod -aG docker pi` in order to run docker as the user pi without the need for `sudo`
 ## Building
 
 To build the docker container, simply run:
@@ -17,6 +17,14 @@ $ cd agent/agent
 $ docker network create wott
 $ ./run.sh
 ```
+
+You can now find out the device hostname by running:
+
+```
+$ docker logs wott-agent | grep hostname
+Got hostname: x.d.wott.local
+```
+
 
 ### Note on the build process
 

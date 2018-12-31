@@ -13,4 +13,4 @@ docker run -d \
     --target wott-wot:8484 \
     --keystore /opt/wott/certs/combined.pem \
     --cacert /opt/wott/certs/ca.crt \
-    --allow-cn *.d.wott.local
+    --allow-all

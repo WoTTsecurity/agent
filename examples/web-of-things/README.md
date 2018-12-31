@@ -70,11 +70,11 @@ $ openssl s_client \
 We can now connect to the remote server using `curl`. However, in order to run it locally, you need to add an entry to your `/etc/hosts` file to map the remote device hostname (xyx.d.wott.local to the local IP. Once you've done this, you can run:
 
 ```
-$ curl -w "\n"
-    --cacert /opt/wott/certs/ca.crt
-    --cert /opt/wott/certs/client.crt
-    --key /opt/wott/certs/client.key
-    https://x.d.wott.local:8443
+$ curl -w "\n" \
+    --cacert /opt/wott/certs/ca.crt \
+    --cert /opt/wott/certs/client.crt \
+    --key /opt/wott/certs/client.key \
+    https://x.d.wott.local:8443 \
 ```
 
 Alternatively, if you do not want to alter your hosts file, you can do accomplish the same thing in a Docker container:

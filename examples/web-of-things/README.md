@@ -95,3 +95,9 @@ $ export WOTT_SERVER_PORT=8443
 $ export WOTT_SERVER_IP=192.168.10.10
 $ ./examples/web-of-things/tunnel-client.sh
 ```
+
+Assuming the you were able to establish the connection and get the tunnel up and running, you should now be able to interact with the remote service using localhost:8080 as follows:
+
+```
+$ curl -w "\n" -H "Authorization: Bearer Y" localhost:8080
+```

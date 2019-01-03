@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
-import hashlib
 import json
 import os
-import sh
-import sys
-import OpenSSL.crypto
 import requests
+import datetime
+
 from pathlib import Path
 from time import sleep
-from datetime import datetime, timedelta
-
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
@@ -31,16 +33,10 @@ def time_for_certificate_renewal():
     if os.path.getsize(client_cert_path) == 0:
         return True
 
-    with open(client_cert, 'rt') as f:
-        cert = OpenSSL.crypto.load_certificate(
-                OpenSSL.crypto.FILETYPE_PEM,
-                f.read()
-                )
-        expiration_date = cert.get_notAfter()
+    with open(client_cert_path, 'r') as f:
+        cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
 
-    # Ugly workaround for date parsing
-    cert_expiration_time = datetime.strptime(expiration_date[0:-2].decode(), '%Y%m%d%H%M%S')
-    return datetime.utcnow() + timedelta(days=RENEWAL_THRESHOLD) > cert_expiration_time
+    return datetime.datetime.utcnow() + datetime.timedelta(days=RENEWAL_THRESHOLD) > cert.not_valid_after
 
 
 def get_device_id():
@@ -54,26 +50,31 @@ def get_device_id():
 
 
 def generate_cert(device_id):
-    client_input = {
-            "CN": "{}".format(device_id),
-            "key": {
-                "algo": "ecdsa",
-                "size": 256
-            },
-            "names": [
-                {
-                    "C": "US",
-                    "ST": "CA",
-                    "L": "San Francisco"
-                }
-            ]
-    }
+    private_key = ec.generate_private_key(
+        ec.SECP384R1(), default_backend()
+    )
+    builder = x509.CertificateSigningRequestBuilder()
 
-    cert = sh.cfssl.genkey('-', _in=json.dumps(client_input, indent=4))
-    if cert.exit_code != 0:
-        print("Certificate generation failed.")
-        sys.exit(1)
-    return json.loads(str(cert))
+    builder = builder.subject_name(x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, u'{}'.format(device_id)),
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u'UK'),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u'London'),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things'),
+            ]))
+
+    csr = builder.sign(private_key, hashes.SHA256(), default_backend())
+
+    serialized_private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    serialized_csr = csr.public_bytes(serialization.Encoding.PEM)
+
+    return {
+        'csr': serialized_csr.decode(),
+        'key': serialized_private_key.decode()
+    }
 
 
 def sign_cert(csr, device_id):
@@ -114,6 +115,8 @@ def main():
 
             print('Generating certificate...')
             gen_key = generate_cert(device_id)
+
+            print(gen_key['csr'])
 
             print('Submitting CSR...')
             crt = sign_cert(gen_key['csr'], device_id)

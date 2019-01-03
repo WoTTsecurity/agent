@@ -5,9 +5,11 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+CERT_PATH=${CERT_PATH:-/opt/wott/certs}
+
 docker run \
     --rm -ti \
     --name wott-agent \
     -v $(pwd):/usr/src/app \
-    -v /opt/wott/cert:/opt/wott/cert \
+    -v ${CERT_PATH}:/opt/wott/certs \
     wott-agent bash

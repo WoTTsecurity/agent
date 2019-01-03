@@ -12,11 +12,6 @@ RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/sq
     git checkout -b v1.3.0 && \
     make
 
-RUN git clone https://github.com/cloudflare/cfssl.git $GOPATH/src/github.com/cloudflare/cfssl && \
-    cd $GOPATH/src/github.com/cloudflare/cfssl && \
-    git checkout -b 5d63dbd981b5c408effbb58c442d54761ff94fbd && \
-    make
-
 ## Runtime container
 FROM python:3.7-slim-stretch
 WORKDIR /usr/src/app
@@ -26,7 +21,6 @@ RUN apt-get update && \
     apt-get clean
 
 COPY --from=build /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
-COPY --from=build /go/src/github.com/cloudflare/cfssl/bin/* /usr/local/bin/
 
 RUN mkdir -p /opt/wott/certs
 

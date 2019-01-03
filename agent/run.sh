@@ -5,11 +5,11 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+CERT_PATH=${CERT_PATH:-/opt/wott/certs}
+
 docker build . -t wott-agent
 docker run -dt \
     --net wott \
     --name wott-agent \
-    -v /opt/wott/certs:/opt/wott/certs \
-    -e CFSSL_SERVER=${CFSSL_SERVER:-localhost} \
-    -e CFSSL_PORT=${CFSSL_PORT:-8888} \
+    -v ${CERT_PATH}:/opt/wott/certs \
     wott-agent

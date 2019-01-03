@@ -116,8 +116,6 @@ def main():
             print('Generating certificate...')
             gen_key = generate_cert(device_id)
 
-            print(gen_key['csr'])
-
             print('Submitting CSR...')
             crt = sign_cert(gen_key['csr'], device_id)
 

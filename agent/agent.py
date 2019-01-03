@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import requests
 import datetime
@@ -18,35 +17,55 @@ WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 RENEWAL_THRESHOLD = 15
 
+CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
+CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
+CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
+COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
+
+
+def is_bootstrapping():
+    client_cert = Path(CLIENT_CERT_PATH)
+
+    if not client_cert.is_file():
+        print('No certificate found on disk.')
+        return True
+
+    # Make sure there is no empty cert on disk
+    if os.path.getsize(CLIENT_CERT_PATH) == 0:
+        print('Certificate found but it is broken')
+        return True
+
+    return False
+
 
 def time_for_certificate_renewal():
     """ Check if it's time for certificate renewal """
 
-    client_cert_path = os.path.join(CERT_PATH, 'client.crt')
-    client_cert = Path(client_cert_path)
-
-    # No cert is the same essentially.
-    if not client_cert.is_file():
-        return True
-
-    # Make sure there is no empty cert on disk
-    if os.path.getsize(client_cert_path) == 0:
-        return True
-
-    with open(client_cert_path, 'r') as f:
+    with open(CLIENT_CERT_PATH, 'r') as f:
         cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
 
     return datetime.datetime.utcnow() + datetime.timedelta(days=RENEWAL_THRESHOLD) > cert.not_valid_after
 
 
-def get_device_id():
+def generate_device_id():
     """
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
-            '{}/v0.1/generate-cert'.format(WOTT_ENDPOINT)
+            '{}/v0.1/generate-id'.format(WOTT_ENDPOINT)
             ).json()
     return device_id_request['device_id']
+
+
+def get_device_id():
+    """
+    Returns the WoTT Device ID (i.e. fqdn) by reading the first subject from
+    the certificate on disk.
+    """
+
+    with open(CLIENT_CERT_PATH, 'r') as f:
+        cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
+    return cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
 
 
 def generate_cert(device_id):
@@ -77,7 +96,7 @@ def generate_cert(device_id):
     }
 
 
-def sign_cert(csr, device_id):
+def get_ca_cert():
     ca = requests.get('{}/v0.1/ca'.format(WOTT_ENDPOINT))
 
     if not ca.ok:
@@ -85,6 +104,16 @@ def sign_cert(csr, device_id):
         print(ca.status_code)
         print(ca.content)
         return
+
+    return ca.json()['ca']
+
+
+def sign_cert(csr, device_id):
+    """
+    This is the function for the initial certificate generation.
+    This is only valid for the first time. Future renewals require the
+    existing certificate to renew.
+    """
 
     payload = {
             'csr': csr,
@@ -102,44 +131,72 @@ def sign_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['crt'], 'ca': ca.json()['ca']}
+    return {'crt': crt_req.json()['crt']}
+
+
+def renew_cert(csr, device_id):
+    """
+    This is the renewal function. We need to use the existing certificate to
+    verify ourselves in order to get a renewed certificate
+    """
+
+    print('Attempting to renew certificate...')
+
+    payload = {
+            'csr': csr,
+            'device_id': device_id,
+            }
+
+    crt_req = requests.post(
+        'https://renewal-api.wott.io/v0.1/sign',
+        verify=CA_CERT_PATH,
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        json=payload
+        )
+    return {'crt': crt_req.json()['crt']}
 
 
 def main():
     while True:
-        if not time_for_certificate_renewal():
-            print("Certificate is valid. No need for renewal.")
-        else:
-            device_id = get_device_id()
+        bootstrapping = is_bootstrapping()
+
+        if bootstrapping:
+            device_id = generate_device_id()
             print('Got hostname: {}'.format(device_id))
+        else:
+            if not time_for_certificate_renewal():
+                print("Certificate is valid. No need for renewal. Going to sleep...")
+                sleep(3600)
+            device_id = get_device_id()
 
-            print('Generating certificate...')
-            gen_key = generate_cert(device_id)
+        print('Generating certificate...')
+        gen_key = generate_cert(device_id)
 
-            print('Submitting CSR...')
+        ca = get_ca_cert()
+        if not ca:
+            break
+
+        print('Submitting CSR...')
+
+        if bootstrapping:
             crt = sign_cert(gen_key['csr'], device_id)
+        else:
+            crt = renew_cert(gen_key['csr'], device_id)
 
-            print('Writing certificate and key to disk...')
-            client_cert = Path(os.path.join(CERT_PATH, 'client.crt'))
-            client_key = Path(os.path.join(CERT_PATH, 'client.key'))
-            client_combined = Path(os.path.join(CERT_PATH, 'combined.pem'))
-            ca_cert = Path(os.path.join(CERT_PATH, 'ca.crt'))
+        print('Writing certificate and key to disk...')
+        with open(CLIENT_CERT_PATH, 'w') as f:
+            f.write(crt['crt'])
 
-            with open(client_cert, 'w') as f:
-                f.write(crt['crt'])
+        with open(CA_CERT_PATH, 'w') as f:
+            f.write(ca)
 
-            with open(ca_cert, 'w') as f:
-                f.write(crt['ca'])
+        with open(CLIENT_KEY_PATH, 'w') as f:
+            f.write(gen_key['key'])
 
-            with open(client_key, 'w') as f:
-                f.write(gen_key['key'])
-
-            with open(client_combined, 'w') as f:
-                f.write(gen_key['key'])
-                f.write(crt['crt'])
-
-        print('Going to sleep...')
-        sleep(3600)
+        with open(COMBINED_PEM_PATH, 'w') as f:
+            f.write(gen_key['key'])
+            f.write(crt['crt'])
+        sleep(60)
 
 
 if __name__ == "__main__":

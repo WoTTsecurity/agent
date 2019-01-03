@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import requests
 import datetime
@@ -44,7 +43,7 @@ def get_device_id():
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
-            '{}/v0.1/generate-cert'.format(WOTT_ENDPOINT)
+            '{}/v0.1/generate-id'.format(WOTT_ENDPOINT)
             ).json()
     return device_id_request['device_id']
 
@@ -103,6 +102,10 @@ def sign_cert(csr, device_id):
         return
 
     return {'crt': crt_req.json()['crt'], 'ca': ca.json()['ca']}
+
+
+def renew_cert():
+    pass
 
 
 def main():

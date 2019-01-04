@@ -162,12 +162,13 @@ def main():
 
         if bootstrapping:
             device_id = generate_device_id()
-            print('Got hostname: {}'.format(device_id))
+            print('Got WoTT ID: {}'.format(device_id))
         else:
             if not time_for_certificate_renewal():
                 print("Certificate is valid. No need for renewal. Going to sleep...")
                 sleep(3600)
             device_id = get_device_id()
+            print('My WoTT ID is: {}'.format(device_id))
 
         print('Generating certificate...')
         gen_key = generate_cert(device_id)

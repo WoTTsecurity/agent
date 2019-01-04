@@ -18,11 +18,11 @@ $ docker network create wott
 $ ./run.sh
 ```
 
-You can now find out the device hostname by running:
+You can now find out the device's WoTT ID by running:
 
 ```
-$ docker logs wott-agent | grep hostname
-Got hostname: x.d.wott.local
+$ docker logs wott-agent | grep wott
+Got WoTT ID: x.d.wott.local
 ```
 
 

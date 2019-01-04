@@ -67,10 +67,11 @@ $ openssl s_client \
 [...]
 ```
 
-We can now connect to the remote server using `curl`. However, in order to run it locally, you need to add an entry to your `/etc/hosts` file to map the remote device hostname (xyx.d.wott.local to the local IP. Once you've done this, you can run:
+We can now connect to the remote server using `curl`. (Note that we do need to add the `--resolve` line and map the WoTT hostname to the IP of the Pi):
 
 ```
 $ curl -w "\n" \
+    --resolve 'x.d.wott.local:8443:192.168.10.10' \
     --cacert /opt/wott/certs/ca.crt \
     --cert /opt/wott/certs/client.crt \
     --key /opt/wott/certs/client.key \

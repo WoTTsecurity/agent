@@ -81,6 +81,13 @@ def generate_cert(device_id):
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things'),
             ]))
 
+    builder = builder.add_extension(
+        x509.SubjectAlternativeName(
+            [x509.DNSName(u'{}'.format(device_id))]
+        ),
+        critical=False
+    )
+
     csr = builder.sign(private_key, hashes.SHA256(), default_backend())
 
     serialized_private_key = private_key.private_bytes(

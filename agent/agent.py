@@ -15,7 +15,10 @@ from cryptography.x509.oid import NameOID
 
 WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
-RENEWAL_THRESHOLD = 15
+
+# This needs to be adjusted once we have
+# changed the certificate life span from 7 days.
+RENEWAL_THRESHOLD = 5
 
 CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
@@ -38,13 +41,20 @@ def is_bootstrapping():
     return False
 
 
-def time_for_certificate_renewal():
-    """ Check if it's time for certificate renewal """
+def get_certificate_expiration_date():
+    """
+    Returns the expiration date of the certificate.
+    """
 
     with open(CLIENT_CERT_PATH, 'r') as f:
         cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
 
-    return datetime.datetime.utcnow() + datetime.timedelta(days=RENEWAL_THRESHOLD) > cert.not_valid_after
+    return cert.not_valid_after
+
+
+def time_for_certificate_renewal():
+    """ Check if it's time for certificate renewal """
+    return datetime.datetime.utcnow() + datetime.timedelta(days=RENEWAL_THRESHOLD) > get_certificate_expiration_date()
 
 
 def generate_device_id():
@@ -160,6 +170,13 @@ def renew_cert(csr, device_id):
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
         )
+
+    if not crt_req.ok:
+        print('Failed to submit CSR...')
+        print(crt_req.status_code)
+        print(crt_req.content)
+        return
+
     return {'crt': crt_req.json()['crt']}
 
 
@@ -172,7 +189,9 @@ def main():
             print('Got WoTT ID: {}'.format(device_id))
         else:
             if not time_for_certificate_renewal():
-                print("Certificate is valid. No need for renewal. Going to sleep...")
+                print("Certificate expires on {}. No need for renewal. Going to sleep...".format(
+                    get_certificate_expiration_date().strftime("%Y-%m-%d %H:%M:%S")
+                    ))
                 sleep(3600)
             device_id = get_device_id()
             print('My WoTT ID is: {}'.format(device_id))

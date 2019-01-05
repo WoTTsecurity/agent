@@ -1,0 +1,5 @@
+wott-agent (0.1.0) UNRELEASED; urgency=low
+
+* wott-agent: Initial debian packaging
+
+-- Viktor Petersson  Sat, 5 Jun 2019 15:52:56 +0000

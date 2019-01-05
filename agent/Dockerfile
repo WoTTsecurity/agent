@@ -27,6 +27,6 @@ RUN mkdir -p /opt/wott/certs
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY agent.py .
+COPY src/agent.py .
 
 CMD python -u ./agent.py

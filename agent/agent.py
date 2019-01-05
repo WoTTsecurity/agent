@@ -6,6 +6,7 @@ import datetime
 
 from pathlib import Path
 from time import sleep
+from math import floor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -189,9 +190,11 @@ def main():
             print('Got WoTT ID: {}'.format(device_id))
         else:
             if not time_for_certificate_renewal():
-                print("Certificate expires on {}. No need for renewal. Going to sleep...".format(
-                    get_certificate_expiration_date().strftime("%Y-%m-%d %H:%M:%S")
-                    ))
+                time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
+                print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
+                    time_to_cert_expires.days,
+                    floor(time_to_cert_expires.seconds / 60 / 60),
+                ))
                 sleep(3600)
             device_id = get_device_id()
             print('My WoTT ID is: {}'.format(device_id))

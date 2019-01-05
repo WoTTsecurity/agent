@@ -41,7 +41,7 @@ $ cd agent
 $ sudo apt-get install python3 python3-pip python3-virtualenv
 $ virtualenv -p python3 ~/.wott-venv
 $ source ~/.wott-venv/bin/activate
-$ pip install --no-index --find-links=./wheelhouse -r agent/requirements.txt
+$ pip install -r agent/requirements.txt
 ```
 
 You now have all the dependencies installed (with the exception of `ghostunnel`, which is used for end-to-end tunnels).

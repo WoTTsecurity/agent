@@ -4,14 +4,16 @@ import os
 import requests
 import datetime
 
-from pathlib import Path
-from math import floor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
+from math import floor
+from pathlib import Path
+from sys import exit
+
 
 WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
@@ -181,62 +183,61 @@ def renew_cert(csr, device_id):
         print('Failed to submit CSR...')
         print(crt_req.status_code)
         print(crt_req.content)
-        return
+        exit(1)
 
     return {'crt': crt_req.json()['crt']}
 
 
 def main():
     create_folders()
+    bootstrapping = is_bootstrapping()
 
-    while True:
-        bootstrapping = is_bootstrapping()
+    if bootstrapping:
+        device_id = generate_device_id()
+        print('Got WoTT ID: {}'.format(device_id))
+    else:
+        if not time_for_certificate_renewal():
+            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
+            print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
+                time_to_cert_expires.days,
+                floor(time_to_cert_expires.seconds / 60 / 60),
+            ))
+        device_id = get_device_id()
+        print('My WoTT ID is: {}'.format(device_id))
 
-        if bootstrapping:
-            device_id = generate_device_id()
-            print('Got WoTT ID: {}'.format(device_id))
-        else:
-            if not time_for_certificate_renewal():
-                time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
-                print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
-                    time_to_cert_expires.days,
-                    floor(time_to_cert_expires.seconds / 60 / 60),
-                ))
-            device_id = get_device_id()
-            print('My WoTT ID is: {}'.format(device_id))
+    print('Generating certificate...')
+    gen_key = generate_cert(device_id)
 
-        print('Generating certificate...')
-        gen_key = generate_cert(device_id)
+    ca = get_ca_cert()
+    if not ca:
+        print('Unable to fetch CA cert. Exiting.')
+        exit(1)
 
-        ca = get_ca_cert()
-        if not ca:
-            break
+    print('Submitting CSR...')
 
-        print('Submitting CSR...')
+    if bootstrapping:
+        crt = sign_cert(gen_key['csr'], device_id)
+    else:
+        crt = renew_cert(gen_key['csr'], device_id)
 
-        if bootstrapping:
-            crt = sign_cert(gen_key['csr'], device_id)
-        else:
-            crt = renew_cert(gen_key['csr'], device_id)
+    print('Writing certificate and key to disk...')
 
-        print('Writing certificate and key to disk...')
+    with open(CLIENT_CERT_PATH, 'w') as f:
+        f.write(crt['crt'])
+    os.chmod(CLIENT_CERT_PATH, 0o600)
 
-        with open(CLIENT_CERT_PATH, 'w') as f:
-            f.write(crt['crt'])
-        os.chmod(CLIENT_CERT_PATH, 0o600)
+    with open(CA_CERT_PATH, 'w') as f:
+        f.write(ca)
+    os.chmod(CA_CERT_PATH, 0o600)
 
-        with open(CA_CERT_PATH, 'w') as f:
-            f.write(ca)
-        os.chmod(CA_CERT_PATH, 0o600)
+    with open(CLIENT_KEY_PATH, 'w') as f:
+        f.write(gen_key['key'])
+    os.chmod(CLIENT_KEY_PATH, 0o600)
 
-        with open(CLIENT_KEY_PATH, 'w') as f:
-            f.write(gen_key['key'])
-        os.chmod(CLIENT_KEY_PATH, 0o600)
-
-        with open(COMBINED_PEM_PATH, 'w') as f:
-            f.write(gen_key['key'])
-            f.write(crt['crt'])
-        os.chmod(COMBINED_PEM_PATH, 0o600)
+    with open(COMBINED_PEM_PATH, 'w') as f:
+        f.write(gen_key['key'])
+        f.write(crt['crt'])
+    os.chmod(COMBINED_PEM_PATH, 0o600)
 
 
 if __name__ == "__main__":

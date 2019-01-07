@@ -5,7 +5,6 @@ import requests
 import datetime
 
 from pathlib import Path
-from time import sleep
 from math import floor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -25,6 +24,12 @@ CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
+
+
+def create_folders():
+    if not os.path.exists(CERT_PATH):
+        os.makedirs(CERT_PATH)
+    os.chmod(CERT_PATH, 0o700)
 
 
 def is_bootstrapping():
@@ -182,6 +187,8 @@ def renew_cert(csr, device_id):
 
 
 def main():
+    create_folders()
+
     while True:
         bootstrapping = is_bootstrapping()
 
@@ -195,7 +202,6 @@ def main():
                     time_to_cert_expires.days,
                     floor(time_to_cert_expires.seconds / 60 / 60),
                 ))
-                sleep(3600)
             device_id = get_device_id()
             print('My WoTT ID is: {}'.format(device_id))
 
@@ -214,19 +220,23 @@ def main():
             crt = renew_cert(gen_key['csr'], device_id)
 
         print('Writing certificate and key to disk...')
+
         with open(CLIENT_CERT_PATH, 'w') as f:
             f.write(crt['crt'])
+        os.chmod(CLIENT_CERT_PATH, 0o600)
 
         with open(CA_CERT_PATH, 'w') as f:
             f.write(ca)
+        os.chmod(CA_CERT_PATH, 0o600)
 
         with open(CLIENT_KEY_PATH, 'w') as f:
             f.write(gen_key['key'])
+        os.chmod(CLIENT_KEY_PATH, 0o600)
 
         with open(COMBINED_PEM_PATH, 'w') as f:
             f.write(gen_key['key'])
             f.write(crt['crt'])
-        sleep(60)
+        os.chmod(COMBINED_PEM_PATH, 0o600)
 
 
 if __name__ == "__main__":

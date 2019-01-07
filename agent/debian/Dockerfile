@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install --yes \
         software-properties-common \
         build-essential \
         debhelper \
+        dh-systemd \
         devscripts \
         equivs \
         python3-dev

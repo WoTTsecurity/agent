@@ -1,11 +1,11 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
 
 %:
-	dh $@ --with python-virtualenv
+	dh $@ --with python-virtualenv --with=systemd
 
 override_dh_virtualenv:
-	dh_virtualenv --python /usr/bin/python3.5 \
-    	--setuptools
+	dh_virtualenv --python /usr/bin/python3.5 --setuptools
 
 override_dh_builddeb:
 	dh_builddeb --destdir=/tmp/python-deb-pkg/debian/dist

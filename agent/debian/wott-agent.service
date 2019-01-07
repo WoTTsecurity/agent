@@ -1,0 +1,9 @@
+[Unit]
+Description=WoTT Agent
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/python/wott-agent/bin/wott-agent
+
+[Install]
+WantedBy=multi-user.target

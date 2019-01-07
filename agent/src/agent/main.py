@@ -239,6 +239,8 @@ def main():
         f.write(crt['crt'])
     os.chmod(COMBINED_PEM_PATH, 0o600)
 
+    print("I'm Done. Ex(c)iting.")
+
 
 if __name__ == "__main__":
     main()

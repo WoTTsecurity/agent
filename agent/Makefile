@@ -1,3 +1,4 @@
+# -*- makefile -*-
 .PHONY: deb deb-build-env deb-enter-docker
 
 deb-build-env:

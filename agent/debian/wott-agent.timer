@@ -1,0 +1,9 @@
+[Unit]
+Description=WoTT Agent Timer
+
+[Timer]
+OnUnitActiveSec=1h
+Unit=wott-agent.service
+
+[Install]
+WantedBy=multi-user.target

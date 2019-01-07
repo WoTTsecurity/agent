@@ -1,1 +1,4 @@
 dist
+*.egg-info
+build/*
+debian/dist/*

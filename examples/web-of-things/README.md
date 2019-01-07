@@ -44,7 +44,7 @@ My API Token is: Y
 Let's verify that we're able to connect to the end point locally:
 
 ```
-$ curl -w "\n" -H "Authorization: Bearer Y" localhost:8484
+$ curl -w "\n" -H "Authorization: Y" localhost:8484
 [...]
 ```
 

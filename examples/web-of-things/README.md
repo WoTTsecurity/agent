@@ -52,7 +52,7 @@ $ curl -w "\n" -H "Authorization: Y" localhost:8484
 Expose the Web of Things service over a secure port:
 
 ```
-$ cd ~/src/agent/web-of-things
+$ cd ~/src/agent/examples/web-of-things
 $ ./tunnel-server.sh
 ```
 
@@ -71,11 +71,11 @@ We can now connect to the remote server using `curl`. (Note that we do need to a
 
 ```
 $ curl -w "\n" \
-    --resolve 'x.d.wott.local:8443:192.168.10.10' \
+    --resolve 'X.d.wott.local:8443:192.168.10.10' \
     --cacert /opt/wott/certs/ca.crt \
     --cert /opt/wott/certs/client.crt \
     --key /opt/wott/certs/client.key \
-    https://x.d.wott.local:8443 \
+    https://X.d.wott.local:8443
 ```
 
 Alternatively, if you do not want to alter your hosts file, you can do accomplish the same thing in a Docker container:

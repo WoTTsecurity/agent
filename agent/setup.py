@@ -28,7 +28,7 @@ setuptools.setup(
 
     entry_points={
         'console_scripts': [
-            'wott-agent = agent:main',
+            'wott-agent = agent.main:main',
         ],
     }
 )

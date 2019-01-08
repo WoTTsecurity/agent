@@ -2,7 +2,7 @@
 # -*- makefile -*-
 
 %:
-	dh $@ --with python-virtualenv --with=systemd
+	dh $@ --with python-virtualenv,systemd
 
 override_dh_virtualenv:
 	dh_virtualenv --python /usr/bin/python3.5 --setuptools

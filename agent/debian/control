@@ -9,7 +9,12 @@ Source: wott-agent
 Section: contrib/python
 Priority: extra
 Maintainer: Viktor Petersson
-Build-Depends: debhelper (>= 9), python3.5, python3-setuptools, dh-virtualenv (>> 0.6), dh-systemd (>= 1.5)
+Build-Depends:
+    debhelper (>= 9),
+    python3.5,
+    python3-setuptools,
+    dh-virtualenv (>> 0.6),
+    dh-systemd (>= 1.5)
 Standards-Version: 3.9.5
 
 Package: wott-agent

@@ -7,8 +7,8 @@
 
 Source: wott-agent
 Section: contrib/python
-Priority: extra
-Maintainer: Viktor Petersson
+Priority: optional
+Maintainer: "Viktor Petersson" <v@viktopia.io>
 Build-Depends:
     debhelper (>= 9),
     python3.5,

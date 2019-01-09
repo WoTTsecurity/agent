@@ -52,3 +52,17 @@ To start the agent, you just need to run:
 $ sudo ~/.wott-venv/bin/python ~/src/agent/agent/agent.py
 ```
 
+
+
+## Building Debian packages
+
+```
+$ cd agent
+$ make deb
+[...]
+$ cd debian/dist
+$ debsign -k10EC1B84E807A08B *.changes
+[...]
+Successfully signed changes file
+$ dput ppa:vpetersson/wott-agent wott-agent_*.changes
+```

@@ -1,4 +1,4 @@
-wott-agent (0.1.0) UNRELEASED; urgency=low
+wott-agent (0.1.0) xenial; urgency=low
 
   * wott-agent: Initial debian packaging
 

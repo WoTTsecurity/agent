@@ -15,5 +15,8 @@ ADD ./debian/control /tmp/python-deb-pkg/debian/control
 RUN mk-build-deps --install /tmp/python-deb-pkg/debian/control --tool "apt-get --allow-downgrades --yes"
 
 WORKDIR /tmp/python-deb-pkg
+COPY ./debian/start.sh /start.sh
 
 ADD . /tmp/python-deb-pkg
+
+CMD /start.sh

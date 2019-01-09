@@ -21,4 +21,4 @@ Package: wott-agent
 Architecture: any
 Pre-Depends: dpkg (>= 1.16.1),  python3.5
 Depends: make
-Description: python-deb-pkg service
+Description: Web of Trusted Things agent

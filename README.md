@@ -61,8 +61,9 @@ $ cd agent
 $ make deb
 [...]
 $ cd debian/dist
-$ debsign -k10EC1B84E807A08B *.changes
+$ debsign -k10EC1B84E807A08B *._source.changes
 [...]
 Successfully signed changes file
-$ dput ppa:vpetersson/wott-agent wott-agent_*.changes
+$ dput ppa:vpetersson/wott-agent wott-agent_*_source.changes
+[...]
 ```

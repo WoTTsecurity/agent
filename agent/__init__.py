@@ -2,14 +2,15 @@ import os
 import requests
 import datetime
 
-from pathlib import Path
-from math import floor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
+from math import floor
+from pathlib import Path
+from sys import exit
 
 WOTT_ENDPOINT = 'https://api.wott.io'
 CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
@@ -199,7 +200,8 @@ def main():
 
     ca = get_ca_cert()
     if not ca:
-        break
+        print('Unable to retrieve CA cert. Exiting.')
+        exit(1)
 
     print('Submitting CSR...')
 

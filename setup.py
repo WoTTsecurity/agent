@@ -1,6 +1,7 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(
+
+setup(
     name="wott-agent",
     version='0.1.0',
 
@@ -9,20 +10,8 @@ setuptools.setup(
 
     description="WoTT agent",
 
-    packages=setuptools.find_packages('src', exclude=('tests',)),
-    package_dir={'': 'src'},
+    packages=find_packages(exclude=('tests',)),
     include_package_data=True,
-    zip_safe=False,
-
-    install_requires=[
-        'certifi',
-        'cffi',
-        'chardet',
-        'cryptography',
-        'idna',
-        'pyOpenSSL',
-        'requests'
-    ],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -37,9 +26,19 @@ setuptools.setup(
         'Topic :: Utilities',
     ],
 
+    install_requires=[
+        'certifi',
+        'cffi',
+        'chardet',
+        'cryptography',
+        'idna',
+        'pyOpenSSL',
+        'requests'
+    ],
+
     entry_points={
         'console_scripts': [
-            'wott-agent = agent.main:main',
+            'wott-agent = agent:main',
         ],
     }
 )

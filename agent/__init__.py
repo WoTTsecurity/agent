@@ -1,11 +1,8 @@
-#!/usr/bin/env python3
-
 import os
 import requests
 import datetime
 
 from pathlib import Path
-from time import sleep
 from math import floor
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -195,7 +192,6 @@ def main():
                     time_to_cert_expires.days,
                     floor(time_to_cert_expires.seconds / 60 / 60),
                 ))
-                sleep(3600)
             device_id = get_device_id()
             print('My WoTT ID is: {}'.format(device_id))
 
@@ -226,7 +222,6 @@ def main():
         with open(COMBINED_PEM_PATH, 'w') as f:
             f.write(gen_key['key'])
             f.write(crt['crt'])
-        sleep(60)
 
 
 if __name__ == "__main__":

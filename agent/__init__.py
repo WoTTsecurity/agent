@@ -179,49 +179,48 @@ def renew_cert(csr, device_id):
 
 
 def main():
-    while True:
-        bootstrapping = is_bootstrapping()
+    bootstrapping = is_bootstrapping()
 
-        if bootstrapping:
-            device_id = generate_device_id()
-            print('Got WoTT ID: {}'.format(device_id))
-        else:
-            if not time_for_certificate_renewal():
-                time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
-                print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
-                    time_to_cert_expires.days,
-                    floor(time_to_cert_expires.seconds / 60 / 60),
-                ))
-            device_id = get_device_id()
-            print('My WoTT ID is: {}'.format(device_id))
+    if bootstrapping:
+        device_id = generate_device_id()
+        print('Got WoTT ID: {}'.format(device_id))
+    else:
+        if not time_for_certificate_renewal():
+            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
+            print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
+                time_to_cert_expires.days,
+                floor(time_to_cert_expires.seconds / 60 / 60),
+            ))
+        device_id = get_device_id()
+        print('My WoTT ID is: {}'.format(device_id))
 
-        print('Generating certificate...')
-        gen_key = generate_cert(device_id)
+    print('Generating certificate...')
+    gen_key = generate_cert(device_id)
 
-        ca = get_ca_cert()
-        if not ca:
-            break
+    ca = get_ca_cert()
+    if not ca:
+        break
 
-        print('Submitting CSR...')
+    print('Submitting CSR...')
 
-        if bootstrapping:
-            crt = sign_cert(gen_key['csr'], device_id)
-        else:
-            crt = renew_cert(gen_key['csr'], device_id)
+    if bootstrapping:
+        crt = sign_cert(gen_key['csr'], device_id)
+    else:
+        crt = renew_cert(gen_key['csr'], device_id)
 
-        print('Writing certificate and key to disk...')
-        with open(CLIENT_CERT_PATH, 'w') as f:
-            f.write(crt['crt'])
+    print('Writing certificate and key to disk...')
+    with open(CLIENT_CERT_PATH, 'w') as f:
+        f.write(crt['crt'])
 
-        with open(CA_CERT_PATH, 'w') as f:
-            f.write(ca)
+    with open(CA_CERT_PATH, 'w') as f:
+        f.write(ca)
 
-        with open(CLIENT_KEY_PATH, 'w') as f:
-            f.write(gen_key['key'])
+    with open(CLIENT_KEY_PATH, 'w') as f:
+        f.write(gen_key['key'])
 
-        with open(COMBINED_PEM_PATH, 'w') as f:
-            f.write(gen_key['key'])
-            f.write(crt['crt'])
+    with open(COMBINED_PEM_PATH, 'w') as f:
+        f.write(gen_key['key'])
+        f.write(crt['crt'])
 
 
 if __name__ == "__main__":

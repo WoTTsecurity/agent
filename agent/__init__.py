@@ -13,7 +13,13 @@ from pathlib import Path
 from sys import exit
 
 WOTT_ENDPOINT = 'https://api.wott.io'
-CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
+
+# Conditional handling for if we're running
+# inside a Snap.
+if os.getenv('SNAP_NAME'):
+    CERT_PATH = os.getenv('SNAP_COMMON')
+else:
+    CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.

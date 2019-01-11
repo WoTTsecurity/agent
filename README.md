@@ -14,9 +14,9 @@ To build the docker container, simply run:
 $ mkdir -p ~/src
 $ cd ~/src
 $ git clone https://github.com/WoTTsecurity/agent.git
-$ cd agent/agent
+$ cd agent
 $ docker network create wott
-$ ./run.sh
+$ ./bin/run.sh
 ```
 
 You can now find out the device's WoTT ID by running:

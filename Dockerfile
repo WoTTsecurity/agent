@@ -15,6 +15,7 @@ RUN git clone https://github.com/square/ghostunnel.git $GOPATH/src/github.com/sq
 ## Runtime container
 FROM python:3.7-slim-stretch
 WORKDIR /usr/src/app
+ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential libssl-dev libffi-dev libltdl-dev curl && \
@@ -27,6 +28,7 @@ RUN mkdir -p /opt/wott/certs
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY agent.py .
+COPY . ./
+RUN python setup.py install
 
-CMD python -u ./agent.py
+CMD wott-agent

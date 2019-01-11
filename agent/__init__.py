@@ -17,7 +17,7 @@ WOTT_ENDPOINT = 'https://api.wott.io'
 # Conditional handling for if we're running
 # inside a Snap.
 if os.getenv('SNAP_NAME'):
-    CERT_PATH = os.getenv('SNAP_COMMON')
+    CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 

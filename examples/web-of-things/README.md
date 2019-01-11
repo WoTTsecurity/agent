@@ -8,15 +8,7 @@
 
 ### Setup
 
-Install the WoTT agent on the device:
-
-```
-$ mkdir -p ~/src
-$ cd ~/src
-$ git clone git@github.com:WoTTsecurity/agent.git
-$ cd agent/agent
-$ ./run.sh
-```
+Install the WoTT agent as per the main README.
 
 Build and launch the Web of Things docker container:
 ```

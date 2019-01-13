@@ -23,7 +23,7 @@ else:
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
-RENEWAL_THRESHOLD = 5
+RENEWAL_THRESHOLD = 3
 
 CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')

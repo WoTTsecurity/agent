@@ -194,10 +194,11 @@ def main():
     else:
         if not time_for_certificate_renewal():
             time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
-            print("Certificate expires in {} days and {} hours. No need for renewal. Going to sleep...".format(
+            print("Certificate expires in {} days and {} hours. No need for renewal.".format(
                 time_to_cert_expires.days,
                 floor(time_to_cert_expires.seconds / 60 / 60),
             ))
+            exit(0)
         device_id = get_device_id()
         print('My WoTT ID is: {}'.format(device_id))
 

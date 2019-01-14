@@ -1,12 +1,40 @@
 # WoTT IoT Agent
 
-## Pre-requisites
+
+## Snap runtime (recommended)
+
+### Pre-requisites (Snap)
+
+* A Raspberry Pi 2 or newer with Raspbian or Ubuntu Core
+
+### Installing
+
+If you're using Raspbian, follow [these instructions](https://docs.snapcraft.io/installing-snap-on-raspbian/6754) first to install `snapd`.
+
+Once you have `snapd` installed (included if you are using Ubuntu Core), simply install the WoTT agent by running:
+
+```
+$ snap install wott-agent
+$ snap start wott-agent
+```
+
+You can now find your device's WoTT ID by running:
+
+```
+$ snap logs wott-agent
+```
+
+It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.
+
+## Docker runtime
+
+### Pre-requisites
 
 * A Raspberry Pi 2 or newer with Raspbian
 * [Docker CE installed](https://docs.docker.com/install/linux/docker-ce/debian/)
   * It is advised that you also run `sudo usermod -aG docker pi` in order to run docker as the user pi without the need for `sudo`
 
-## Building
+### Building
 
 To build the docker container, simply run:
 
@@ -26,12 +54,12 @@ $ docker logs wott-agent | grep wott
 Got WoTT ID: x.d.wott.local
 ```
 
-### Note on the build process
+#### Note on the build process
 
 * The build process is utilizing [multi-stage docker build](https://docs.docker.com/develop/develop-images/multistage-build/) to make sure we don't need to include all tools in the runtime environment.
 
 
-## Installing without Docker
+### Python runtime (advanced)
 
 It is possible to run the WoTT agent without Docker. To do this on a Raspbian Stretch device, run the following command:
 

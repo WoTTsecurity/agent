@@ -1,5 +1,6 @@
 # WoTT IoT Agent
 
+**WARNING:** This software is yet not ready for production.
 
 ## Snap runtime (recommended)
 
@@ -25,6 +26,9 @@ $ wott-agent.whoami
 ```
 
 It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.
+
+For more information, see the [examples](https://github.com/WoTTsecurity/agent/tree/master/examples), in particular the [Simple WebApp example](https://github.com/WoTTsecurity/agent/tree/master/examples/simple-webapp).
+
 
 ## Docker runtime
 

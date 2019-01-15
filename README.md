@@ -3,7 +3,7 @@
 
 ## Snap runtime (recommended)
 
-### Pre-requisites (Snap)
+### Pre-requisites
 
 * A Raspberry Pi 2 or newer with Raspbian or Ubuntu Core
 

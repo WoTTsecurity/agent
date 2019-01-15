@@ -12,7 +12,7 @@ from math import floor
 from pathlib import Path
 from sys import exit
 
-WOTT_ENDPOINT = 'https://api.wott.io'
+WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 
 # Conditional handling for if we're running
 # inside a Snap.

@@ -194,9 +194,10 @@ def main():
     else:
         if not time_for_certificate_renewal():
             time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
-            print("Certificate expires in {} days and {} hours. No need for renewal.".format(
+            print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                 time_to_cert_expires.days,
                 floor(time_to_cert_expires.seconds / 60 / 60),
+                RENEWAL_THRESHOLD,
             ))
             exit(0)
         device_id = get_device_id()

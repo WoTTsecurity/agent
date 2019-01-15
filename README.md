@@ -21,7 +21,7 @@ $ snap start wott-agent
 You can now find your device's WoTT ID by running:
 
 ```
-$ snap logs wott-agent
+$ wott-agent.whoami
 ```
 
 It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.

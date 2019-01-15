@@ -14,8 +14,8 @@ The first thing that we will do is to setup a simple Python WebApp on a Raspberr
 $ apt-get update && apt-get install -y python3 python3-pip curl
 $ mkdir ~/wott-webapp-example
 $ cd ~/wott-webapp-example
-$ curl -O app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/app.py
-$ curl -O requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/requirements.txt
+$ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/app.py
+$ curl -o requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/requirements.txt
 $ pip3 install -r requirements.txt
 $ python3 app.py
 [...]

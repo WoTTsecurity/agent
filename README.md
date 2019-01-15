@@ -69,7 +69,8 @@ $ cd agent
 $ sudo apt-get install python3 python3-pip python3-virtualenv
 $ virtualenv -p python3 ~/.wott-venv
 $ source ~/.wott-venv/bin/activate
-$ pip install -r agent/requirements.txt
+$ pip install -r requirements.txt
+$ python setup.py install
 ```
 
 You now have all the dependencies installed (with the exception of `ghostunnel`, which is used for end-to-end tunnels).
@@ -77,6 +78,6 @@ You now have all the dependencies installed (with the exception of `ghostunnel`,
 To start the agent, you just need to run:
 
 ```
-$ sudo ~/.wott-venv/bin/python ~/src/agent/agent/agent.py
+$ sudo ~/.wott-venv/bin/python wott-agent
 ```
 

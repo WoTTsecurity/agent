@@ -58,7 +58,7 @@ With the server up and running, we can now move on to the client. This should be
 In order to connect to the server, we need to know the following:
 
  * The IP of the device running the server
- * The WoTT ID of the server (y.d.wott.local)
+ * The WoTT ID of the server (you can get this by running `wott-agent.whoami`)
 
 Once we have this information, all we need to do is to start the client by running:
 

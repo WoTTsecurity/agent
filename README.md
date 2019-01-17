@@ -2,7 +2,24 @@
 
 **WARNING:** This software is yet not ready for production.
 
-## Snap runtime (recommended)
+## What is this?
+
+**tl;dr** Let's Encrypt for IoT (with more bells and whistles).
+
+The goals for WoTT Agent is to do two things:
+
+ * Simplify encryption of device communication
+ * Provide cryptographic identity of sender (such that the receiver can trust that the sender is who it claims to be)
+
+The first build-block we need in order to facilitate encrypted communication between two peers is a cryptographic certificate [1]. This is provisioned automatically through the WoTT agent. At its core, this serves both as the means to enable encrypted communication, as well as each unique device’s identity.
+
+With the certificate installed on the device, we’re able to establish connections to devices and services and cryptographically prove we are whom we claim to be [2]. It’s worth pointing out that this is different than how say your browser works. In such scenario, you as the client (i.e. the browser) verifies that the remote server (e.g. https://www.google.com) is indeed the being served from Google’s server and not an impersonator. There is however no way for Google to cryptographically know that you are who are (which is why you need to login in order to access your email). With WoTT however, we’re able to add this piece, which essentially means that there is no longer a need for username and passwords, since we can cryptographically prove that the client/user is indeed who he/she/it claims to be.
+
+[1] We do this by issuing an x509 certificate from our own Certificate Authority (CA).
+[2] This is done using something called Mutual TLS, or mTLS for short.
+
+
+## Installation: Snap runtime (recommended)
 
 ### Pre-requisites
 
@@ -30,7 +47,7 @@ It's also worth noting that the certificates can be found on disk within the fol
 For more information, see the [examples](https://github.com/WoTTsecurity/agent/tree/master/examples), in particular the [Simple WebApp example](https://github.com/WoTTsecurity/agent/tree/master/examples/simple-webapp).
 
 
-## Docker runtime
+## Installation: Docker runtime
 
 ### Pre-requisites
 
@@ -63,7 +80,7 @@ Got WoTT ID: x.d.wott.local
 * The build process is utilizing [multi-stage docker build](https://docs.docker.com/develop/develop-images/multistage-build/) to make sure we don't need to include all tools in the runtime environment.
 
 
-### Python runtime (advanced)
+## Installation:  Python runtime (advanced)
 
 It is possible to run the WoTT agent without Docker. To do this on a Raspbian Stretch device, run the following command:
 
@@ -84,4 +101,3 @@ To start the agent, you just need to run:
 ```
 $ sudo ~/.wott-venv/bin/python wott-agent
 ```
-

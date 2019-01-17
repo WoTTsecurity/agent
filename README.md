@@ -15,8 +15,8 @@ The first build-block we need in order to facilitate encrypted communication bet
 
 With the certificate installed on the device, we’re able to establish connections to devices and services and cryptographically prove we are whom we claim to be [2]. It’s worth pointing out that this is different than how say your browser works. In such scenario, you as the client (i.e. the browser) verifies that the remote server (e.g. https://www.google.com) is indeed the being served from Google’s server and not an impersonator. There is however no way for Google to cryptographically know that you are who are (which is why you need to login in order to access your email). With WoTT however, we’re able to add this piece, which essentially means that there is no longer a need for username and passwords, since we can cryptographically prove that the client/user is indeed who he/she/it claims to be.
 
-[1] We do this by issuing an x509 certificate from our own Certificate Authority (CA).
-[2] This is done using something called Mutual TLS, or mTLS for short.
+* [1] We do this by issuing an x509 certificate from our own Certificate Authority (CA).
+* [2] This is done using something called Mutual TLS, or mTLS for short.
 
 
 ## Installation: Snap runtime (recommended)
@@ -46,6 +46,7 @@ It's also worth noting that the certificates can be found on disk within the fol
 
 For more information, see the [examples](https://github.com/WoTTsecurity/agent/tree/master/examples), in particular the [Simple WebApp example](https://github.com/WoTTsecurity/agent/tree/master/examples/simple-webapp).
 
+The source code for the Snap can be found [here](https://github.com/WoTTsecurity/wott-agent-snap).
 
 ## Installation: Docker runtime
 
@@ -77,7 +78,7 @@ Got WoTT ID: x.d.wott.local
 
 #### Note on the build process
 
-* The build process is utilizing [multi-stage docker build](https://docs.docker.com/develop/develop-images/multistage-build/) to make sure we don't need to include all tools in the runtime environment.
+The build process is utilizing [multi-stage docker build](https://docs.docker.com/develop/develop-images/multistage-build/) to make sure we don't need to include all tools in the runtime environment. For more information, see the [Dockerfile](https://github.com/WoTTsecurity/agent/blob/master/Dockerfile).
 
 
 ## Installation:  Python runtime (advanced)

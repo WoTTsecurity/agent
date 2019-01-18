@@ -85,7 +85,7 @@ def get_device_id():
 
 def generate_cert(device_id):
     private_key = ec.generate_private_key(
-        ec.SECP384R1(), default_backend()
+        ec.SECP256R1(), default_backend()
     )
     builder = x509.CertificateSigningRequestBuilder()
 

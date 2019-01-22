@@ -1,6 +1,7 @@
 import os
 import requests
 import datetime
+import pytz
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -54,7 +55,7 @@ def get_certificate_expiration_date():
     with open(CLIENT_CERT_PATH, 'r') as f:
         cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
 
-    return cert.not_valid_after
+    return cert.not_valid_after.replace(tzinfo=pytz.utc)
 
 
 def time_for_certificate_renewal():

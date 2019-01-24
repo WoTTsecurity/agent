@@ -68,7 +68,7 @@ def generate_device_id():
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
-            '{}/v0.1/generate-id'.format(WOTT_ENDPOINT)
+            '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
             ).json()
     return device_id_request['device_id']
 
@@ -94,7 +94,7 @@ def generate_cert(device_id):
                 x509.NameAttribute(NameOID.COMMON_NAME, u'{}'.format(device_id)),
                 x509.NameAttribute(NameOID.COUNTRY_NAME, u'UK'),
                 x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u'London'),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things'),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things, Ltd'),
             ]))
 
     builder = builder.add_extension(
@@ -120,7 +120,7 @@ def generate_cert(device_id):
 
 
 def get_ca_cert():
-    ca = requests.get('{}/v0.1/ca'.format(WOTT_ENDPOINT))
+    ca = requests.get('{}/v0.2/ca'.format(WOTT_ENDPOINT))
 
     if not ca.ok:
         print('Failed to get CA...')
@@ -128,7 +128,7 @@ def get_ca_cert():
         print(ca.content)
         return
 
-    return ca.json()['ca']
+    return ca.json()['ca_certificate']
 
 
 def sign_cert(csr, device_id):
@@ -144,7 +144,7 @@ def sign_cert(csr, device_id):
             }
 
     crt_req = requests.post(
-            '{}/v0.1/sign'.format(WOTT_ENDPOINT),
+            '{}/v0.2/sign-csr'.format(WOTT_ENDPOINT),
             json=payload
             )
 
@@ -154,7 +154,7 @@ def sign_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['crt']}
+    return {'crt': crt_req.json()['certificate']}
 
 
 def renew_cert(csr, device_id):

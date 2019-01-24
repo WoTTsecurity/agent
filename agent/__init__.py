@@ -10,7 +10,6 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 from math import floor
-from django.utils import timezone
 from pathlib import Path
 from sys import exit
 

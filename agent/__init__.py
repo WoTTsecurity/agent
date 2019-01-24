@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 from math import floor
+from django.utils import timezone
 from pathlib import Path
 from sys import exit
 
@@ -60,7 +61,7 @@ def get_certificate_expiration_date():
 
 def time_for_certificate_renewal():
     """ Check if it's time for certificate renewal """
-    return datetime.datetime.utcnow() + datetime.timedelta(days=RENEWAL_THRESHOLD) > get_certificate_expiration_date()
+    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) > get_certificate_expiration_date()
 
 
 def generate_device_id():
@@ -194,7 +195,7 @@ def main():
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal():
-            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now()
+            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.utcnow()
             print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                 time_to_cert_expires.days,
                 floor(time_to_cert_expires.seconds / 60 / 60),

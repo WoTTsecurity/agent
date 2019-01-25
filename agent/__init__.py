@@ -159,7 +159,10 @@ def sign_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['certificate']}
+    return {
+        'crt': crt_req.json()['certificate'],
+        'claim_token': crt_req.json()['claim_token']
+    }
 
 
 def renew_cert(csr, device_id):
@@ -228,6 +231,7 @@ def main():
         print('Unable to sign CSR. Exiting.')
         exit(1)
 
+    print('Got Claim Token: {}'.format(crt['claim_token']))
     print('Writing certificate and key to disk...')
     with open(CLIENT_CERT_PATH, 'w') as f:
         f.write(crt['crt'])

@@ -138,11 +138,13 @@ def get_ca_cert():
 
 
 def send_ping():
-    return requests.get(
+    ping = requests.get(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
     )
+    if not ping.ok:
+        print('Ping failed.')
 
 
 def sign_cert(csr, device_id):

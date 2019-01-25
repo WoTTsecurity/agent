@@ -33,6 +33,11 @@ COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 
 
 def is_bootstrapping():
+    # Create path if it doesn't exist
+    if not os.path.isdir(CERT_PATH):
+        os.makedirs(CERT_PATH)
+        os.chmod(CERT_PATH, 0o700)
+
     client_cert = Path(CLIENT_CERT_PATH)
 
     if not client_cert.is_file():
@@ -171,7 +176,7 @@ def renew_cert(csr, device_id):
             }
 
     crt_req = requests.post(
-        'https://renewal-api.wott.io/v0.1/sign',
+        'https://mtls.wott.io/v0.2/sign-csr',
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
@@ -219,19 +224,27 @@ def main():
     else:
         crt = renew_cert(gen_key['csr'], device_id)
 
+    if not crt:
+        print('Unable to sign CSR. Exiting.')
+        exit(1)
+
     print('Writing certificate and key to disk...')
     with open(CLIENT_CERT_PATH, 'w') as f:
         f.write(crt['crt'])
+    os.chmod(CLIENT_CERT_PATH, 0o644)
 
     with open(CA_CERT_PATH, 'w') as f:
         f.write(ca)
+    os.chmod(CA_CERT_PATH, 0o644)
 
     with open(CLIENT_KEY_PATH, 'w') as f:
         f.write(gen_key['key'])
+    os.chmod(CLIENT_KEY_PATH, 0o600)
 
     with open(COMBINED_PEM_PATH, 'w') as f:
         f.write(gen_key['key'])
         f.write(crt['crt'])
+    os.chmod(COMBINED_PEM_PATH, 0o600)
 
 
 if __name__ == "__main__":

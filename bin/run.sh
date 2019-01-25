@@ -6,6 +6,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 CERT_PATH=${CERT_PATH:-/opt/wott/certs}
+WOTT_ENDPOINT=${WOTT_ENDPOINT:-https://api.wott.io}
 
 docker build . -t wott-agent
 docker run -dt \

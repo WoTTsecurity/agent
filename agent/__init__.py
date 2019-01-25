@@ -202,7 +202,10 @@ def renew_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['crt']}
+    return {
+        'crt': crt_req.json()['certificate'],
+        'claim_token': crt_req.json()['claim_token']
+    }
 
 
 def main():

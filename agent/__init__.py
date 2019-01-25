@@ -14,6 +14,7 @@ from pathlib import Path
 from sys import exit
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
+MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
 
 # Conditional handling for if we're running
 # inside a Snap.
@@ -136,6 +137,14 @@ def get_ca_cert():
     return ca.json()['ca_bundle']
 
 
+def send_ping():
+    return requests.get(
+        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
+        verify=CA_CERT_PATH,
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+    )
+
+
 def sign_cert(csr, device_id):
     """
     This is the function for the initial certificate generation.
@@ -179,7 +188,7 @@ def renew_cert(csr, device_id):
             }
 
     crt_req = requests.post(
-        'https://mtls.wott.io/v0.2/sign-csr',
+        '{}/v0.2/sign-csr'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
@@ -202,6 +211,7 @@ def main():
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal():
+            send_ping()
             time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.utcnow()
             print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                 time_to_cert_expires.days,

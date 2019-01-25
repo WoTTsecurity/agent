@@ -147,6 +147,17 @@ def send_ping():
         print('Ping failed.')
 
 
+def say_hello():
+    hello = requests.get(
+        '{}/v0.2/hello'.format(MTLS_ENDPOINT),
+        verify=CA_CERT_PATH,
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+    )
+    if not hello.ok:
+        print('Hello failed.')
+    return hello.json()
+
+
 def sign_cert(csr, device_id):
     """
     This is the function for the initial certificate generation.

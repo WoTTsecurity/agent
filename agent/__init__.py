@@ -14,6 +14,7 @@ from pathlib import Path
 from sys import exit
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
+MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
 
 # Conditional handling for if we're running
 # inside a Snap.
@@ -33,6 +34,11 @@ COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 
 
 def is_bootstrapping():
+    # Create path if it doesn't exist
+    if not os.path.isdir(CERT_PATH):
+        os.makedirs(CERT_PATH)
+        os.chmod(CERT_PATH, 0o700)
+
     client_cert = Path(CLIENT_CERT_PATH)
 
     if not client_cert.is_file():
@@ -68,7 +74,7 @@ def generate_device_id():
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
-            '{}/v0.1/generate-id'.format(WOTT_ENDPOINT)
+            '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
             ).json()
     return device_id_request['device_id']
 
@@ -94,7 +100,7 @@ def generate_cert(device_id):
                 x509.NameAttribute(NameOID.COMMON_NAME, u'{}'.format(device_id)),
                 x509.NameAttribute(NameOID.COUNTRY_NAME, u'UK'),
                 x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u'London'),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things'),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things, Ltd'),
             ]))
 
     builder = builder.add_extension(
@@ -120,7 +126,7 @@ def generate_cert(device_id):
 
 
 def get_ca_cert():
-    ca = requests.get('{}/v0.1/ca'.format(WOTT_ENDPOINT))
+    ca = requests.get('{}/v0.2/ca-bundle'.format(WOTT_ENDPOINT))
 
     if not ca.ok:
         print('Failed to get CA...')
@@ -128,7 +134,17 @@ def get_ca_cert():
         print(ca.content)
         return
 
-    return ca.json()['ca']
+    return ca.json()['ca_bundle']
+
+
+def send_ping():
+    ping = requests.get(
+        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
+        verify=CA_CERT_PATH,
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+    )
+    if not ping.ok:
+        print('Ping failed.')
 
 
 def sign_cert(csr, device_id):
@@ -144,7 +160,7 @@ def sign_cert(csr, device_id):
             }
 
     crt_req = requests.post(
-            '{}/v0.1/sign'.format(WOTT_ENDPOINT),
+            '{}/v0.2/sign-csr'.format(WOTT_ENDPOINT),
             json=payload
             )
 
@@ -154,7 +170,10 @@ def sign_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['crt']}
+    return {
+        'crt': crt_req.json()['certificate'],
+        'claim_token': crt_req.json()['claim_token']
+    }
 
 
 def renew_cert(csr, device_id):
@@ -171,7 +190,7 @@ def renew_cert(csr, device_id):
             }
 
     crt_req = requests.post(
-        'https://renewal-api.wott.io/v0.1/sign',
+        '{}/v0.2/sign-csr'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
@@ -183,7 +202,10 @@ def renew_cert(csr, device_id):
         print(crt_req.content)
         return
 
-    return {'crt': crt_req.json()['crt']}
+    return {
+        'crt': crt_req.json()['certificate'],
+        'claim_token': crt_req.json()['claim_token']
+    }
 
 
 def main():
@@ -194,7 +216,8 @@ def main():
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal():
-            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.utcnow()
+            send_ping()
+            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
             print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                 time_to_cert_expires.days,
                 floor(time_to_cert_expires.seconds / 60 / 60),
@@ -219,19 +242,28 @@ def main():
     else:
         crt = renew_cert(gen_key['csr'], device_id)
 
+    if not crt:
+        print('Unable to sign CSR. Exiting.')
+        exit(1)
+
+    print('Got Claim Token: {}'.format(crt['claim_token']))
     print('Writing certificate and key to disk...')
     with open(CLIENT_CERT_PATH, 'w') as f:
         f.write(crt['crt'])
+    os.chmod(CLIENT_CERT_PATH, 0o644)
 
     with open(CA_CERT_PATH, 'w') as f:
         f.write(ca)
+    os.chmod(CA_CERT_PATH, 0o644)
 
     with open(CLIENT_KEY_PATH, 'w') as f:
         f.write(gen_key['key'])
+    os.chmod(CLIENT_KEY_PATH, 0o600)
 
     with open(COMBINED_PEM_PATH, 'w') as f:
         f.write(gen_key['key'])
         f.write(crt['crt'])
+    os.chmod(COMBINED_PEM_PATH, 0o600)
 
 
 if __name__ == "__main__":

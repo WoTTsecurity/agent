@@ -120,7 +120,7 @@ def generate_cert(device_id):
 
 
 def get_ca_cert():
-    ca = requests.get('{}/v0.2/ca'.format(WOTT_ENDPOINT))
+    ca = requests.get('{}/v0.2/ca-bundle'.format(WOTT_ENDPOINT))
 
     if not ca.ok:
         print('Failed to get CA...')
@@ -128,7 +128,7 @@ def get_ca_cert():
         print(ca.content)
         return
 
-    return ca.json()['ca_certificate']
+    return ca.json()['ca_bundle']
 
 
 def sign_cert(csr, device_id):

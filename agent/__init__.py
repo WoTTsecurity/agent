@@ -3,7 +3,6 @@ import requests
 import datetime
 import pytz
 import platform
-import rpi_helper
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -170,10 +169,10 @@ def sign_cert(csr, device_id):
     payload = {
             'csr': csr,
             'device_id': device_id,
-            'device_architecture': platform.system(),
+            'device_architecture': platform.machine(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
-            }
+    }
 
     crt_req = requests.post(
             '{}/v0.2/sign-csr'.format(WOTT_ENDPOINT),

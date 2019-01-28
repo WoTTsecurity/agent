@@ -4,6 +4,7 @@ import datetime
 import pytz
 import platform
 import socket
+import netifaces
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -63,6 +64,15 @@ def can_read_cert():
     if not os.access(CLIENT_KEY_PATH, os.R_OK):
         print('Permission denied when trying to read the key file.')
         exit(1)
+
+
+def get_primary_ip():
+    try:
+        primary_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+        addrs = netifaces.ifaddresses(primary_interface)
+        return addrs[netifaces.AF_INET][0]['addr']
+    except:
+        return None
 
 
 def get_certificate_expiration_date():
@@ -161,11 +171,19 @@ def get_ca_cert():
 def send_ping():
     can_read_cert()
 
-    ping = requests.get(
+    payload = {
+        'device_operating_system_version': platform.release(),
+        'fqdn': socket.getfqdn(),
+        'ipv4_address': get_primary_ip(),
+    }
+
+    ping = requests.POST(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        json=payload
     )
+
     if not ping.ok:
         print('Ping failed.')
 
@@ -194,7 +212,8 @@ def sign_cert(csr, device_id):
             'device_architecture': platform.machine(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
-            'fqdn': socket.getfqdn()
+            'fqdn': socket.getfqdn(),
+            'ipv4_address': get_primary_ip(),
     }
 
     crt_req = requests.post(
@@ -230,6 +249,7 @@ def renew_cert(csr, device_id):
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
             'fqdn': socket.getfqdn()
+            'ipv4_address': get_primary_ip()
             }
 
     crt_req = requests.post(

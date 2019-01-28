@@ -33,7 +33,8 @@ setup(
         'cryptography',
         'idna',
         'pyOpenSSL',
-        'requests'
+        'requests',
+        'netifaces'
     ],
 
     entry_points={

@@ -57,11 +57,11 @@ def is_bootstrapping():
 
 def can_read_cert():
     if not os.access(CLIENT_CERT_PATH, os.R_OK):
-        print('Unable to read certificate file.')
+        print('Permission denied when trying to read the certificate file.')
         exit(1)
 
     if not os.access(CLIENT_KEY_PATH, os.R_OK):
-        print('Unable to read key file.')
+        print('Permission denied when trying to read the key file.')
         exit(1)
 
 

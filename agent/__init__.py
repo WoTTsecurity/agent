@@ -248,7 +248,7 @@ def renew_cert(csr, device_id):
             'device_architecture': platform.system(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
-            'fqdn': socket.getfqdn()
+            'fqdn': socket.getfqdn(),
             'ipv4_address': get_primary_ip()
             }
 

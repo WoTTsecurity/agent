@@ -177,7 +177,7 @@ def send_ping():
         'ipv4_address': get_primary_ip(),
     }
 
-    ping = requests.POST(
+    ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),

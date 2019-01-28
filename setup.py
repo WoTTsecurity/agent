@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="wott-agent",
-    version='0.1.1',
+    version='0.1.2',
 
     author="Viktor Petersson",
     author_email="v@viktopia.io",
@@ -34,7 +34,8 @@ setup(
         'idna',
         'pyOpenSSL',
         'requests',
-        'netifaces'
+        'netifaces',
+        'pytz'
     ],
 
     entry_points={

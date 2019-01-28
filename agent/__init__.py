@@ -55,13 +55,22 @@ def is_bootstrapping():
     return False
 
 
+def can_read_cert():
+    if not os.access(CLIENT_CERT_PATH, os.R_OK):
+        print('Unable to read certificate file.')
+        exit(1)
+
+    if not os.access(CLIENT_KEY_PATH, os.R_OK):
+        print('Unable to read key file.')
+        exit(1)
+
+
 def get_certificate_expiration_date():
     """
     Returns the expiration date of the certificate.
     """
-    if not os.access(CLIENT_CERT_PATH, os.R_OK):
-        print('Unable to read certificate file.')
-        exit(1)
+
+    can_read_cert()
 
     with open(CLIENT_CERT_PATH, 'r') as f:
         cert = x509.load_pem_x509_certificate(
@@ -92,9 +101,7 @@ def get_device_id():
     the certificate on disk.
     """
 
-    if not os.access(CLIENT_CERT_PATH, os.R_OK):
-        print('Unable to read certificate file.')
-        exit(1)
+    can_read_cert()
 
     with open(CLIENT_CERT_PATH, 'r') as f:
         cert = x509.load_pem_x509_certificate(
@@ -152,6 +159,8 @@ def get_ca_cert():
 
 
 def send_ping():
+    can_read_cert()
+
     ping = requests.get(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         verify=CA_CERT_PATH,
@@ -212,6 +221,7 @@ def renew_cert(csr, device_id):
     """
 
     print('Attempting to renew certificate...')
+    can_read_cert()
 
     payload = {
             'csr': csr,

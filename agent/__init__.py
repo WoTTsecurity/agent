@@ -3,6 +3,7 @@ import requests
 import datetime
 import pytz
 import platform
+import socket
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -58,9 +59,14 @@ def get_certificate_expiration_date():
     """
     Returns the expiration date of the certificate.
     """
+    if not os.access(CLIENT_CERT_PATH, os.R_OK):
+        print('Unable to read certificate file.')
+        exit(1)
 
     with open(CLIENT_CERT_PATH, 'r') as f:
-        cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
+        cert = x509.load_pem_x509_certificate(
+            f.read().encode(), default_backend()
+        )
 
     return cert.not_valid_after.replace(tzinfo=pytz.utc)
 
@@ -86,8 +92,15 @@ def get_device_id():
     the certificate on disk.
     """
 
+    if not os.access(CLIENT_CERT_PATH, os.R_OK):
+        print('Unable to read certificate file.')
+        exit(1)
+
     with open(CLIENT_CERT_PATH, 'r') as f:
-        cert = x509.load_pem_x509_certificate(f.read().encode(), default_backend())
+        cert = x509.load_pem_x509_certificate(
+            f.read().encode(), default_backend()
+        )
+
     return cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
 
 
@@ -172,6 +185,7 @@ def sign_cert(csr, device_id):
             'device_architecture': platform.machine(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
+            'fqdn': socket.getfqdn()
     }
 
     crt_req = requests.post(
@@ -205,6 +219,7 @@ def renew_cert(csr, device_id):
             'device_architecture': platform.system(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
+            'fqdn': socket.getfqdn()
             }
 
     crt_req = requests.post(

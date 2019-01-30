@@ -107,6 +107,14 @@ deviceAckTime: '2019-01-30T11:57:15.586890Z'
 version: '1'
 ```
 
+## Send a message
+
+You can send a message to the device from within the Google Cloud Console. After sending the message, it should appear in the logs as such:
+
+```
+Received message 'b'Hello world'' on topic '/devices/x.d.wott.local/commands' with Qos 0
+```
+
 ## Reference implementation
 
 You may also want to take a look at our Balena [reference implementation](https://github.com/WoTTsecurity/wott-agent-balena/tree/master/google-core-iot) of the above.

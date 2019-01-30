@@ -245,7 +245,7 @@ def renew_cert(csr, device_id):
     payload = {
             'csr': csr,
             'device_id': device_id,
-            'device_architecture': platform.system(),
+            'device_architecture': platform.machine(),
             'device_operating_system': platform.system(),
             'device_operating_system_version': platform.release(),
             'fqdn': socket.getfqdn(),

@@ -179,7 +179,6 @@ def send_ping():
 
     ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
-        verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
     )
@@ -191,7 +190,6 @@ def send_ping():
 def say_hello():
     hello = requests.get(
         '{}/v0.2/hello'.format(MTLS_ENDPOINT),
-        verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
     )
     if not hello.ok:
@@ -254,7 +252,6 @@ def renew_cert(csr, device_id):
 
     crt_req = requests.post(
         '{}/v0.2/sign-csr'.format(MTLS_ENDPOINT),
-        verify=CA_CERT_PATH,
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
         )

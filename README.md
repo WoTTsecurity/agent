@@ -48,7 +48,11 @@ See Use Cases below for examples on how to use your agent.
 
 The source code for the Snap can be found [here](https://github.com/WoTTsecurity/wott-agent-snap).
 
-While the recommended runtime environment is a Snap as illustrated above, there are [alternative installation methods](https://github.com/WoTTsecurity/agent/tree/master/docs/alternative_installation_methods.md).
+While the recommended runtime environment is a Snap as illustrated above Alternative installation methods:
+
+ * [Docker](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation-docker-runtime)
+ * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advance://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
+ * [Balena](https://github.com/WoTTsecurity/wott-agent-balena)
 
 ## Use Cases
 
@@ -56,4 +60,4 @@ The certificates used for the WoTT agent can be use for a number of use cases. H
 
  * [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp)
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
-
+ * [Google Core IoT](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/google-core-iot)

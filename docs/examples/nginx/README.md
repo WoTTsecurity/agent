@@ -4,10 +4,9 @@ WoTT can be used to cryptographically authenticate a client connecting to an Ngi
 
 Before we begin, we need to install the WoTT agent on the server running Nginx. You can do this either
 
-Let's say we have an appserver running on localhost:8000 and we then want t
+Let's say we have an appserver running on localhost:8000 and that we want to protect using mTLS. Using the `ssl_client_certificate` stanza in Nginx, we're able to block all connections that fail to provide a valid certificate (i.e. not signed by the WoTT CA).
 
-@TODO finish
-
+Here's how a minimal config would look like:
 
 ```
 upstream appserver {
@@ -15,16 +14,18 @@ upstream appserver {
 }
 
 server {
-    server_name mtls.mydomain.c;
+    server_name mtls.mydomain.com;
     listen 443 ssl;
 
+    # mTLS block for WoTT
     if ($ssl_client_verify != "SUCCESS") { return 403; }
-
-    ssl_certificate /opt/wott/certs/client.crt;
-    ssl_certificate_key /opt/wott/certs/client.key;
     ssl_client_certificate /opt/wott/certs/cert-bundle.crt;
     ssl_verify_depth 2;
     ssl_verify_client on;
+
+    # This can be a Let's Encrypt certificate
+    ssl_certificate     /etc/ssl/mydomain.com.crt;
+    ssl_certificate_key /etc/ssl/mydomain.com.key;
 
     location / {
         proxy_set_header Host $host;
@@ -35,3 +36,10 @@ server {
     }
 }
 ```
+
+There are a few things to point out here:
+
+ * You can use a regular SSL certificate (for instance issued by Let's Encrypt) here as the Nginx will only use it to verify the client's keys.
+ * In the above configuration **any** device with a valid WoTT device certificate would be able to access the service. You can create a whitelist of approved devices either inside your appserver (by using the `SSL_CLIENT` header) or directly in Nginx using something like Lua.
+
+

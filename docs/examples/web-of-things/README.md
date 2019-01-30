@@ -1,14 +1,16 @@
-## Securing Web of Things with WoTT
+# Securing Web of Things with WoTT
+
+## Hardware requirements
+
+ * A Raspberry Pi (ideally two)
+ * A PC running macOS or Linux
 
 ### Pre-requisites
 
- * Web of Things installed and running on a Raspberry Pi
- * Docker installed on the Raspberry Pi
- * A device or computer with `curl` installed along with the WoTT agent
+ * Install the Dockerized version of the WoTT agent on your Raspberry Pi(s) ([installation instruction](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation-docker-runtime))
+ * If you're connecting from a PC instead of between the two Raspberry Pis, you also need `curl` installed along with Docker.
 
 ### Setup
-
-Install the WoTT agent as per the main README.
 
 Build and launch the Web of Things docker container:
 ```
@@ -39,8 +41,6 @@ Let's verify that we're able to connect to the end point locally:
 $ curl -w "\n" -H "Authorization: Y" localhost:8484
 [...]
 ```
-
-
 Expose the Web of Things service over a secure port:
 
 ```

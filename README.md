@@ -19,7 +19,7 @@ With the certificate installed on the device, we’re able to establish connecti
 * [2] This is done using something called Mutual TLS, or mTLS for short.
 
 
-## Installation: Snap runtime (recommended)
+## Installation
 
 ### Pre-requisites
 
@@ -44,61 +44,16 @@ $ wott-agent.whoami
 
 It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.
 
-For more information, see the [examples](https://github.com/WoTTsecurity/agent/tree/master/examples), in particular the [Simple WebApp example](https://github.com/WoTTsecurity/agent/tree/master/examples/simple-webapp).
+See Use Cases below for examples on how to use your agent.
 
 The source code for the Snap can be found [here](https://github.com/WoTTsecurity/wott-agent-snap).
 
-## Installation: Docker runtime
+While the recommended runtime environment is a Snap as illustrated above, there are [alternative installation methods](https://github.com/WoTTsecurity/agent/tree/master/docs/alternative_installation_methods.md).
 
-### Pre-requisites
+## Use Cases
 
-* A Raspberry Pi 2 or newer with Raspbian
-* [Docker CE installed](https://docs.docker.com/install/linux/docker-ce/debian/)
-  * It is advised that you also run `sudo usermod -aG docker pi` in order to run docker as the user pi without the need for `sudo`
+The certificates used for the WoTT agent can be use for a number of use cases. Here are some ideas to help you get started:
 
-### Building
+ * [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp)
+ * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
 
-To build the docker container, simply run:
-
-```
-$ mkdir -p ~/src
-$ cd ~/src
-$ git clone https://github.com/WoTTsecurity/agent.git
-$ cd agent
-$ docker network create wott
-$ ./bin/run.sh
-```
-
-You can now find out the device's WoTT ID by running:
-
-```
-$ docker logs wott-agent | grep wott
-Got WoTT ID: x.d.wott.local
-```
-
-#### Note on the build process
-
-The build process is utilizing [multi-stage docker build](https://docs.docker.com/develop/develop-images/multistage-build/) to make sure we don't need to include all tools in the runtime environment. For more information, see the [Dockerfile](https://github.com/WoTTsecurity/agent/blob/master/Dockerfile).
-
-
-## Installation:  Python runtime (advanced)
-
-It is possible to run the WoTT agent without Docker. To do this on a Raspbian Stretch device, run the following command:
-
-```
-$ git clone https://github.com/WoTTsecurity/agent.git
-$ cd agent
-$ sudo apt-get install python3 python3-pip python3-virtualenv
-$ virtualenv -p python3 ~/.wott-venv
-$ source ~/.wott-venv/bin/activate
-$ pip install -r requirements.txt
-$ python setup.py install
-```
-
-You now have all the dependencies installed (with the exception of `ghostunnel`, which is used for end-to-end tunnels).
-
-To start the agent, you just need to run:
-
-```
-$ sudo ~/.wott-venv/bin/python wott-agent
-```

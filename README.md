@@ -32,15 +32,17 @@ If you're using Raspbian, follow [these instructions](https://docs.snapcraft.io/
 Once you have `snapd` installed (included if you are using Ubuntu Core), simply install the WoTT agent by running:
 
 ```
-$ snap install wott-agent
-$ snap start wott-agent
+$ sudo snap install wott-agent
+$ sudo snap start wott-agent
 ```
 
 You can now find your device's WoTT ID by running:
 
 ```
-$ wott-agent.whoami
+$ sudo wott-agent.whoami
 ```
+
+If you get an error try: `sudo $(which wott-agent.whoami)`
 
 It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.
 

@@ -14,8 +14,8 @@ The first thing that we will do is to setup a simple Python WebApp on a Raspberr
 $ apt-get update && apt-get install -y python3 python3-pip curl
 $ mkdir ~/wott-webapp-example
 $ cd ~/wott-webapp-example
-$ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/app.py
-$ curl -o requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/examples/simple-webapp/requirements.txt
+$ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp/app.py
+$ curl -o requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp/requirements.txt
 $ pip3 install -r requirements.txt
 $ python3 app.py
 [...]
@@ -30,7 +30,7 @@ Hello from WoTT!
 
 This webserver is however insecure. The traffic to it is fully unencrypted. When communicating on within the same device, this isn't a major security problem, but as soon as the communication leaves the local device (such as over the network, or even worse, over the internet), this is a big problem. It's then prone to a number of attacks, such as eavesdropping and impersonation attacks.
 
-Let's solve secure this service using the WoTT agent. To do this, we can either by creating a tunnel between the agent and server, or using the WoTT certificates directly in the client (such as in `curl`.). In this example, we'll opt for the former option (i.e. a tunnel).
+Let's solve secure this service using the WoTT agent. To do this, we can either create a tunnel between the agent and server, or use the WoTT certificates directly in the client (such as in `curl`.). In this example, we'll opt for the former option (i.e. a tunnel).
 
 ## Setting up the server
 

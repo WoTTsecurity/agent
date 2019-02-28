@@ -5,6 +5,7 @@ import pytz
 import platform
 import socket
 import netifaces
+import rpi_helper
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -176,6 +177,11 @@ def send_ping():
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
     }
+
+    rpi_metadata = rpi_helper.detect_raspberry_pi()
+    if rpi_metadata['is_raspberry_pi']:
+        payload['device_manufacturer'] = 'Raspberry Pi'
+        payload['device_model'] = rpi_metadata['hardware_model']
 
     ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),

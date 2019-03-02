@@ -32,9 +32,10 @@ setup(
         'chardet',
         'cryptography',
         'idna',
+        'netifaces',
         'pyOpenSSL',
         'requests',
-        'netifaces',
+        'sh',
         'pytz'
     ],
 

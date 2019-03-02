@@ -7,6 +7,7 @@ import socket
 import netifaces
 
 from agent import rpi_helper
+from agent import security_helper
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -167,6 +168,11 @@ def get_ca_cert():
         return
 
     return ca.json()['ca_bundle']
+
+
+def get_open_ports():
+    target = get_primary_ip()
+    return security_helper.nmap_scan(target)
 
 
 def send_ping():

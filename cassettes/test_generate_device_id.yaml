@@ -1,0 +1,24 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.20.1]
+    method: GET
+    uri: https://api.wott.io/v0.2/generate-id
+  response:
+    body: {string: '{"device_id":"a93d8539ed04471dbc941d14a3f2ace2.d.wott.local"}'}
+    headers:
+      Allow: ['GET, OPTIONS']
+      Connection: [keep-alive]
+      Content-Length: ['61']
+      Content-Type: [application/json]
+      Date: ['Tue, 05 Mar 2019 20:43:57 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Vary: ['Accept, Cookie']
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+version: 1

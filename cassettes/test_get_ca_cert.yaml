@@ -1,0 +1,44 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.20.1]
+    method: GET
+    uri: https://api.wott.io/v0.2/ca-bundle
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA9SUYa+iOBSG/8rmfr3ZiIpemWQ+tKVA0aJFQCEmGwoKgqKopej++UXvzGZ2M9nN
+        flyShubk9PCe0/fh97ck/o2LKj1s3768/fp8IDaJ8wvCrkcMgoCHX9FNRQlBpEAIJPsMSAJBRvxg
+        PSbumESlH4wSTRi3Ei3qR2/ZmxCJspBMTxF5FAru8uWmWj3wjILSBH0fw5yiwL+2+gM4MHMCCBIP
+        lm3Dj27DC7ylUL7yUE6DYBDsiakdNxUx3Hu6dpRoxbLAzM/8mD6oe5UmC/WAMR239p0PNGW2cvJZ
+        lTapxQQ3tSJcSWnlidN14ZWSekShXqg4BZCrLkq7919iBdxRdpXos6qJpR0sH3hBgWJuqpf6lpqe
+        qYmoW3RJJfnMnOL2vI5WJOODMAssu58M3UOEoB+bBxEN6ZXgVtlUkY5jCrNXf6ClbjjA8meKVx7w
+        YJbUeVnMF4xAmGWv/aZaMAqhdBAA7m3n62R9FPVhnff2PgRLRK+i6Z3K4DByL2q/f7npQWlzrXee
+        r5v77TKzugrn2j3FHh8oTdFE9p3sCLOKEAV5nd1Tu6ecBqGMdDB/3o3FJhDsJhgCikAYSpyF+qYK
+        XMUDzOp1RpAww7D39IQO0s8TKjYy5tecO0ksyGJbFM516/N73RoAGY7EnR8s2U3NVYquMWmcgG8Y
+        1B6R/cFUoX22kvw0/rhru3jFz+zvbtKXAHQVXEZyMLsaem+qz40dPe9nam8SgPGoFtIOu6FF0fJQ
+        CIMXJE4rG+yBPbqEly22FTBJxaY6eIWdDsV1mKiivhnoXTs0/N6EH9P6yrOvXzfVy/7Y0X+CxL/x
+        At+fvMToT168oz0tuXbqX1MVNo/SFZYdj2KzbNX/ES+O/ozhwQ+88P/Ai6tKC3znJfgnXlrzAaJN
+        9dlv98XKbviQ3TpeRNqpTtHoygdOznUYUUhNeK/NJVU1kGEToW97ia1Og0IA1GttNFZgiaylFU52
+        q0dT22VxY8M6p0YqRtvzVPXPlIH5x85S+2LYvge1JPNKuJvqxPN9K0qYieiymLcfw9FxOFrGblLu
+        C1Z06oD6nH+qyycJ7HmDEBZg8aLBpbDT8CTI6wjpmKFQ+czO2ApC5vuyKvdTn2f4WKZ3s7g0s752
+        jsRBB9MfqWc6yBwCdGiAPQZFC4yL4/Qn78JFytDYZcixb8d2EE2J7w8u49NZfNTVgrjdn9ugnR8W
+        ewb+kH6BRY5ZUX6aq3ZVVbJTZKmhb6mxe16Qv3NFSLBRnl+wT3hqFd5Ur1QLAAAA//8DAOQzKds2
+        BgAA
+    headers:
+      Allow: ['OPTIONS, GET']
+      Connection: [keep-alive]
+      Content-Encoding: [gzip]
+      Content-Type: [application/json]
+      Date: ['Tue, 05 Mar 2019 20:56:07 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Transfer-Encoding: [chunked]
+      Vary: [Accept-Encoding, Cookie]
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+version: 1

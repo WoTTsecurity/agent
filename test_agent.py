@@ -51,7 +51,6 @@ def test_is_bootstrapping_check_filesize(tmpdir):
     crt = tmpdir / 'client.crt'
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
-    a = agent
     with mock.patch('builtins.print') as prn:
         Path(crt).touch()
         assert agent.is_bootstrapping()

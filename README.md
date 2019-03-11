@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/WoTTsecurity/agent.svg?style=svg)](https://circleci.com/gh/WoTTsecurity/agent)
+
 # WoTT IoT Agent
 
 **WARNING:** This software is yet not ready for production.

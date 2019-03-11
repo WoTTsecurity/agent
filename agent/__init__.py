@@ -170,6 +170,17 @@ def get_ca_cert():
     return ca.json()['ca_bundle']
 
 
+def get_uptime():
+    """
+    Returns the uptime in seconds.
+    """
+
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+
+    return uptime_seconds
+
+
 def get_open_ports():
     target = get_primary_ip()
     return security_helper.nmap_scan(target)
@@ -182,6 +193,7 @@ def send_ping():
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
+        'uptime': get_uptime(),
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

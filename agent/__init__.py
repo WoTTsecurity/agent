@@ -102,8 +102,8 @@ def generate_device_id():
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
-            '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
-            ).json()
+        '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
+    ).json()
     return device_id_request['device_id']
 
 
@@ -130,11 +130,11 @@ def generate_cert(device_id):
     builder = x509.CertificateSigningRequestBuilder()
 
     builder = builder.subject_name(x509.Name([
-                x509.NameAttribute(NameOID.COMMON_NAME, u'{}'.format(device_id)),
-                x509.NameAttribute(NameOID.COUNTRY_NAME, u'UK'),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u'London'),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things, Ltd'),
-            ]))
+        x509.NameAttribute(NameOID.COMMON_NAME, u'{}'.format(device_id)),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u'UK'),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u'London'),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Web of Trusted Things, Ltd'),
+    ]))
 
     builder = builder.add_extension(
         x509.SubjectAlternativeName(
@@ -217,19 +217,19 @@ def sign_cert(csr, device_id):
     """
 
     payload = {
-            'csr': csr,
-            'device_id': device_id,
-            'device_architecture': platform.machine(),
-            'device_operating_system': platform.system(),
-            'device_operating_system_version': platform.release(),
-            'fqdn': socket.getfqdn(),
-            'ipv4_address': get_primary_ip(),
+        'csr': csr,
+        'device_id': device_id,
+        'device_architecture': platform.machine(),
+        'device_operating_system': platform.system(),
+        'device_operating_system_version': platform.release(),
+        'fqdn': socket.getfqdn(),
+        'ipv4_address': get_primary_ip(),
     }
 
     crt_req = requests.post(
-            '{}/v0.2/sign-csr'.format(WOTT_ENDPOINT),
-            json=payload
-            )
+        '{}/v0.2/sign-csr'.format(WOTT_ENDPOINT),
+        json=payload
+    )
 
     if not crt_req.ok:
         print('Failed to submit CSR...')
@@ -253,20 +253,20 @@ def renew_cert(csr, device_id):
     can_read_cert()
 
     payload = {
-            'csr': csr,
-            'device_id': device_id,
-            'device_architecture': platform.machine(),
-            'device_operating_system': platform.system(),
-            'device_operating_system_version': platform.release(),
-            'fqdn': socket.getfqdn(),
-            'ipv4_address': get_primary_ip()
-            }
+        'csr': csr,
+        'device_id': device_id,
+        'device_architecture': platform.machine(),
+        'device_operating_system': platform.system(),
+        'device_operating_system_version': platform.release(),
+        'fqdn': socket.getfqdn(),
+        'ipv4_address': get_primary_ip()
+    }
 
     crt_req = requests.post(
         '{}/v0.2/sign-csr'.format(MTLS_ENDPOINT),
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
-        )
+    )
 
     if not crt_req.ok:
         print('Failed to submit CSR...')

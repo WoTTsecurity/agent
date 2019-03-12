@@ -73,7 +73,7 @@ def get_primary_ip():
         primary_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
         addrs = netifaces.ifaddresses(primary_interface)
         return addrs[netifaces.AF_INET][0]['addr']
-    except:
+    except (OSError, KeyError):
         return None
 
 

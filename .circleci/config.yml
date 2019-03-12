@@ -20,6 +20,11 @@ jobs:
           command: |
             . venv/bin/activate
             flake8 ./ --exclude=venv --ignore=E501 --output-file test-reports
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest --cov=agent
       - store_artifacts:
           path: test-reports
           destination: test-reports

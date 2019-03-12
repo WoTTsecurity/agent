@@ -1,3 +1,4 @@
+import iptc
 from xml.etree import ElementTree as ET
 from sh import nmap
 
@@ -25,3 +26,10 @@ def nmap_scan(target):
                 'state': state
             })
     return result
+
+
+def is_firewall_enabled():
+    """Check if FILTER INPUT chain contains any rule"""
+    filter_table = iptc.Table(iptc.Table.FILTER)
+    input_chain = next(filter(lambda c: c.name == 'INPUT', filter_table))
+    return not len(input_chain.rules) == 0

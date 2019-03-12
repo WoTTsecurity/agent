@@ -5,6 +5,7 @@ cryptography==2.4.2
 idna==2.7
 netifaces==0.10.9
 pyOpenSSL==18.0.0
+python-iptables==0.13.0
 pytz==2018.9
 requests==2.20.1
 sh==1.12.14

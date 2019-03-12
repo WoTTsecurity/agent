@@ -6,7 +6,7 @@ import pytest
 import freezegun
 import agent
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import nmap_scan
+from agent.security_helper import nmap_scan, is_firewall_enabled
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -39,7 +39,7 @@ def test_is_bootstrapping_create_dir(tmpdir):
     notexistent_dir = str(tmpdir / 'notexistent')
     agent.CERT_PATH = notexistent_dir
     with mock.patch('os.makedirs') as md, \
-            mock.patch('os.chmod') as chm,\
+            mock.patch('os.chmod') as chm, \
             mock.patch('builtins.print') as prn:
         assert agent.is_bootstrapping()
         assert md.called_with(notexistent_dir)
@@ -174,7 +174,7 @@ def test_get_ca_cert():
 
 
 def test_get_ca_cert_none_on_fail():
-    with mock.patch('requests.get') as req,\
+    with mock.patch('requests.get') as req, \
             mock.patch('builtins.print') as prn:
         req.return_value.ok = False
         ca_bundle = agent.get_ca_cert()
@@ -208,7 +208,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
             mock.mock_open(read_data=raspberry_cpuinfo),
             create=True
     ), \
-        mock.patch('socket.getfqdn') as getfqdn,\
+        mock.patch('socket.getfqdn') as getfqdn, \
             mock.patch('builtins.print') as prn, \
             mock.patch(
                 'builtins.open',
@@ -257,3 +257,21 @@ def test_uptime(uptime):
     ):
         up = agent.get_uptime()
         assert up == 60
+
+
+def test_firewall_enabled_pos():
+    with mock.patch('iptc.Table') as ipt:
+        chain0 = mock.Mock()
+        chain0.name = 'INPUT'
+        chain0.rules = [object(), object()]
+        ipt.return_value = [chain0]
+        assert is_firewall_enabled() is True
+
+
+def test_firewall_enabled_neg():
+    with mock.patch('iptc.Table') as ipt:
+        chain0 = mock.Mock()
+        chain0.name = 'INPUT'
+        chain0.rules = []
+        ipt.return_value = [chain0]
+        assert is_firewall_enabled() is False

@@ -100,7 +100,7 @@ def test_can_read_cert_none_on_success(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('builtins.print'):
         Path(crt).touch(mode=0o600)
         Path(key).touch(mode=0o600)
         can_read = agent.can_read_cert()
@@ -122,7 +122,7 @@ def test_get_primary_ip_none_on_exception(netif_gateways_invalid, netif_ifaddres
         gw.return_value = netif_gateways_invalid
         ifaddr.return_value = netif_ifaddresses
         primary_ip = agent.get_primary_ip()
-        assert  primary_ip is None
+        assert primary_ip is None
 
 
 def test_get_certificate_expiration_date(cert):
@@ -130,7 +130,7 @@ def test_get_certificate_expiration_date(cert):
             'builtins.open',
             mock.mock_open(read_data=cert),
             create=True
-    ) as _open:
+    ):
         exp_date = agent.get_certificate_expiration_date()
         assert exp_date.date() == datetime.date(2019, 3, 19)
 
@@ -141,7 +141,7 @@ def test_time_for_certificate_renewal(cert):
             'builtins.open',
             mock.mock_open(read_data=cert),
             create=True
-    ) as _open:
+    ):
         assert agent.time_for_certificate_renewal()
 
 
@@ -214,7 +214,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
                 'builtins.open',
                 mock.mock_open(read_data=uptime),
                 create=True
-            ):
+            ):  # noqa E213
         getfqdn.return_value = 'localhost'
         ping = agent.send_ping()
         assert ping is None
@@ -248,6 +248,7 @@ def test_say_hello_ok(tmpdir, cert, key):
     hello = agent.say_hello()
     assert hello['message']
 
+
 def test_uptime(uptime):
     with mock.patch(
             'builtins.open',
@@ -256,4 +257,3 @@ def test_uptime(uptime):
     ):
         up = agent.get_uptime()
         assert up == 60
-

@@ -120,6 +120,7 @@ wvxtn4GAzMNNjW7k84yIUwsqoR23mPBjv2VyGeQEhNQAgeDiVWK6UVFW
 -----END PRIVATE KEY-----
 """
 
+
 @pytest.fixture
 def nmap_fixture():
     return NMAP_FIXTURE
@@ -145,8 +146,8 @@ def netif_ifaddresses():
     return {
         17: [
             {
-            'addr': 'aa:aa:aa:aa:aa:aa',
-            'broadcast': 'ff:ff:ff:ff:ff:ff'
+                'addr': 'aa:aa:aa:aa:aa:aa',
+                'broadcast': 'ff:ff:ff:ff:ff:ff'
             }
         ],
         2: [
@@ -159,7 +160,7 @@ def netif_ifaddresses():
         10: [
             {
                 'addr': 'fe80::1e93:cce9:0000:0000%wlo1',
-              'netmask': 'ffff:ffff:ffff:ffff::/64'
+                'netmask': 'ffff:ffff:ffff:ffff::/64'
             }
         ]
     }
@@ -193,6 +194,7 @@ def invalid_key():
 @pytest.fixture
 def gen_id():
     return {"device_id": "60f4e66c1e7746c3ba8f3301d8a4d1c4.d.wott.local"}
+
 
 @pytest.fixture
 def uptime():

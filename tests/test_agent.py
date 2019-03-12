@@ -132,7 +132,7 @@ def test_get_certificate_expiration_date(cert):
             create=True
     ) as _open:
         exp_date = agent.get_certificate_expiration_date()
-        assert exp_date.date() == datetime.date(2019, 4, 4)
+        assert exp_date.date() == datetime.date(2019, 3, 19)
 
 
 @freezegun.freeze_time("2019-04-04")
@@ -158,11 +158,11 @@ def test_get_device_id(cert):
             create=True
     ):
         device_id = agent.get_device_id()
-        assert device_id == 'localhost'
+        assert device_id == '4853b630822946019393b16c5b710b9e.d.wott.local'
 
 
 def test_generate_cert():  # TODO: parse key and csr
-    cert = agent.generate_cert('localhost')
+    cert = agent.generate_cert('4853b630822946019393b16c5b710b9e.d.wott.local')
     assert cert['key']
     assert cert['csr']
 
@@ -222,7 +222,22 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
 
 
 @pytest.mark.vcr
-def test_say_hello(tmpdir, cert, key):
+def test_say_hello_failed(tmpdir, invalid_cert, invalid_key):
+    crt_path = tmpdir / 'client.crt'
+    key_path = tmpdir / 'client.key'
+    Path(crt_path).write_text(invalid_cert)
+    Path(key_path).write_text(invalid_key)
+    agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(crt_path)
+    agent.CLIENT_KEY_PATH = str(key_path)
+    with mock.patch('builtins.print') as prn:
+        with pytest.raises(json.decoder.JSONDecodeError):
+            _ = agent.say_hello()
+        assert mock.call('Hello failed.') in prn.mock_calls
+
+
+@pytest.mark.vcr
+def test_say_hello_ok(tmpdir, cert, key):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
     Path(crt_path).write_text(cert)
@@ -230,11 +245,8 @@ def test_say_hello(tmpdir, cert, key):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt_path)
     agent.CLIENT_KEY_PATH = str(key_path)
-    with mock.patch('builtins.print') as prn:
-        with pytest.raises(json.decoder.JSONDecodeError):
-            hello = agent.say_hello()
-        assert mock.call('Hello failed.') in prn.mock_calls
-
+    hello = agent.say_hello()
+    assert hello['message']
 
 def test_uptime(uptime):
     with mock.patch(

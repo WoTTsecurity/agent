@@ -30,11 +30,11 @@ interactions:
         ewb+kH6BRY5ZUX6aq3ZVVbJTZKmhb6mxe16Qv3NFSLBRnl+wT3hqFd5Ur1QLAAAA//8DAOQzKds2
         BgAA
     headers:
-      Allow: ['OPTIONS, GET']
+      Allow: ['GET, OPTIONS']
       Connection: [keep-alive]
       Content-Encoding: [gzip]
       Content-Type: [application/json]
-      Date: ['Tue, 05 Mar 2019 20:56:07 GMT']
+      Date: ['Tue, 12 Mar 2019 15:31:53 GMT']
       Server: [nginx/1.15.8]
       Strict-Transport-Security: [max-age=15724800; includeSubDomains]
       Transfer-Encoding: [chunked]

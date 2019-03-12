@@ -1,24 +1,21 @@
 interactions:
 - request:
-    body: '{"device_operating_system_version": "4.15.0-45-generic", "fqdn": "localhost",
-      "ipv4_address": "192.168.1.3", "uptime": 60.0}'
+    body: null
     headers:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
       Connection: [keep-alive]
-      Content-Length: ['124']
-      Content-Type: [application/json]
       User-Agent: [python-requests/2.20.1]
-    method: POST
-    uri: https://mtls.wott.io/v0.2/ping
+    method: GET
+    uri: https://mtls.wott.io/v0.2/hello
   response:
-    body: {string: '{"message":"pong"}'}
+    body: {string: '{"message":"Hello 4853b630822946019393b16c5b710b9e.d.wott.local"}'}
     headers:
-      Allow: ['GET, POST, OPTIONS']
+      Allow: ['GET, OPTIONS']
       Connection: [keep-alive]
-      Content-Length: ['18']
+      Content-Length: ['65']
       Content-Type: [application/json]
-      Date: ['Tue, 12 Mar 2019 15:31:54 GMT']
+      Date: ['Tue, 12 Mar 2019 15:31:56 GMT']
       Server: [nginx/1.15.8]
       Strict-Transport-Security: [max-age=15724800; includeSubDomains]
       Vary: ['Accept, Cookie']

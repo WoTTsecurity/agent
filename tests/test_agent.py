@@ -195,7 +195,7 @@ def test_get_open_ports(nmap_fixture, netif_gateways, netif_ifaddresses):
 
 
 @pytest.mark.vcr
-def test_send_ping(raspberry_cpuinfo, tmpdir, cert, key):
+def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
     Path(crt_path).write_text(cert)
@@ -209,7 +209,12 @@ def test_send_ping(raspberry_cpuinfo, tmpdir, cert, key):
             create=True
     ), \
         mock.patch('socket.getfqdn') as getfqdn,\
-            mock.patch('builtins.print') as prn:
+            mock.patch('builtins.print') as prn, \
+            mock.patch(
+                'builtins.open',
+                mock.mock_open(read_data=uptime),
+                create=True
+            ):
         getfqdn.return_value = 'localhost'
         ping = agent.send_ping()
         assert ping is None
@@ -231,4 +236,12 @@ def test_say_hello(tmpdir, cert, key):
         assert mock.call('Hello failed.') in prn.mock_calls
 
 
+def test_uptime(uptime):
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=uptime),
+            create=True
+    ):
+        up = agent.get_uptime()
+        assert up == 60
 

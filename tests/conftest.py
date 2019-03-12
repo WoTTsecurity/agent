@@ -155,3 +155,7 @@ def key():
 @pytest.fixture
 def gen_id():
     return {"device_id": "60f4e66c1e7746c3ba8f3301d8a4d1c4.d.wott.local"}
+
+@pytest.fixture
+def uptime():
+    return "60 60"

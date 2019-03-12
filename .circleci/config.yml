@@ -12,6 +12,10 @@ jobs:
             . venv/bin/activate
             pip install -r requirements-dev.txt
       - run:
+          name: Install nmap
+          command: |
+            sudo apt-get instlal -y nmap
+      - run:
           name: run linting and metrics
           command: |
             . venv/bin/activate

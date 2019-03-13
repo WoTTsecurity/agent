@@ -12,9 +12,9 @@ jobs:
             . venv/bin/activate
             pip install -r requirements-dev.txt
       - run:
-          name: Install nmap
+          name: Install nmap and iptables
           command: |
-            sudo apt-get install -y nmap
+            sudo apt-get install -y nmap iptables
       - run:
           name: run linting and metrics
           command: |

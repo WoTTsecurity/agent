@@ -6,6 +6,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install iptables
+          command: |
+            sudo apt-get install -y iptables
+      - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv

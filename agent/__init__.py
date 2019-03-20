@@ -331,6 +331,12 @@ def main():
         exit(1)
 
     print('Got Claim Token: {}'.format(crt['claim_token']))
+    print('Claim your device: {WOTT_ENDPOINT}/v0.2/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
+        WOTT_ENDPOINT=WOTT_ENDPOINT,
+        device_id=device_id,
+        claim_token=crt['claim_token']
+    )
+    )
     print('Writing certificate and key to disk...')
     with open(CLIENT_CERT_PATH, 'w') as f:
         f.write(crt['crt'])

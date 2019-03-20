@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 import datetime
@@ -194,6 +195,9 @@ def send_ping():
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
+        'distr_id': rpi_helper.get_distro()['id'],
+        'distr_release': rpi_helper.get_distro()['release'],
+        'scan_info': json.dumps(get_open_ports())
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

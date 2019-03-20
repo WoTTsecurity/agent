@@ -1,3 +1,6 @@
+from sh import lsb_release
+
+
 def detect_raspberry_pi():
     metadata = {
         'is_raspberry_pi': None,
@@ -19,3 +22,10 @@ def detect_raspberry_pi():
                 metadata['serial_number'] = line.split()[-1]
 
     return metadata
+
+
+def get_distro():
+    return {
+        'id': lsb_release(['-i', '-s']).split()[0],  # --id --short
+        'release': lsb_release(['-r', '-s']).split()[0]
+    }

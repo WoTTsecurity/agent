@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import freezegun
 import agent
-from agent.rpi_helper import detect_raspberry_pi
+from agent.rpi_helper import detect_raspberry_pi, get_distro
 from agent.security_helper import nmap_scan, is_firewall_enabled
 
 
@@ -195,7 +195,7 @@ def test_get_open_ports(nmap_fixture, netif_gateways, netif_ifaddresses):
 
 
 @pytest.mark.vcr
-def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
+def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_fixture, netif_gateways, netif_ifaddresses):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
     Path(crt_path).write_text(cert)
@@ -209,13 +209,21 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
             create=True
     ), \
         mock.patch('socket.getfqdn') as getfqdn, \
-            mock.patch('builtins.print') as prn, \
-            mock.patch(
-                'builtins.open',
-                mock.mock_open(read_data=uptime),
-                create=True
-            ):  # noqa E213
+        mock.patch('builtins.print') as prn, \
+        mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=uptime),
+            create=True
+        ), \
+        mock.patch('agent.security_helper.nmap') as nmap, \
+        mock.patch('netifaces.gateways') as gw, \
+        mock.patch('netifaces.ifaddresses') as ifaddr, \
+        mock.patch('agent.rpi_helper.lsb_release') as lsb_release: # noqa E213
+        lsb_release.side_effect = ['Raspbian\n', '9.4\n', 'Raspbian\n', '9.4\n']
         getfqdn.return_value = 'localhost'
+        nmap.return_value.stdout = nmap_fixture
+        gw.return_value = netif_gateways
+        ifaddr.return_value = netif_ifaddresses
         ping = agent.send_ping()
         assert ping is None
         assert prn.call_count == 0 or (prn.call_count == 1 and mock.call('Ping failed.') in prn.mock_calls)
@@ -275,3 +283,13 @@ def test_firewall_enabled_neg():
         chain0.rules = []
         ipt.return_value = [chain0]
         assert is_firewall_enabled() is False
+
+
+def test_get_distro_info():
+    with mock.patch('agent.rpi_helper.lsb_release') as lsb_release:
+        lsb_release.side_effect = ['Raspbian\n', '9.4\n']
+        distr_info = get_distro()
+        distrib_id = distr_info['id']
+        release = distr_info['release']
+    assert distrib_id == 'Raspbian'
+    assert release == '9.4'

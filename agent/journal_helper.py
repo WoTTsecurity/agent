@@ -36,20 +36,18 @@ def logins(entries):
     res = {}
 
     def logins_by_username(username):
-        if not username in res:
+        if username not in res:
             res[username] = {'failed': 0, 'success': 0}
         return res[username]
 
     for entry in entries:
         m = entry['MESSAGE']
-        print(m)
         if m.startswith(MSG_AUTH_FAIL):
             u = m.split()[-1]
             if u.startswith('user='):
                 username = u.split('=')[1]
             else:
                 username = ''
-            print('USER: '+username)
             logins_by_username(username)['failed'] += 1
         elif m.startswith('PAM ') and MSG_MORE_FAILURE in m:
             u = m.split()[-1]
@@ -57,13 +55,11 @@ def logins(entries):
                 username = u.split('=')[1]
             else:
                 username = ''
-            print('USER: '+username)
             logins_by_username(username)['failed'] += int(m.split()[1])
         elif m.startswith(MSG_SESSION_OPENED):
             username = m.split()[-3]
             logins_by_username(username)['success'] += 1
 
-    print('{}'.format(res))
     return res
 
 

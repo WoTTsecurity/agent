@@ -22,7 +22,7 @@ def failed_logins(entries):
     for the following lines in the system journal:
         pam_unix(sshd:auth): check pass; user unknown
         pam_unix(sshd:auth): authentication failure; ...
-    
+
     These lines usually come in pairs, however one of the two may be outside the
     time limit, so the code counts them separately and returns the max count.
     '''

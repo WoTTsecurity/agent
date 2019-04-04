@@ -15,6 +15,7 @@ def get_journal_records():
     j.add_match(SYSLOG_FACILITY=10)
     return j
 
+
 def failed_logins(entries):
     '''
     Returns the number of failed login attempts (password auth). The code looks
@@ -38,6 +39,7 @@ def failed_logins(entries):
             n2 += 1
     print('counts: {}, {}'.format(n1, n2))
     return max(n1, n2)
+
 
 def failed_logins_last_hour():
     return failed_logins(get_journal_records())

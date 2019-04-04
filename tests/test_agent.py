@@ -21,6 +21,7 @@ def test_detect_raspberry_pi(raspberry_cpuinfo):
         assert metadata['hardware_model'] == '900092'
         assert metadata['serial_number'] == '00000000ebd5f1e8'
 
+
 def test_failed_logins():
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
@@ -29,7 +30,7 @@ def test_failed_logins():
         ]
         result = failed_logins_last_hour()
         assert result == 1
-    
+
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
             {'MESSAGE': 'pam_unix(sshd:auth): check pass; user unknown'},
@@ -39,7 +40,7 @@ def test_failed_logins():
         ]
         result = failed_logins_last_hour()
         assert result == 2
-    
+
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
             {'MESSAGE': 'pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225'},
@@ -48,7 +49,7 @@ def test_failed_logins():
         ]
         result = failed_logins_last_hour()
         assert result == 2
-    
+
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
             {'MESSAGE': 'pam_unix(sshd:auth): check pass; user unknown'},
@@ -57,19 +58,20 @@ def test_failed_logins():
         ]
         result = failed_logins_last_hour()
         assert result == 2
-    
+
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
             {'MESSAGE': 'pam_unix(sshd:auth): some other message'},
         ]
         result = failed_logins_last_hour()
         assert result == 0
-    
+
     with mock.patch('agent.security_helper.get_journal_records') as gjr:
         gjr.return_value = [
         ]
         result = failed_logins_last_hour()
         assert result == 0
+
 
 def test_nmap_scan(nmap_fixture):
     with mock.patch('agent.security_helper.nmap') as nmap:

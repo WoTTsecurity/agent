@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import freezegun
 import agent
+from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import nmap_scan, is_firewall_enabled
 
@@ -19,6 +20,50 @@ def test_detect_raspberry_pi(raspberry_cpuinfo):
         assert metadata['is_raspberry_pi']
         assert metadata['hardware_model'] == '900092'
         assert metadata['serial_number'] == '00000000ebd5f1e8'
+
+
+def test_failed_logins():
+    with mock.patch('agent.journal_helper.get_journal_records') as gjr:
+        gjr.return_value = [
+        ]
+        result = logins_last_hour()
+        assert result == {}
+
+    with mock.patch('agent.journal_helper.get_journal_records') as gjr:
+        gjr.return_value = [
+            {'MESSAGE': 'pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225'}
+        ]
+        result = logins_last_hour()
+        assert result == {'': {'success': 0, 'failed': 1}}
+
+    with mock.patch('agent.journal_helper.get_journal_records') as gjr:
+        gjr.return_value = [
+            {'MESSAGE': 'pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225  user=pi'}
+        ]
+        result = logins_last_hour()
+        assert result == {'pi': {'success': 0, 'failed': 1}}
+
+    with mock.patch('agent.journal_helper.get_journal_records') as gjr:
+        gjr.return_value = [
+            {'MESSAGE': 'PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225  user=pi'},
+            {'MESSAGE': 'pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225  user=pi'},
+            {'MESSAGE': 'PAM 1 more authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225  user=pi'},
+            {'MESSAGE': 'pam_unix(sshd:session): session opened for user pi by (uid=0)'},
+            {'MESSAGE': 'pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.147.17.225'}
+        ]
+        result = logins_last_hour()
+        assert result == {
+            'pi': {'success': 1, 'failed': 4},
+            '': {'success': 0, 'failed': 1}}
+
+    with mock.patch('agent.journal_helper.get_journal_records') as gjr:
+        gjr.return_value = [
+            {'MESSAGE': 'pam_unix(sshd:auth): some other message'},
+            {'MESSAGE': 'something unrelated'},
+            {'MESSAGE': 'PAM and something unrelated'},
+        ]
+        result = logins_last_hour()
+        assert result == {}
 
 
 def test_nmap_scan(nmap_fixture):

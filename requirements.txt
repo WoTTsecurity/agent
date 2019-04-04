@@ -9,3 +9,4 @@ python-iptables==0.13.0
 pytz==2018.9
 requests==2.20.1
 sh==1.12.14
+systemd-python==234

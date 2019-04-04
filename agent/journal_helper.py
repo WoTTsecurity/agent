@@ -9,37 +9,63 @@ def get_journal_records():
     '''
     j = journal.Reader()
     j.this_boot()
-    j.log_level(journal.LOG_NOTICE)
+    j.log_level(journal.LOG_INFO)
     last_hour = time.time() - 60**2
     j.seek_realtime(last_hour)
     j.add_match(SYSLOG_FACILITY=10)
     return j
 
 
-def failed_logins(entries):
+def logins(entries):
     '''
-    Returns the number of failed login attempts (password auth). The code looks
-    for the following lines in the system journal:
-        pam_unix(sshd:auth): check pass; user unknown
-        pam_unix(sshd:auth): authentication failure; ...
+    Returns the number of failed or successful login attempts per user as
+        {'<user>': {'success': <N>, 'failed': '<N>'}, ...}
 
-    These lines usually come in pairs, however one of the two may be outside the
-    time limit, so the code counts them separately and returns the max count.
+    Failed attempts are logged in the system journal like this:
+        pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=<ip>  user=<user>
+        PAM 1 more authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=<ip>  user=<user>
+        PAM <n> more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=<ip>  user=<user>
+    Successful attempts are logged like this:
+        pam_unix(sshd:session): session opened for user pi by (uid=0)
     '''
-    MSG1 = 'pam_unix(sshd:auth): check pass; user unknown'
-    MSG2 = 'pam_unix(sshd:auth): authentication failure;'
+    MSG_AUTH_FAIL = 'pam_unix(sshd:auth): authentication failure;'
+    MSG_SESSION_OPENED = 'pam_unix(sshd:session): session opened for user'
+    MSG_MORE_FAILURE = 'more authentication failure'
 
-    n1, n2 = 0, 0
+    username = ''
+    res = {}
+
+    def logins_by_username(username):
+        if not username in res:
+            res[username] = {'failed': 0, 'success': 0}
+        return res[username]
+
     for entry in entries:
         m = entry['MESSAGE']
         print(m)
-        if m.startswith(MSG1):
-            n1 += 1
-        elif m.startswith(MSG2):
-            n2 += 1
-    print('counts: {}, {}'.format(n1, n2))
-    return max(n1, n2)
+        if m.startswith(MSG_AUTH_FAIL):
+            u = m.split()[-1]
+            if u.startswith('user='):
+                username = u.split('=')[1]
+            else:
+                username = ''
+            print('USER: '+username)
+            logins_by_username(username)['failed'] += 1
+        elif m.startswith('PAM ') and MSG_MORE_FAILURE in m:
+            u = m.split()[-1]
+            if u.startswith('user='):
+                username = u.split('=')[1]
+            else:
+                username = ''
+            print('USER: '+username)
+            logins_by_username(username)['failed'] += int(m.split()[1])
+        elif m.startswith(MSG_SESSION_OPENED):
+            username = m.split()[-3]
+            logins_by_username(username)['success'] += 1
+
+    print('{}'.format(res))
+    return res
 
 
-def failed_logins_last_hour():
-    return failed_logins(get_journal_records())
+def logins_last_hour():
+    return logins(get_journal_records())

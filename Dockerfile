@@ -17,9 +17,10 @@ FROM python:3.7-slim-stretch
 WORKDIR /usr/src/app
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libssl-dev libffi-dev libltdl-dev curl && \
-    apt-get clean
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential libssl-dev libffi-dev libltdl-dev \
+                                               curl pkg-config libsystemd-dev iptables nmap \
+ && apt-get clean
 
 COPY --from=build /go/src/github.com/square/ghostunnel/ghostunnel /usr/local/bin/
 

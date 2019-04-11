@@ -17,7 +17,6 @@ X-Python3-Version: >= 3.5
 Package: wott-agent
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python3:Depends}, python3-pkg-resources
-Recommends: python3-rpi.gpio, python3-spidev
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pkg-resources, libsystemd0, nmap, iptables
 Suggests: ghostunnel
 Description: Let's Encrypt for IoT (with more bells and whistles).

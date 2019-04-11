@@ -1,0 +1,6 @@
+wott-agent (0.1.2) xenial; urgency=medium
+
+  * Artem Martynovich
+    - Initial DEB release
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Thu, 11 Apr 2019 17:53:05 +0000

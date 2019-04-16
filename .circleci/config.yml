@@ -23,17 +23,17 @@ jobs:
           command: |
             sudo gem install rake package_cloud
       - run:
-          name: run linting and metrics
+          name: Run linting and metrics
           command: |
             . venv/bin/activate
             flake8 ./ --exclude=venv --ignore=E501 --output-file test-reports
       - run:
-          name: run tests
+          name: Run tests
           command: |
             . venv/bin/activate
             pytest --cov=agent
       - run:
-          name: build DEB package
+          name: Build dpkg packages
           command: |
             debuild  -i -us -uc -b
             mkdir -p /tmp/deb

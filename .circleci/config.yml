@@ -14,7 +14,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo apt-get install -y nmap iptables devscripts ruby2.3-dev rubygems
+            sudo apt-get install -y \
+              nmap iptables devscripts ruby2.3-dev rubygems \
+              build-essential:native python-setuptools python3-all python3-setuptools
       - run:
           name: Install PackageCloud
           command: |

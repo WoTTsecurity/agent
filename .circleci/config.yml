@@ -12,9 +12,13 @@ jobs:
             . venv/bin/activate
             pip install -r requirements-dev.txt
       - run:
-          name: Install nmap and iptables
+          name: Install dependencies
           command: |
-            sudo apt-get install -y nmap iptables
+            sudo apt-get install -y nmap iptables devscripts ruby2.3-dev rubygems
+      - run:
+          name: Install PackageCloud
+          command: |
+            sudo gem install rake package_cloud
       - run:
           name: run linting and metrics
           command: |
@@ -25,6 +29,20 @@ jobs:
           command: |
             . venv/bin/activate
             pytest --cov=agent
+      - run:
+          name: build DEB package
+          command: |
+            debuild  -i -us -uc -b
+            mkdir -p /tmp/deb
+            mv ../*.deb /tmp/deb
+      - deploy:
+          command: |
+              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                package_cloud push wott/agent/debian/stretch /tmp/deb/*.deb
+                package_cloud push wott/agent/raspbian/stretch /tmp/deb/*.deb
+              fi
       - store_artifacts:
           path: test-reports
           destination: test-reports
+      - store_artifacts:
+          path: /tmp/deb

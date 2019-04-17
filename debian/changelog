@@ -1,3 +1,10 @@
+wott-agent (0.1.2+ppa4) stable; urgency=medium
+
+  * Make systemd timer calendar.
+  * Fix postinst script.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Wed, 17 Apr 2019 09:47:59 +0000
+
 wott-agent (0.1.2+ppa3) stable; urgency=medium
 
   * systemd timer.

@@ -1,3 +1,7 @@
-echo "Thank you for installing the wott-agent. Your device's unique ID is: [device id]"
-echo ""
-echo "To unleash the value of WoTT, and to gain insight into the security of your device(s), sign up for an account at http://dash.wott.io."
+#DEBHELPER#
+
+echo "Thank you for installing the wott-agent."
+echo "Your device's unique ID is: [device id]"
+echo "To unleash the value of WoTT, and to gain "
+echo "insight into the security of your device(s),"
+echo "sign up for an account at http://dash.wott.io."

@@ -2,9 +2,8 @@
 Description=Run wott-agent hourly
 
 [Timer]
-OnBootSec=15min
-OnUnitActiveSec=1h
-Unit=wott-agent.service
+OnCalendar=hourly
+Persistent=true
 
 [Install]
-WantedBy=default.target
+WantedBy=timers.target

@@ -4,7 +4,3 @@ Description=WoTT Agent
 [Service]
 Type=simple
 ExecStart=/usr/bin/wott-agent
-
-[Install]
-Alias=wott-agent
-WantedBy=multi-user.target

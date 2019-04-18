@@ -11,8 +11,8 @@ $(wott-agent claim-url)
 
 For more information on how to get started, visit wott.io/getting-started or drop me a line at hey@wott.io.
 
-Best!
-Viktor
+Regards,
+The WoTT team
 "
 
 printf "$HELLO"

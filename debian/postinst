@@ -1,6 +1,8 @@
 #DEBHELPER#
 
-HELLO="Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
+HELLO="
+
+Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
 You're one step closer to building a secure device. Your device's unique ID is: $(wott-agent whoami)
 
@@ -9,10 +11,11 @@ To unleash the value of WoTT, and to gain insight into the security of your devi
 You can claim your device in the dashboard by visiting:
 $(wott-agent claim-url)
 
-For more information on how to get started, visit wott.io/getting-started or drop me a line at hey@wott.io.
+For more information on how to get started, visit wott.io/getting-started or drop us a line at hey@wott.io.
 
 Regards,
-The WoTT team
+The WoTT Team
+
 "
 
 printf "$HELLO"

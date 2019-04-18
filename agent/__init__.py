@@ -100,13 +100,17 @@ def time_for_certificate_renewal():
     return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) > get_certificate_expiration_date()
 
 
-def generate_device_id():
+def generate_device_id(debug=False):
     """
     Device ID is generated remotely.
     """
     device_id_request = requests.get(
         '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
     ).json()
+
+    if debug:
+        print("[RECEIVED] Generate Device ID: {}".format(device_id_request))
+
     return device_id_request['device_id']
 
 
@@ -161,8 +165,12 @@ def generate_cert(device_id):
     }
 
 
-def get_ca_cert():
+def get_ca_cert(debug=False):
     ca = requests.get('{}/v0.2/ca-bundle'.format(WOTT_ENDPOINT))
+
+    if debug:
+        print("[RECEIVED] Get CA Cert: {}".format(ca.status_code))
+        print("[RECEIVED] Get CA Cert: {}".format(ca.content))
 
     if not ca.ok:
         print('Failed to get CA...')
@@ -203,7 +211,7 @@ def get_open_ports():
     return security_helper.nmap_scan(target)
 
 
-def send_ping():
+def send_ping(debug=False):
     can_read_cert()
 
     payload = {
@@ -218,11 +226,18 @@ def send_ping():
         payload['device_manufacturer'] = 'Raspberry Pi'
         payload['device_model'] = rpi_metadata['hardware_model']
 
+    if debug:
+        print("[GATHER] Ping: {}".format(payload))
+
     ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload
     )
+
+    if debug:
+        print("[RECEIVED] Ping: {}".format(ping.status_code))
+        print("[RECEIVED] Ping: {}".format(ping.content))
 
     if not ping.ok:
         print('Ping failed.')
@@ -238,7 +253,7 @@ def say_hello():
     return hello.json()
 
 
-def sign_cert(csr, device_id):
+def sign_cert(csr, device_id, debug=False):
     """
     This is the function for the initial certificate generation.
     This is only valid for the first time. Future renewals require the
@@ -262,8 +277,9 @@ def sign_cert(csr, device_id):
 
     if not crt_req.ok:
         print('Failed to submit CSR...')
-        print(crt_req.status_code)
-        print(crt_req.content)
+        if debug:
+            print("[RECEIVED] Sign Cert: {}".format(crt_req.status_code))
+            print("[RECEIVED] Sign Cert: {}".format(crt_req.content))
         return
 
     return {
@@ -272,7 +288,7 @@ def sign_cert(csr, device_id):
     }
 
 
-def renew_cert(csr, device_id):
+def renew_cert(csr, device_id, debug=False):
     """
     This is the renewal function. We need to use the existing certificate to
     verify ourselves in order to get a renewed certificate
@@ -299,8 +315,9 @@ def renew_cert(csr, device_id):
 
     if not crt_req.ok:
         print('Failed to submit CSR...')
-        print(crt_req.status_code)
-        print(crt_req.content)
+        if debug:
+            print("[RECEIVED] Renew Cert: {}".format(crt_req.status_code))
+            print("[RECEIVED] Renew Cert: {}".format(crt_req.content))
         return
 
     return {
@@ -309,16 +326,16 @@ def renew_cert(csr, device_id):
     }
 
 
-def run(ping=True):
+def run(ping=True, debug=False):
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:
-        device_id = generate_device_id()
+        device_id = generate_device_id(debug=debug)
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal():
             if ping:
-                send_ping()
+                send_ping(debug=debug)
                 time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
                 print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                     time_to_cert_expires.days,
@@ -334,7 +351,7 @@ def run(ping=True):
     print('Generating certificate...')
     gen_key = generate_cert(device_id)
 
-    ca = get_ca_cert()
+    ca = get_ca_cert(debug=debug)
     if not ca:
         print('Unable to retrieve CA cert. Exiting.')
         exit(1)
@@ -342,9 +359,9 @@ def run(ping=True):
     print('Submitting CSR...')
 
     if bootstrapping:
-        crt = sign_cert(gen_key['csr'], device_id)
+        crt = sign_cert(gen_key['csr'], device_id, debug=debug)
     else:
-        crt = renew_cert(gen_key['csr'], device_id)
+        crt = renew_cert(gen_key['csr'], device_id, debug=debug)
 
     if not crt:
         print('Unable to sign CSR. Exiting.')

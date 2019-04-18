@@ -1,3 +1,9 @@
+wott-agent (0.1.2+ppa6) stable; urgency=medium
+
+  * Adds debug logging
+
+ -- Viktor Petersson <v@wott.io>  Thu, 18 Apr 2019 16:20:16 +0000
+
 wott-agent (0.1.2+ppa5) stable; urgency=medium
 
   * Meaningful postinst message.
@@ -15,7 +21,7 @@ wott-agent (0.1.2+ppa4) stable; urgency=medium
 wott-agent (0.1.2+ppa3) stable; urgency=medium
 
   * systemd timer.
-  * 
+  *
 
  -- Artem Martynovich <artem.martynovich@gmail.com>  Tue, 16 Apr 2019 15:39:52 +0000
 

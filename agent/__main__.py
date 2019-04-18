@@ -14,11 +14,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action', nargs='?',
                         choices=actions.keys())
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
     if not args.action:
-        run(True)
+        run(ping=True, debug=args.debug)
     else:
-        run(False)
+        run(ping=False, debug=args.debug)
         print(actions[args.action]())
 
 

@@ -41,7 +41,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'wott-agent = agent:main',
+            'wott-agent = agent.__main__:main',
         ],
     }
 )

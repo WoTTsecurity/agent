@@ -1,3 +1,4 @@
+import configparser
 import os
 import requests
 import datetime
@@ -24,9 +25,10 @@ MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
 # Conditional handling for if we're running
 # inside a Snap.
 if os.getenv('SNAP_NAME'):
-    CERT_PATH = os.getenv('SNAP_DATA')
+    CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
+    CONFIG_PATH = os.getenv('CERT_PATH', '/opt/wott')
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
@@ -36,6 +38,7 @@ CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
+INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
 
 
 def is_bootstrapping():
@@ -170,6 +173,20 @@ def get_ca_cert():
     return ca.json()['ca_bundle']
 
 
+def get_claim_token():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT']['claim_token']
+
+
+def get_claim_url():
+    return '{WOTT_ENDPOINT}/v0.2/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
+        WOTT_ENDPOINT=WOTT_ENDPOINT,
+        device_id=get_device_id(),
+        claim_token=get_claim_token()
+    )
+
+
 def get_uptime():
     """
     Returns the uptime in seconds.
@@ -292,7 +309,7 @@ def renew_cert(csr, device_id):
     }
 
 
-def main():
+def run(ping=True):
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:
@@ -300,14 +317,17 @@ def main():
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal():
-            send_ping()
-            time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
-            print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
-                time_to_cert_expires.days,
-                floor(time_to_cert_expires.seconds / 60 / 60),
-                RENEWAL_THRESHOLD,
-            ))
-            exit(0)
+            if ping:
+                send_ping()
+                time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
+                print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
+                    time_to_cert_expires.days,
+                    floor(time_to_cert_expires.seconds / 60 / 60),
+                    RENEWAL_THRESHOLD,
+                ))
+                exit(0)
+            else:
+                return
         device_id = get_device_id()
         print('My WoTT ID is: {}'.format(device_id))
 
@@ -355,6 +375,9 @@ def main():
         f.write(crt['crt'])
     os.chmod(COMBINED_PEM_PATH, 0o600)
 
-
-if __name__ == "__main__":
-    main()
+    print("Writing config...")
+    config = configparser.ConfigParser()
+    config['DEFAULT'] = {'claim_token': crt['claim_token']}
+    with open(INI_PATH, 'w') as configfile:
+        config.write(configfile)
+    os.chmod(INI_PATH, 0o600)

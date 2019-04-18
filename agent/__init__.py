@@ -1,4 +1,3 @@
-import argparse
 import configparser
 import os
 import requests
@@ -381,4 +380,4 @@ def run(ping=True):
     config['DEFAULT'] = {'claim_token': crt['claim_token']}
     with open(INI_PATH, 'w') as configfile:
         config.write(configfile)
-    os.chmod(INI_PATH, 0o700)
+    os.chmod(INI_PATH, 0o600)

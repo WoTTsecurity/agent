@@ -23,37 +23,22 @@ With the certificate installed on the device, we’re able to establish connecti
 
 ## Installation
 
-### Pre-requisites
+Supported hardware:
 
-* A Raspberry Pi 2 or newer with Raspbian or Ubuntu Core
+* Raspberry Pi
 
-### Installing
+### Installing on Raspbian
 
-If you're using Raspbian, follow [these instructions](https://docs.snapcraft.io/installing-snap-on-raspbian/6754) first to install `snapd`.
-
-Once you have `snapd` installed (included if you are using Ubuntu Core), simply install the WoTT agent by running:
+Recommended installation steps:
 
 ```
-$ sudo snap install wott-agent
-$ sudo snap start wott-agent
+$ curl -s https://packagecloud.io/install/repositories/wott/agent/script.deb.sh | sudo bash
+$ sudo apt install wott-agent
 ```
 
-You can now find your device's WoTT ID by running:
+#### Alternative runtime environments
 
-```
-$ sudo wott-agent.whoami
-```
-
-If you get an error try: `sudo $(which wott-agent.whoami)`
-
-It's also worth noting that the certificates can be found on disk within the folder `/var/snap/wott-agent/current`.
-
-See Use Cases below for examples on how to use your agent.
-
-The source code for the Snap can be found [here](https://github.com/WoTTsecurity/wott-agent-snap).
-
-While the recommended runtime environment is a Snap as illustrated above Alternative installation methods:
-
+ * [Snap](https://github.com/WoTTsecurity/wott-agent-snap)
  * [Docker](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation-docker-runtime)
  * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advance://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
  * [Balena](https://github.com/WoTTsecurity/wott-agent-balena)

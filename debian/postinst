@@ -1,7 +1,18 @@
 #DEBHELPER#
 
-echo "Thank you for installing the wott-agent."
-echo "Your device's unique ID is: [device id]"
-echo "To unleash the value of WoTT, and to gain "
-echo "insight into the security of your device(s),"
-echo "sign up for an account at http://dash.wott.io."
+HELLO="Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
+
+You're one step closer to building a secure device. Your device's unique ID is: $(wott-agent whoami)
+
+To unleash the value of WoTT, and to gain insight into the security of your device(s), connect your device at https://dash.wott.io.
+
+You can claim your device in the dashboard by visiting:
+$(wott-agent claim-url)
+
+For more information on how to get started, visit wott.io/getting-started or drop me a line at hey@wott.io.
+
+Best!
+Viktor
+"
+
+printf "$HELLO"

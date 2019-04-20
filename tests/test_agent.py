@@ -254,16 +254,14 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
             create=True
     ), \
         mock.patch('socket.getfqdn') as getfqdn, \
-            mock.patch('sh.nmap') as nmap, \
+    mock.patch('agent.security_helper.nmap_scan') as nm, \
             mock.patch('builtins.print') as prn, \
             mock.patch(
                 'builtins.open',
                 mock.mock_open(read_data=uptime),
                 create=True
             ):  # noqa E213
-        class mock_nmap_stdout():
-            stdout = nmap_stdout
-        nmap.return_value = mock_nmap_stdout()
+        nm.return_value = []
         getfqdn.return_value = 'localhost'
         ping = agent.send_ping()
         assert ping is None

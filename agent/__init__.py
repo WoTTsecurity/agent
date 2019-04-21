@@ -2,6 +2,7 @@ import configparser
 import os
 import requests
 import datetime
+import json
 import pytz
 import platform
 import socket
@@ -219,6 +220,7 @@ def send_ping(debug=False):
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
+        'scan_info': json.dumps(get_open_ports())
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

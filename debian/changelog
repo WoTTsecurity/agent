@@ -1,3 +1,9 @@
+wott-agent (0.1.2+ppa7) stable; urgency=medium
+
+  * Fix "ping failed".
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Sat, 20 Apr 2019 17:01:59 +0000
+
 wott-agent (0.1.2+ppa6) stable; urgency=medium
 
   * Adds debug logging

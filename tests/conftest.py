@@ -199,3 +199,8 @@ def gen_id():
 @pytest.fixture
 def uptime():
     return "60 60"
+
+
+@pytest.fixture
+def nmap_stdout():
+    return '<?xml version="1.0" ?><host></host>'

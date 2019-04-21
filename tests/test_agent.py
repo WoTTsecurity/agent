@@ -240,7 +240,7 @@ def test_get_open_ports(nmap_fixture, netif_gateways, netif_ifaddresses):
 
 
 @pytest.mark.vcr
-def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
+def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
     Path(crt_path).write_text(cert)
@@ -254,12 +254,14 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key):
             create=True
     ), \
         mock.patch('socket.getfqdn') as getfqdn, \
+    mock.patch('agent.security_helper.nmap_scan') as nm, \
             mock.patch('builtins.print') as prn, \
             mock.patch(
                 'builtins.open',
                 mock.mock_open(read_data=uptime),
                 create=True
             ):  # noqa E213
+        nm.return_value = []
         getfqdn.return_value = 'localhost'
         ping = agent.send_ping()
         assert ping is None

@@ -53,7 +53,9 @@ def netstat_scan():
     """
     Returns all open inet connections with their addresses and PIDs.
     """
-    lines = netstat(['-pa']).stdout.decode().split('\n')
+    out = netstat(['-pa'])
+    lines_str = out.stdout
+    lines = lines_str.decode().split('\n')
     list_start = 0
     list_end = len(lines)
     for i, l in enumerate(lines):

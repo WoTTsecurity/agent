@@ -1,3 +1,9 @@
+wott-agent (0.1.2+ppa8) stable; urgency=medium
+
+  * Send netstat info.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Sat, 22 Apr 2019 18:35:43 +0000
+
 wott-agent (0.1.2+ppa7) stable; urgency=medium
 
   * Fix "ping failed".

@@ -40,9 +40,9 @@ def parse_line(l):
     state = fields[5] if len(fields) > 5 and fields[5] != '-' else None
     program = fields[6] if len(fields) > 6 and fields[6] != '-' else None
     return {
-        'proto': fields[0], 
-        'recv_q': fields[1], 
-        'send_q': fields[2], 
+        'proto': fields[0],
+        'recv_q': fields[1],
+        'send_q': fields[2],
         'local_address': fields[3],
         'foreign_address': fields[4],
         'state': state,

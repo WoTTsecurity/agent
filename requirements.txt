@@ -4,6 +4,7 @@ chardet==3.0.4
 cryptography==2.4.2
 idna==2.7
 netifaces==0.10.9
+psutil==5.0.1
 pyOpenSSL==18.0.0
 python-iptables==0.13.0
 pytz==2018.9

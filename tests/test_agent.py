@@ -7,7 +7,7 @@ import freezegun
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import nmap_scan, netstat_scan, is_firewall_enabled
+from agent.security_helper import nmap_scan, is_firewall_enabled
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -71,14 +71,6 @@ def test_nmap_scan(nmap_fixture):
         nmap.return_value.stdout = nmap_fixture
         result = nmap_scan('localhost')
         assert len(result) == 4  # TODO: test keys/values
-
-
-def test_netstat_scan(netstat_fixtures):
-    for inp, outp in netstat_fixtures:
-        with mock.patch('agent.security_helper.netstat') as ns:
-            ns.return_value.stdout = inp
-            res = netstat_scan()
-            assert res == outp
 
 
 def test_is_bootstrapping_stat_file(tmpdir):

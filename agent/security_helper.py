@@ -1,6 +1,8 @@
 import iptc
+import psutil
+import socket
 from xml.etree import ElementTree as ET
-from sh import netstat, nmap
+from sh import nmap
 
 
 def nmap_scan(target):
@@ -35,34 +37,16 @@ def is_firewall_enabled():
     return not len(input_chain.rules) == 0
 
 
-def parse_line(l):
-    fields = l.split()
-    state = fields[5] if len(fields) > 5 and fields[5] != '-' else None
-    program = fields[6] if len(fields) > 6 and fields[6] != '-' else None
-    return {
-        'proto': fields[0],
-        'recv_q': fields[1],
-        'send_q': fields[2],
-        'local_address': fields[3],
-        'foreign_address': fields[4],
-        'state': state,
-        'program': program}
-
-
 def netstat_scan():
     """
     Returns all open inet connections with their addresses and PIDs.
     """
-    out = netstat(['-pa'])
-    lines_str = out.stdout
-    lines = lines_str.decode().split('\n')
-    list_start = 0
-    list_end = len(lines)
-    for i, l in enumerate(lines):
-        if l.startswith('Active Internet connections'):
-            if len(lines) > i and lines[i + 1].startswith('Proto'):
-                list_start = i + 2
-        elif l.startswith('Active '):
-            list_end = i
-            break
-    return [parse_line(l) for l in lines[list_start:list_end]]
+    connections = psutil.net_connections(kind='inet')
+    return [{
+        'ip_version': 4 if c.family == socket.AF_INET else 6,
+        'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
+        'local_address': c.laddr,
+        'remote_address': c.raddr,
+        'status': c.status if c.type == socket.SOCK_STREAM else None,
+        'pid': c.pid
+    } for c in connections]

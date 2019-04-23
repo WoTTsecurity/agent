@@ -204,27 +204,3 @@ def uptime():
 @pytest.fixture
 def nmap_stdout():
     return '<?xml version="1.0" ?><host></host>'
-
-
-@pytest.fixture
-def netstat_fixtures():
-    return [
-        (b"""Active Internet connections (servers and established)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-Active UNIX domain sockets (servers and established)
-Proto RefCnt Flags       Type       State         I-Node   PID/Program name     Path
-unix  2      [ ACC ]     STREAM     LISTENING     80400    24990/dirmngr        /root/.gnupg/S.dirmngr
-""", []),
-        (b"""Active Internet connections (servers and established)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-tcp        0      0 localhost:47862         localhost:8989          ESTABLISHED 699/python3
-tcp        0      0 0.0.0.0:57413           0.0.0.0:*               LISTEN      -
-udp        0      0 10.13.37.255:netbios-ns 0.0.0.0:*                           -
-Active UNIX domain sockets (servers and established)
-Proto RefCnt Flags       Type       State         I-Node   PID/Program name     Path
-""", [
-            {'foreign_address': 'localhost:8989', 'local_address': 'localhost:47862', 'program': '699/python3', 'proto': 'tcp', 'state': 'ESTABLISHED', 'recv_q': '0', 'send_q': '0'},
-            {'foreign_address': '0.0.0.0:*', 'local_address': '0.0.0.0:57413', 'program': None, 'proto': 'tcp', 'state': 'LISTEN', 'recv_q': '0', 'send_q': '0'},
-            {'foreign_address': '0.0.0.0:*', 'local_address': '10.13.37.255:netbios-ns', 'program': None, 'proto': 'udp', 'state': None, 'recv_q': '0', 'send_q': '0'},
-        ]),
-    ]

@@ -22,6 +22,8 @@ from sys import exit
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
+WOTT_DEV_PORT = 8001
+MTLS_DEV_PORT = 8002
 
 # Conditional handling for if we're running
 # inside a Snap.
@@ -212,7 +214,7 @@ def get_open_ports():
     return security_helper.nmap_scan(target)
 
 
-def send_ping(debug=False):
+def send_ping(debug=False, dev=False):
     can_read_cert()
 
     payload = {
@@ -234,7 +236,11 @@ def send_ping(debug=False):
     ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        json=payload
+        json=payload,
+        headers={
+            'SSL_CLIENT_SUBJECT_DN': 'CN=' + get_device_id(),
+            'SSL_CLIENT_VERIFY': 'SUCCESS'
+        } if dev else {}
     )
 
     if debug:
@@ -328,7 +334,13 @@ def renew_cert(csr, device_id, debug=False):
     }
 
 
-def run(ping=True, debug=False):
+def run(ping=True, debug=False, dev=False):
+    if dev:
+        global WOTT_ENDPOINT, MTLS_ENDPOINT
+        endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
+        WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
+        MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
+
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:
@@ -337,7 +349,7 @@ def run(ping=True, debug=False):
     else:
         if not time_for_certificate_renewal():
             if ping:
-                send_ping(debug=debug)
+                send_ping(debug=debug, dev=dev)
                 time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
                 print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
                     time_to_cert_expires.days,

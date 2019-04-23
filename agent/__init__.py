@@ -193,7 +193,7 @@ def get_claim_token():
 
 
 def get_claim_url():
-    return '{WOTT_ENDPOINT}/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
+    return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
         WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=get_device_id(),
         claim_token=get_claim_token()
@@ -385,7 +385,7 @@ def run(ping=True, debug=False, dev=False):
         exit(1)
 
     print('Got Claim Token: {}'.format(crt['claim_token']))
-    print('Claim your device: {WOTT_ENDPOINT}/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
+    print('Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
         WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=device_id,
         claim_token=crt['claim_token']

@@ -1,4 +1,6 @@
 import iptc
+import psutil
+import socket
 from xml.etree import ElementTree as ET
 from sh import nmap
 
@@ -33,3 +35,18 @@ def is_firewall_enabled():
     filter_table = iptc.Table(iptc.Table.FILTER)
     input_chain = next(filter(lambda c: c.name == 'INPUT', filter_table))
     return not len(input_chain.rules) == 0
+
+
+def netstat_scan():
+    """
+    Returns all open inet connections with their addresses and PIDs.
+    """
+    connections = psutil.net_connections(kind='inet')
+    return [{
+        'ip_version': 4 if c.family == socket.AF_INET else 6,
+        'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
+        'local_address': c.laddr,
+        'remote_address': c.raddr,
+        'status': c.status if c.type == socket.SOCK_STREAM else None,
+        'pid': c.pid
+    } for c in connections]

@@ -222,7 +222,8 @@ def send_ping(debug=False, dev=False):
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
-        'scan_info': json.dumps(get_open_ports())
+        'scan_info': json.dumps(get_open_ports()),
+        'netstat': json.dumps(security_helper.netstat_scan())
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

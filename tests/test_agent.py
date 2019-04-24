@@ -311,18 +311,22 @@ def test_uptime(uptime):
 
 
 def test_firewall_enabled_pos():
-    with mock.patch('iptc.Table') as ipt:
+    with mock.patch('iptc.Table') as iptcTable, \
+            mock.patch('iptc.Chain') as iptcChain:
+        iptcTable.return_value = None
         chain0 = mock.Mock()
         chain0.name = 'INPUT'
-        chain0.rules = [object(), object()]
-        ipt.return_value = [chain0]
+        chain0.rules = [object()]
+        iptcChain.return_value = chain0
         assert is_firewall_enabled() is True
 
 
 def test_firewall_enabled_neg():
-    with mock.patch('iptc.Table') as ipt:
+    with mock.patch('iptc.Table') as iptcTable, \
+            mock.patch('iptc.Chain') as iptcChain:
+        iptcTable.return_value = None
         chain0 = mock.Mock()
         chain0.name = 'INPUT'
         chain0.rules = []
-        ipt.return_value = [chain0]
+        iptcChain.return_value = chain0
         assert is_firewall_enabled() is False

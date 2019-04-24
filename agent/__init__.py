@@ -22,6 +22,8 @@ from sys import exit
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
+DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
+DASH_DEV_PORT = 8000
 WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
 
@@ -191,8 +193,8 @@ def get_claim_token():
 
 
 def get_claim_url():
-    return '{WOTT_ENDPOINT}/v0.2/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
-        WOTT_ENDPOINT=WOTT_ENDPOINT,
+    return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+        WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=get_device_id(),
         claim_token=get_claim_token()
     )
@@ -337,8 +339,9 @@ def renew_cert(csr, device_id, debug=False):
 
 def run(ping=True, debug=False, dev=False):
     if dev:
-        global WOTT_ENDPOINT, MTLS_ENDPOINT
+        global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
         endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
+        DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
         WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
 
@@ -383,8 +386,8 @@ def run(ping=True, debug=False, dev=False):
         exit(1)
 
     print('Got Claim Token: {}'.format(crt['claim_token']))
-    print('Claim your device: {WOTT_ENDPOINT}/v0.2/claim-device?device-id={device_id}&claim-token={claim_token}'.format(
-        WOTT_ENDPOINT=WOTT_ENDPOINT,
+    print('Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+        WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=device_id,
         claim_token=crt['claim_token']
     )

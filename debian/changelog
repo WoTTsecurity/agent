@@ -1,3 +1,11 @@
+wott-agent (0.1.2+ppa9) stable; urgency=medium
+
+  * Correct claim device URL;
+  * dev mode for working with local API server;
+  * Add dependency on python3-psutil.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Wed, 24 Apr 2019 18:36:00 +0000
+
 wott-agent (0.1.2+ppa8) stable; urgency=medium
 
   * Send netstat info.

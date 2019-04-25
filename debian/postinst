@@ -1,6 +1,11 @@
 #DEBHELPER#
 
 HELLO="
+               _   _     _
+__      _____ | |_| |_  (_) ___
+\ \ /\ / / _ \| __| __| | |/ _ \
+ \ V  V / (_) | |_| |_ _| | (_) |
+  \_/\_/ \___/ \__|\__(_)_|\___/
 
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 

@@ -244,8 +244,8 @@ def send_ping(debug=False, dev=False):
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         json=payload,
         headers={
-            'SSL_CLIENT_SUBJECT_DN': 'CN=' + get_device_id(),
-            'SSL_CLIENT_VERIFY': 'SUCCESS'
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
         } if dev else {}
     )
 

@@ -32,9 +32,11 @@ def nmap_scan(target):
 
 def is_firewall_enabled():
     """Check if FILTER INPUT chain contains any rule"""
-    filter_table = iptc.Table(iptc.Table.FILTER)
-    input_chain = next(filter(lambda c: c.name == 'INPUT', filter_table))
-    return not len(input_chain.rules) == 0
+    try:
+        chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
+        return len(chain.rules) > 0
+    except iptc.ip4tc.IPTCError:
+        return False
 
 
 def netstat_scan():
@@ -50,3 +52,15 @@ def netstat_scan():
         'status': c.status if c.type == socket.SOCK_STREAM else None,
         'pid': c.pid
     } for c in connections]
+
+
+def process_scan():
+    processes = []
+    for proc in psutil.process_iter():
+        try:
+            processes.append(proc.as_dict(attrs=[
+                'pid', 'name', 'cpu_percent', 'memory_percent', 'cmdline',
+                'environ', 'username', 'connections', 'status']))
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return processes

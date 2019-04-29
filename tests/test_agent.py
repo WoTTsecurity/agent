@@ -243,25 +243,29 @@ def test_get_open_ports(nmap_fixture, netif_gateways, netif_ifaddresses):
 def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
-    Path(crt_path).write_text(cert)
-    Path(key_path).write_text(key)
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt_path)
     agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(key)
     with mock.patch(
             'builtins.open',
             mock.mock_open(read_data=raspberry_cpuinfo),
             create=True
     ), \
-        mock.patch('socket.getfqdn') as getfqdn, \
+    mock.patch('socket.getfqdn') as getfqdn, \
     mock.patch('agent.security_helper.nmap_scan') as nm, \
-            mock.patch('builtins.print') as prn, \
-            mock.patch(
-                'builtins.open',
-                mock.mock_open(read_data=uptime),
-                create=True
-            ):  # noqa E213
+    mock.patch('agent.security_helper.is_firewall_enabled') as fw, \
+    mock.patch('agent.security_helper.process_scan') as ps, \
+    mock.patch('builtins.print') as prn, \
+    mock.patch(
+        'builtins.open',
+        mock.mock_open(read_data=uptime),
+        create=True
+    ):  # noqa E213
         nm.return_value = []
+        fw.return_value = False
+        ps.return_value = []
         getfqdn.return_value = 'localhost'
         ping = agent.send_ping()
         assert ping is None
@@ -307,18 +311,22 @@ def test_uptime(uptime):
 
 
 def test_firewall_enabled_pos():
-    with mock.patch('iptc.Table') as ipt:
+    with mock.patch('iptc.Table') as iptcTable, \
+            mock.patch('iptc.Chain') as iptcChain:
+        iptcTable.return_value = None
         chain0 = mock.Mock()
         chain0.name = 'INPUT'
-        chain0.rules = [object(), object()]
-        ipt.return_value = [chain0]
+        chain0.rules = [object()]
+        iptcChain.return_value = chain0
         assert is_firewall_enabled() is True
 
 
 def test_firewall_enabled_neg():
-    with mock.patch('iptc.Table') as ipt:
+    with mock.patch('iptc.Table') as iptcTable, \
+            mock.patch('iptc.Chain') as iptcChain:
+        iptcTable.return_value = None
         chain0 = mock.Mock()
         chain0.name = 'INPUT'
         chain0.rules = []
-        ipt.return_value = [chain0]
+        iptcChain.return_value = chain0
         assert is_firewall_enabled() is False

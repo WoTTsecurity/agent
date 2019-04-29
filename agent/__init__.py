@@ -226,7 +226,8 @@ def send_ping(debug=False, dev=False):
         'uptime': get_uptime(),
         'scan_info': json.dumps(get_open_ports()),
         'netstat': json.dumps(security_helper.netstat_scan()),
-        'processes': json.dumps(security_helper.process_scan()),
+        # FIXME: uncomment this after fixing server logic
+        # 'processes': json.dumps(security_helper.process_scan()),
         'firewall_enabled': security_helper.is_firewall_enabled()
     }
 

@@ -60,7 +60,7 @@ def process_scan():
         try:
             processes.append(proc.as_dict(attrs=[
                 'pid', 'name', 'cpu_percent', 'memory_percent', 'cmdline',
-                'environ', 'username', 'connections', 'status']))
+                'username', 'connections', 'status']))
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return processes

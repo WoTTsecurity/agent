@@ -1,3 +1,9 @@
+wott-agent (0.1.2+ppa12) stable; urgency=medium
+
+  * Don't send processes as the server is not ready for that yet.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Mon, 29 Apr 2019 15:33:07 +0000
+
 wott-agent (0.1.2+ppa11) stable; urgency=medium
 
   * Don't send processes environment vars as the server is not ready for that yet.

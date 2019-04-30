@@ -64,3 +64,42 @@ def process_scan():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return processes
+
+
+def is_app_armor_enabled():
+    """
+    Returns a True/False if AppArmor is enabled.
+    """
+    try:
+        from sh import aa_status
+    except ImportError:
+        return False
+
+    # Returns 0 if enabled and 1 if disabled
+    return bool(aa_status(['--enabled']).exit_code)
+
+
+def selinux_status():
+    """
+    Returns a dict as similar to:
+        {'enabled': False, 'mode': 'enforcing'}
+    """
+    selinux_enabled = None
+    selinux_mode = None
+
+    try:
+        from sh import sestatus
+    except ImportError:
+        return {'enabled': False}
+
+    # Manually parse out the output for SELinux status
+    for line in sestatus().stdout.split(b'\n'):
+        row = line.split(b':')
+
+        if row[0].startswith(b'SELinux status'):
+            selinux_enabled = row[1].strip() == b'enabled'
+
+        if row[0].startswith(b'Current mode'):
+            selinux_mode = row[1].strip()
+
+    return {'enabled': selinux_enabled, 'mode': selinux_mode}

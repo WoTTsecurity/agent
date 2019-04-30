@@ -105,6 +105,10 @@ def time_for_certificate_renewal():
     return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) > get_certificate_expiration_date()
 
 
+def is_certificate_expired():
+    return datetime.datetime.now(datetime.timezone.utc) > get_certificate_expiration_date()
+
+
 def generate_device_id(debug=False):
     """
     Device ID is generated remotely.
@@ -189,7 +193,13 @@ def get_ca_cert(debug=False):
 def get_claim_token():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
-    return config['DEFAULT']['claim_token']
+    return config['DEFAULT'].get('claim_token', None)
+
+
+def get_fallback_token():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].get('fallback_token', None)
 
 
 def get_claim_url():
@@ -296,9 +306,11 @@ def sign_cert(csr, device_id, debug=False):
             print("[RECEIVED] Sign Cert: {}".format(crt_req.content))
         return
 
+    res = crt_req.json()
     return {
-        'crt': crt_req.json()['certificate'],
-        'claim_token': crt_req.json()['claim_token']
+        'crt': res['certificate'],
+        'claim_token': res['claim_token'],
+        'fallback_token': res['fallback_token']
     }
 
 
@@ -334,9 +346,51 @@ def renew_cert(csr, device_id, debug=False):
             print("[RECEIVED] Renew Cert: {}".format(crt_req.content))
         return
 
+    res = crt_req.json()
     return {
-        'crt': crt_req.json()['certificate'],
-        'claim_token': crt_req.json()['claim_token']
+        'crt': res['certificate'],
+        'claim_token': res['claim_token'],
+        'fallback_token': res['fallback_token']
+    }
+
+
+def renew_expired_cert(csr, device_id, debug=False):
+    """
+    This is the renewal function. We need to use the existing certificate to
+    verify ourselves in order to get a renewed certificate
+    """
+
+    print('Attempting to renew expired certificate...')
+    can_read_cert()
+
+    payload = {
+        'csr': csr,
+        'device_id': device_id,
+        'device_architecture': platform.machine(),
+        'device_operating_system': platform.system(),
+        'device_operating_system_version': platform.release(),
+        'fqdn': socket.getfqdn(),
+        'ipv4_address': get_primary_ip(),
+        'fallback_token': get_fallback_token()
+    }
+
+    crt_req = requests.post(
+        '{}/v0.2/sign-expired-csr'.format(WOTT_ENDPOINT),
+        json=payload
+    )
+
+    if not crt_req.ok:
+        print('Failed to submit CSR...')
+        if debug:
+            print("[RECEIVED] Renew expired Cert: {}".format(crt_req.status_code))
+            print("[RECEIVED] Renew expired Cert: {}".format(crt_req.content))
+        return
+
+    res = crt_req.json()
+    return {
+        'crt': res['certificate'],
+        'claim_token': res['claim_token'],
+        'fallback_token': res['fallback_token']
     }
 
 
@@ -349,12 +403,13 @@ def run(ping=True, debug=False, dev=False):
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
 
     bootstrapping = is_bootstrapping()
+    expired = is_certificate_expired()
 
     if bootstrapping:
         device_id = generate_device_id(debug=debug)
         print('Got WoTT ID: {}'.format(device_id))
     else:
-        if not time_for_certificate_renewal():
+        if not time_for_certificate_renewal() and not expired:
             if ping:
                 send_ping(debug=debug, dev=dev)
                 time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
@@ -381,6 +436,8 @@ def run(ping=True, debug=False, dev=False):
 
     if bootstrapping:
         crt = sign_cert(gen_key['csr'], device_id, debug=debug)
+    elif expired:
+        crt = renew_expired_cert(gen_key['csr'], device_id, debug=debug)
     else:
         crt = renew_cert(gen_key['csr'], device_id, debug=debug)
 
@@ -415,7 +472,10 @@ def run(ping=True, debug=False, dev=False):
 
     print("Writing config...")
     config = configparser.ConfigParser()
-    config['DEFAULT'] = {'claim_token': crt['claim_token']}
+    config['DEFAULT'] = {
+        'claim_token': crt['claim_token'],
+        'fallback_token': crt['fallback_token']
+    }
     with open(INI_PATH, 'w') as configfile:
         config.write(configfile)
     os.chmod(INI_PATH, 0o600)

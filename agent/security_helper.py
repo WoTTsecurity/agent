@@ -75,8 +75,11 @@ def is_app_armor_enabled():
     except ImportError:
         return False
 
-    # Returns 0 if enabled and 1 if disabled
-    return bool(aa_status(['--enabled']).exit_code)
+    # Returns 0 if enabled and 1 if disable
+    get_aa_status = aa_status(['--enabled'], _ok_code=[0, 1]).exit_code
+    if get_aa_status == 1:
+        return False
+    return True
 
 
 def selinux_status():

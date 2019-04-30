@@ -1,3 +1,9 @@
+wott-agent (0.1.3) stable; urgency=medium
+
+  * Reverts back limited version of processes
+
+ -- Viktor Petersson <v@wott.io>  Mon, 30 Apr 2019 13:14:49 +0000
+
 wott-agent (0.1.2+ppa13) stable; urgency=medium
 
   * Fix SSL-CLIENT-* headers in dev mode.

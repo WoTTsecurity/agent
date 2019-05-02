@@ -2,7 +2,6 @@ import configparser
 import os
 import requests
 import datetime
-import json
 import pytz
 import platform
 import socket

@@ -190,6 +190,16 @@ def test_time_for_certificate_renewal(cert):
         assert agent.time_for_certificate_renewal()
 
 
+@freezegun.freeze_time("2019-04-14")
+def test_cert_expired(cert):
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=cert),
+            create=True
+    ):
+        assert agent.is_certificate_expired()
+
+
 @pytest.mark.vcr
 def test_generate_device_id():
     dev_id = agent.generate_device_id()
@@ -270,6 +280,28 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
         ping = agent.send_ping()
         assert ping is None
         assert prn.call_count == 0 or (prn.call_count == 1 and mock.call('Ping failed.') in prn.mock_calls)
+
+
+@pytest.mark.vcr
+def test_renew_cert(raspberry_cpuinfo, tmpdir, cert, key):
+    crt_path = tmpdir / 'client.crt'
+    key_path = tmpdir / 'client.key'
+    agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(crt_path)
+    agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(key)
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=raspberry_cpuinfo),
+            create=True
+    ), \
+    mock.patch('socket.getfqdn') as getfqdn, \
+    mock.patch('builtins.print') as prn:  # noqa E213
+        getfqdn.return_value = 'localhost'
+        res = agent.renew_expired_cert(None, None)
+        assert res is None
+        assert (prn.call_count == 2 and mock.call('Failed to submit CSR...') in prn.mock_calls)
 
 
 @pytest.mark.vcr

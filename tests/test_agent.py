@@ -283,6 +283,28 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
 
 
 @pytest.mark.vcr
+def test_renew_cert(raspberry_cpuinfo, tmpdir, cert, key):
+    crt_path = tmpdir / 'client.crt'
+    key_path = tmpdir / 'client.key'
+    agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(crt_path)
+    agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(key)
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=raspberry_cpuinfo),
+            create=True
+    ), \
+    mock.patch('socket.getfqdn') as getfqdn, \
+    mock.patch('builtins.print') as prn:  # noqa E213
+        getfqdn.return_value = 'localhost'
+        res = agent.renew_expired_cert(None, None)
+        assert res is None
+        assert (prn.call_count == 2 and mock.call('Failed to submit CSR...') in prn.mock_calls)
+
+
+@pytest.mark.vcr
 def test_say_hello_failed(tmpdir, invalid_cert, invalid_key):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'

@@ -266,6 +266,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     mock.patch('socket.getfqdn') as getfqdn, \
     mock.patch('agent.security_helper.nmap_scan') as nm, \
     mock.patch('agent.security_helper.is_firewall_enabled') as fw, \
+    mock.patch('agent.security_helper.get_firewall_rules') as fr, \
     mock.patch('agent.security_helper.process_scan') as ps, \
     mock.patch('agent.security_helper.block_ports') as bp, \
     mock.patch('agent.security_helper.block_networks') as bn, \
@@ -277,6 +278,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     ):  # noqa E213
         nm.return_value = []
         fw.return_value = False
+        fr.return_value = {}
         ps.return_value = []
         getfqdn.return_value = 'localhost'
         bp.return_value = None

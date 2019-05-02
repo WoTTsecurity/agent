@@ -234,11 +234,10 @@ def send_ping(debug=False, dev=False):
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
-        'scan_info': json.dumps(get_open_ports()),
-        'netstat': json.dumps(security_helper.netstat_scan()),
-        # 'processes': json.dumps(security_helper.process_scan()),
+        'scan_info': get_open_ports(),
+        'netstat': security_helper.netstat_scan(),
+        'processes': security_helper.process_scan(),
         'firewall_enabled': security_helper.is_firewall_enabled(),
-        'selinux_status': security_helper.selinux_status(),
         'app_armor_enabled': security_helper.is_app_armor_enabled()
     }
 

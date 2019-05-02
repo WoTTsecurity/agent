@@ -1,3 +1,10 @@
+wott-agent (0.1.4.2) stable; urgency=medium
+
+  * Send processes, netstat, scan_info as netsted objects.
+  * Sign expired certs.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Thu, 02 May 2019 07:33:08 +0000
+
 wott-agent (0.1.4.1) stable; urgency=medium
 
   * Fixes AppArmor status

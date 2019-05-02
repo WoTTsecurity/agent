@@ -190,6 +190,16 @@ def test_time_for_certificate_renewal(cert):
         assert agent.time_for_certificate_renewal()
 
 
+@freezegun.freeze_time("2019-04-14")
+def test_cert_expired(cert):
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=cert),
+            create=True
+    ):
+        assert agent.is_certificate_expired()
+
+
 @pytest.mark.vcr
 def test_generate_device_id():
     dev_id = agent.generate_device_id()

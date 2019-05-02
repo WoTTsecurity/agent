@@ -402,13 +402,12 @@ def run(ping=True, debug=False, dev=False):
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
 
     bootstrapping = is_bootstrapping()
-    expired = is_certificate_expired()
 
     if bootstrapping:
         device_id = generate_device_id(debug=debug)
         print('Got WoTT ID: {}'.format(device_id))
     else:
-        if not time_for_certificate_renewal() and not expired:
+        if not time_for_certificate_renewal() and not is_certificate_expired():
             if ping:
                 send_ping(debug=debug, dev=dev)
                 time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
@@ -435,7 +434,7 @@ def run(ping=True, debug=False, dev=False):
 
     if bootstrapping:
         crt = sign_cert(gen_key['csr'], device_id, debug=debug)
-    elif expired:
+    elif is_certificate_expired():
         crt = renew_expired_cert(gen_key['csr'], device_id, debug=debug)
     else:
         crt = renew_cert(gen_key['csr'], device_id, debug=debug)

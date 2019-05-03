@@ -10,10 +10,7 @@ def nmap_scan(target):
     Performs an nmap portscan against the
     target on all TCP/UDP ports.
     """
-    try:
-        scan = nmap([target, '-sS', '-sU', '-oX', '-'])
-    except:
-        return []
+    scan = nmap([target, '-sS', '-sU', '-oX', '-'])
     dom = ET.fromstring(scan.stdout)
     result = []
 
@@ -116,7 +113,7 @@ TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
 OUTPUT_CHAIN = 'OUTPUT'
 INPUT_CHAIN = 'INPUT'
-WOTT_COMMENT = { 'comment': 'added by WoTT' }
+WOTT_COMMENT = {'comment': 'added by WoTT'}
 
 
 def prepare_iptables():
@@ -138,20 +135,18 @@ def update_iptables(table, chain, rules):
 
 def block_ports(port_list):
     prepare_iptables()
-    rules = [{
-                'protocol': 'tcp',
-                'tcp': {'dport': str(p)},
-                'target': DROP_CHAIN,
-                'comment': WOTT_COMMENT
-            } for p in port_list]
+    rules = [{'protocol': 'tcp',
+              'tcp': {'dport': str(p)},
+              'target': DROP_CHAIN,
+              'comment': WOTT_COMMENT}
+             for p in port_list]
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 
 def block_networks(network_list):
     prepare_iptables()
-    rules = [{
-            'dst': n,
-            'target': DROP_CHAIN,
-            'comment': WOTT_COMMENT
-        } for n in network_list]
+    rules = [{'dst': n,
+              'target': DROP_CHAIN,
+              'comment': WOTT_COMMENT}
+             for n in network_list]
     update_iptables(TABLE, OUTPUT_CHAIN, rules)

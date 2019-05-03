@@ -117,6 +117,11 @@ WOTT_COMMENT = {'comment': 'added by WoTT'}
 
 
 def prepare_iptables():
+    """
+    Add a log-drop chain which will log a packet and drop it.
+
+    :return: None
+    """
     if not iptc.easy.has_chain(TABLE, DROP_CHAIN):
         iptc.easy.add_chain(TABLE, DROP_CHAIN)
         iptc.easy.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}})
@@ -124,6 +129,15 @@ def prepare_iptables():
 
 
 def update_iptables(table, chain, rules):
+    """
+    Insert new rules from the supplied list,
+    remove those which are not supplied.
+
+    :param table: table name
+    :param chain: chain name
+    :param rules: a list of rules in iptc.easy format
+    :return: None
+    """
     existing = iptc.easy.dump_chain(table, chain)
     for r in existing:
         if r.get('comment', None) == WOTT_COMMENT and r not in rules:
@@ -134,6 +148,13 @@ def update_iptables(table, chain, rules):
 
 
 def block_ports(port_list):
+    """
+    Block incoming TCP packets to the ports supplied in the list,
+    unblock previously blocked.
+
+    :param port_list: list of ports to be blocked
+    :return: None
+    """
     prepare_iptables()
     rules = [{'protocol': 'tcp',
               'tcp': {'dport': str(p)},
@@ -144,6 +165,13 @@ def block_ports(port_list):
 
 
 def block_networks(network_list):
+    """
+    Block outgoing packets to the networks supplied in the list,
+    unblock previously blocked.
+
+    :param network_list: list of IPs in dot-notation or subnets (<IP>/<mask>)
+    :return: None
+    """
     prepare_iptables()
     rules = [{'dst': n,
               'target': DROP_CHAIN,

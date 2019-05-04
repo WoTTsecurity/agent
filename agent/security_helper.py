@@ -36,6 +36,7 @@ def is_firewall_enabled():
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
         return len(chain.rules) > 0
     except iptc.ip4tc.IPTCError:
+        print('IPTC ERROR')
         return False
 
 
@@ -106,3 +107,74 @@ def selinux_status():
             selinux_mode = row[1].strip()
 
     return {'enabled': selinux_enabled, 'mode': selinux_mode}
+
+
+TABLE = 'filter'
+DROP_CHAIN = 'WOTT_LOG_DROP'
+OUTPUT_CHAIN = 'OUTPUT'
+INPUT_CHAIN = 'INPUT'
+WOTT_COMMENT = {'comment': 'added by WoTT'}
+
+
+def prepare_iptables():
+    """
+    Add a log-drop chain which will log a packet and drop it.
+
+    :return: None
+    """
+    if not iptc.easy.has_chain(TABLE, DROP_CHAIN):
+        iptc.easy.add_chain(TABLE, DROP_CHAIN)
+        iptc.easy.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}})
+        iptc.easy.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'})
+
+
+def update_iptables(table, chain, rules):
+    """
+    Insert new rules from the supplied list,
+    remove those which are not supplied.
+
+    :param table: table name
+    :param chain: chain name
+    :param rules: a list of rules in iptc.easy format
+    :return: None
+    """
+    existing = iptc.easy.dump_chain(table, chain)
+    for r in existing:
+        if r.get('comment', None) == WOTT_COMMENT and r not in rules:
+            iptc.easy.delete_rule(table, chain, r)
+    for r in rules:
+        if r not in existing:
+            iptc.easy.add_rule(table, chain, r)
+
+
+def block_ports(port_list):
+    """
+    Block incoming TCP packets to the ports supplied in the list,
+    unblock previously blocked.
+
+    :param port_list: list of ports to be blocked
+    :return: None
+    """
+    prepare_iptables()
+    rules = [{'protocol': 'tcp',
+              'tcp': {'dport': str(p)},
+              'target': DROP_CHAIN,
+              'comment': WOTT_COMMENT}
+             for p in port_list]
+    update_iptables(TABLE, INPUT_CHAIN, rules)
+
+
+def block_networks(network_list):
+    """
+    Block outgoing packets to the networks supplied in the list,
+    unblock previously blocked.
+
+    :param network_list: list of IPs in dot-notation or subnets (<IP>/<mask>)
+    :return: None
+    """
+    prepare_iptables()
+    rules = [{'dst': n,
+              'target': DROP_CHAIN,
+              'comment': WOTT_COMMENT}
+             for n in network_list]
+    update_iptables(TABLE, OUTPUT_CHAIN, rules)

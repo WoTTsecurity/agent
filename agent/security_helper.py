@@ -40,6 +40,11 @@ def is_firewall_enabled():
         return False
 
 
+def get_firewall_rules():
+    """Get all FILTER table rules"""
+    return iptc.easy.dump_table('filter')
+
+
 def netstat_scan():
     """
     Returns all open inet connections with their addresses and PIDs.

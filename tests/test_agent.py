@@ -374,6 +374,7 @@ def test_firewall_enabled_neg():
 def test_blocking():
     with mock.patch('iptc.easy.has_chain') as has_chain,\
             mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.delete_rule'),\
             mock.patch('iptc.easy.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([])
@@ -384,6 +385,7 @@ def test_blocking():
 
     with mock.patch('iptc.easy.has_chain') as has_chain,\
             mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.delete_rule'),\
             mock.patch('iptc.easy.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
@@ -395,7 +397,8 @@ def test_blocking():
         ])
 
     with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain, \
+            mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.add_rule'),\
             mock.patch('iptc.easy.delete_rule') as delete_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([

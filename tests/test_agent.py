@@ -372,16 +372,20 @@ def test_firewall_enabled_neg():
 
 
 def test_blocking():
-    with mock.patch('iptc.easy.dump_chain') as dump_chain,\
+    with mock.patch('iptc.easy.has_chain') as has_chain,\
+            mock.patch('iptc.easy.dump_chain') as dump_chain,\
             mock.patch('iptc.easy.add_rule') as add_rule:
+        has_chain.return_value = True
         dump_chain.return_value = ([])
         block_networks(['10.10.10.10'])
         assert add_rule.has_calls([
             mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
         ])
 
-    with mock.patch('iptc.easy.dump_chain') as dump_chain,\
+    with mock.patch('iptc.easy.has_chain') as has_chain,\
+            mock.patch('iptc.easy.dump_chain') as dump_chain,\
             mock.patch('iptc.easy.add_rule') as add_rule:
+        has_chain.return_value = True
         dump_chain.return_value = ([
             {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
         ])
@@ -390,8 +394,10 @@ def test_blocking():
             mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
         ])
 
-    with mock.patch('iptc.easy.dump_chain') as dump_chain, \
+    with mock.patch('iptc.easy.has_chain') as has_chain,\
+            mock.patch('iptc.easy.dump_chain') as dump_chain, \
             mock.patch('iptc.easy.delete_rule') as delete_rule:
+        has_chain.return_value = True
         dump_chain.return_value = ([
             {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
         ])

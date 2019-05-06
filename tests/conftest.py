@@ -1,4 +1,5 @@
 import pytest
+from agent.security_helper import DROP_CHAIN, WOTT_COMMENT
 
 
 NMAP_FIXTURE = """<?xml version="1.0" encoding="UTF-8"?>
@@ -204,3 +205,16 @@ def uptime():
 @pytest.fixture
 def nmap_stdout():
     return '<?xml version="1.0" ?><host></host>'
+
+
+@pytest.fixture
+def ipt_rules():
+    return (
+        {'dst': '10.10.10.10', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT},
+        {'dst': '10.20.10.20', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}
+    )
+
+
+@pytest.fixture
+def ipt_networks():
+    return ('10.10.10.10', '10.20.10.20')

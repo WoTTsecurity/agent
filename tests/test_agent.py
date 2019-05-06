@@ -8,7 +8,7 @@ import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import nmap_scan, is_firewall_enabled, \
-    block_networks, WOTT_COMMENT
+    block_networks
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -371,40 +371,77 @@ def test_firewall_enabled_neg():
         assert is_firewall_enabled() is False
 
 
-def test_blocking():
+def test_block_networks(ipt_networks, ipt_rules):
+    rule1, rule2 = ipt_rules
+    net1, net2 = ipt_networks
+
     with mock.patch('iptc.easy.has_chain') as has_chain,\
             mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.delete_rule'),\
+            mock.patch('iptc.easy.delete_rule') as delete_rule,\
             mock.patch('iptc.easy.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([])
-        block_networks(['10.10.10.10'])
-        assert add_rule.has_calls([
-            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+
+        block_networks([net1, net2])
+        delete_rule.assert_not_called()
+        add_rule.assert_has_calls([
+            mock.call('filter', 'OUTPUT', rule1),
+            mock.call('filter', 'OUTPUT', rule2)
         ])
 
     with mock.patch('iptc.easy.has_chain') as has_chain,\
             mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.delete_rule'),\
+            mock.patch('iptc.easy.delete_rule') as delete_rule,\
             mock.patch('iptc.easy.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
-            {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
+            rule1
         ])
-        block_networks(['10.10.10.10'])
-        assert add_rule.has_calls([
-            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+
+        block_networks([net2])
+        delete_rule.assert_has_calls([
+            mock.call('filter', 'OUTPUT', rule1)
+        ])
+        add_rule.assert_has_calls([
+            mock.call('filter', 'OUTPUT', rule2)
         ])
 
     with mock.patch('iptc.easy.has_chain') as has_chain,\
             mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.add_rule'),\
+            mock.patch('iptc.easy.delete_rule') as delete_rule,\
+            mock.patch('iptc.easy.add_rule') as add_rule:
+        has_chain.return_value = True
+        dump_chain.return_value = ([
+            rule1, rule2
+        ])
+
+        block_networks([net1, net2])
+        add_rule.assert_not_called()
+        delete_rule.assert_not_called()
+
+    with mock.patch('iptc.easy.has_chain') as has_chain,\
+            mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.add_rule') as add_rule,\
             mock.patch('iptc.easy.delete_rule') as delete_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
-            {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
+            rule1, rule2
         ])
+
         block_networks([])
-        assert delete_rule.has_calls([
-            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+        add_rule.assert_not_called()
+        delete_rule.assert_has_calls([
+            mock.call('filter', 'OUTPUT', rule1),
+            mock.call('filter', 'OUTPUT', rule2)
         ])
+
+    with mock.patch('iptc.easy.has_chain') as has_chain,\
+            mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.add_rule') as add_rule,\
+            mock.patch('iptc.easy.delete_rule') as delete_rule:
+        has_chain.return_value = True
+        dump_chain.return_value = ([])
+
+        block_networks([])
+        add_rule.assert_not_called()
+        delete_rule.assert_not_called()

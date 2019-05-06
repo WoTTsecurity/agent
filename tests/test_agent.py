@@ -7,7 +7,8 @@ import freezegun
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import nmap_scan, is_firewall_enabled
+from agent.security_helper import nmap_scan, is_firewall_enabled, \
+    block_networks, WOTT_COMMENT
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -368,3 +369,33 @@ def test_firewall_enabled_neg():
         chain0.rules = []
         iptcChain.return_value = chain0
         assert is_firewall_enabled() is False
+
+
+def test_blocking():
+    with mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.add_rule') as add_rule:
+        dump_chain.return_value = ([])
+        block_networks(['10.10.10.10'])
+        assert add_rule.has_calls([
+            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+        ])
+
+    with mock.patch('iptc.easy.dump_chain') as dump_chain,\
+            mock.patch('iptc.easy.add_rule') as add_rule:
+        dump_chain.return_value = ([
+            {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
+        ])
+        block_networks(['10.10.10.10'])
+        assert add_rule.has_calls([
+            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+        ])
+
+    with mock.patch('iptc.easy.dump_chain') as dump_chain, \
+            mock.patch('iptc.easy.delete_rule') as delete_rule:
+        dump_chain.return_value = ([
+            {'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT}
+        ])
+        block_networks([])
+        assert delete_rule.has_calls([
+            mock.call({'dst': '10.10.10.10', 'target': WOTT_COMMENT, 'comment': WOTT_COMMENT})
+        ])

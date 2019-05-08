@@ -10,7 +10,9 @@ jobs:
           command: |
             apt update
             apt install -y \
-              libsystemd-dev gcc python3-dev pkg-config python3-pkg-resources python3-iptables python3-psutil \
+              devscripts libsystemd-dev gcc python3-dev pkg-config \
+              nmap iptables devscripts ruby2.3-dev rubygems build-essential:native \
+              python3-setuptools python3-all python3-pkg-resources python3-iptables python3-psutil \
               python3-certifi python3-cffi python3-chardet  python3-cryptography python3-idna python3-netifaces \
               python3-psutil python3-openssl  python3-iptables python3-tz python3-requests python3-sh python3-systemd \
               python3-nmap python3-venv python3-pip
@@ -32,6 +34,7 @@ jobs:
       - deploy:
           command: |
               if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                sudo gem install rake package_cloud
                 package_cloud push wott/agent/debian/stretch /tmp/deb/*.deb
                 package_cloud push wott/agent/raspbian/stretch /tmp/deb/*.deb
               fi

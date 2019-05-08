@@ -2,35 +2,25 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.8-stretch
+      - image: debian
     steps:
       - checkout
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt install libsystemd-dev gcc python3-dev pkg-config
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements-dev.txt
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt-get install -y \
-              nmap iptables devscripts ruby2.3-dev rubygems \
-              build-essential:native python-setuptools python3-all python3-setuptools
-      - run:
-          name: Install PackageCloud
-          command: |
-            sudo gem install rake package_cloud
+            apt install \
+              libsystemd-dev gcc python3-dev pkg-config python3-pkg-resources python3-iptables python3-psutil \
+              python3-certifi python3-cffi python3-chardet  python3-cryptography python3-idna python3-netifaces \
+              python3-psutil python3-openssl  python3-iptables python3-tz python3-requests python3-sh python3-systemd \
+              python3-venv
+            pip3 install -r requirements-dev.txt
       - run:
           name: Run linting and metrics
           command: |
-            . venv/bin/activate
             flake8 ./ --exclude=venv --ignore=E501 --output-file test-reports
       - run:
           name: Run tests
           command: |
-            . venv/bin/activate
             pytest --cov=agent
       - run:
           name: Build dpkg packages

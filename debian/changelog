@@ -1,3 +1,9 @@
+wott-agent (0.1.4.3) stable; urgency=medium
+
+  * Revert python-iptables dependency to the version provided for Stretch.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Wed, 08 May 2019 08:45:35 +0000
+
 wott-agent (0.1.4.2) stable; urgency=medium
 
   * Send processes, netstat, scan_info as netsted objects.

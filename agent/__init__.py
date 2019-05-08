@@ -268,7 +268,7 @@ def send_ping(debug=False, dev=False):
         print('Ping failed.')
         return
 
-    pong = json.loads(ping.content)
+    pong = ping.json()
     security_helper.block_ports(pong.get('block_ports', []))
     security_helper.block_networks(pong.get('block_networks', []))
 

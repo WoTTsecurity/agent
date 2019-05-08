@@ -8,6 +8,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            apt update
             apt install \
               libsystemd-dev gcc python3-dev pkg-config python3-pkg-resources python3-iptables python3-psutil \
               python3-certifi python3-cffi python3-chardet  python3-cryptography python3-idna python3-netifaces \

@@ -367,10 +367,10 @@ def test_block_networks(ipt_networks, ipt_rules):
     rule1, rule2 = ipt_rules
     net1, net2 = ipt_networks
 
-    with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.delete_rule') as delete_rule,\
-            mock.patch('iptc.easy.add_rule') as add_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
+            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
+            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
+            mock.patch('agent.iptc_helper.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([])
 
@@ -381,10 +381,10 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
-    with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.delete_rule') as delete_rule,\
-            mock.patch('iptc.easy.add_rule') as add_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
+            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
+            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
+            mock.patch('agent.iptc_helper.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
             rule1
@@ -398,10 +398,10 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
-    with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.delete_rule') as delete_rule,\
-            mock.patch('iptc.easy.add_rule') as add_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
+            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
+            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
+            mock.patch('agent.iptc_helper.add_rule') as add_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
             rule1, rule2
@@ -411,10 +411,10 @@ def test_block_networks(ipt_networks, ipt_rules):
         add_rule.assert_not_called()
         delete_rule.assert_not_called()
 
-    with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.add_rule') as add_rule,\
-            mock.patch('iptc.easy.delete_rule') as delete_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
+            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
+            mock.patch('agent.iptc_helper.add_rule') as add_rule,\
+            mock.patch('agent.iptc_helper.delete_rule') as delete_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([
             rule1, rule2
@@ -427,10 +427,10 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
-    with mock.patch('iptc.easy.has_chain') as has_chain,\
-            mock.patch('iptc.easy.dump_chain') as dump_chain,\
-            mock.patch('iptc.easy.add_rule') as add_rule,\
-            mock.patch('iptc.easy.delete_rule') as delete_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
+            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
+            mock.patch('agent.iptc_helper.add_rule') as add_rule,\
+            mock.patch('agent.iptc_helper.delete_rule') as delete_rule:
         has_chain.return_value = True
         dump_chain.return_value = ([])
 

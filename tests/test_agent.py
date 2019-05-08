@@ -97,7 +97,7 @@ def test_is_bootstrapping_check_filesize(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     with mock.patch('builtins.print') as prn:
-        Path(crt).touch()
+        Path(agent.CLIENT_CERT_PATH).touch()
         assert agent.is_bootstrapping()
         assert mock.call('Certificate found but it is broken') in prn.mock_calls
 
@@ -107,7 +107,7 @@ def test_is_bootstrapping_false_on_valid_cert(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     with mock.patch('builtins.print') as prn:
-        Path(crt).write_text('nonzero')
+        Path(agent.CLIENT_CERT_PATH).write_text('nonzero')
         assert not agent.is_bootstrapping()
         assert not prn.mock_calls
 
@@ -119,7 +119,7 @@ def test_can_read_cert_stat_cert(tmpdir):
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
     with mock.patch('builtins.print') as prn:
-        Path(crt).touch(mode=0o100)
+        # Path(crt).touch(mode=0o100)
         with pytest.raises(SystemExit):
             agent.can_read_cert()
         assert mock.call('Permission denied when trying to read the certificate file.') in prn.mock_calls
@@ -132,8 +132,8 @@ def test_can_read_cert_stat_key(tmpdir):
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
     with mock.patch('builtins.print') as prn:
-        Path(crt).touch(mode=0o600)
-        Path(key).touch(mode=0o100)
+        Path(agent.CLIENT_CERT_PATH).touch(mode=0o600)
+        # Path(agent.CLIENT_KEY_PATH).touch(mode=0o100)
         with pytest.raises(SystemExit):
             agent.can_read_cert()
         assert mock.call('Permission denied when trying to read the key file.') in prn.mock_calls
@@ -146,8 +146,8 @@ def test_can_read_cert_none_on_success(tmpdir):
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
     with mock.patch('builtins.print'):
-        Path(crt).touch(mode=0o600)
-        Path(key).touch(mode=0o600)
+        Path(agent.CLIENT_CERT_PATH).touch(mode=0o600)
+        Path(agent.CLIENT_KEY_PATH).touch(mode=0o600)
         can_read = agent.can_read_cert()
         assert can_read is None
 
@@ -196,7 +196,8 @@ def test_cert_expired(cert):
             'builtins.open',
             mock.mock_open(read_data=cert),
             create=True
-    ):
+    ), mock.patch('agent.can_read_cert') as cr:
+        cr.return_value = True
         assert agent.is_certificate_expired()
 
 
@@ -211,7 +212,8 @@ def test_get_device_id(cert):
             'builtins.open',
             mock.mock_open(read_data=cert),
             create=True
-    ):
+    ), mock.patch('agent.can_read_cert') as cr:
+        cr.return_value = True
         device_id = agent.get_device_id()
         assert device_id == '4853b630822946019393b16c5b710b9e.d.wott.local'
 
@@ -314,11 +316,11 @@ def test_renew_cert(raspberry_cpuinfo, tmpdir, cert, key):
 def test_say_hello_failed(tmpdir, invalid_cert, invalid_key):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
-    Path(crt_path).write_text(invalid_cert)
-    Path(key_path).write_text(invalid_key)
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt_path)
     agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(invalid_cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(invalid_key)
     with mock.patch('builtins.print') as prn:
         with pytest.raises(json.decoder.JSONDecodeError):
             _ = agent.say_hello()
@@ -329,11 +331,11 @@ def test_say_hello_failed(tmpdir, invalid_cert, invalid_key):
 def test_say_hello_ok(tmpdir, cert, key):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
-    Path(crt_path).write_text(cert)
-    Path(key_path).write_text(key)
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt_path)
     agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(key)
     hello = agent.say_hello()
     assert hello['message']
 
@@ -349,22 +351,12 @@ def test_uptime(uptime):
 
 
 def test_firewall_enabled_pos():
-    with mock.patch('iptc.Table') as iptcTable, \
-            mock.patch('iptc.Chain') as iptcChain:
-        iptcTable.return_value = None
-        chain0 = mock.Mock()
-        chain0.name = 'INPUT'
-        chain0.rules = [object()]
-        iptcChain.return_value = chain0
+    with mock.patch('agent.iptc_helper.dump_chain') as dump_chain:
+        dump_chain.return_value = [{'dst': 'DROP'}]
         assert is_firewall_enabled() is True
 
 
 def test_firewall_enabled_neg():
-    with mock.patch('iptc.Table') as iptcTable, \
-            mock.patch('iptc.Chain') as iptcChain:
-        iptcTable.return_value = None
-        chain0 = mock.Mock()
-        chain0.name = 'INPUT'
-        chain0.rules = []
-        iptcChain.return_value = chain0
+    with mock.patch('agent.iptc_helper.dump_chain') as dump_chain:
+        dump_chain.return_value = []
         assert is_firewall_enabled() is False

@@ -6,8 +6,9 @@ idna==2.7
 netifaces==0.10.9
 psutil==5.0.1
 pyOpenSSL==18.0.0
--e git+https://github.com/ldx/python-iptables.git@f8a66414e9e72f02e7e335ef66433400ee218080#egg=python-iptables
+python-iptables==0.13.0
 pytz==2018.9
 requests==2.20.1
 sh==1.12.14
 systemd-python==234
+

@@ -1,4 +1,4 @@
-import iptc
+from . import iptc_helper
 import psutil
 import socket
 from xml.etree import ElementTree as ET
@@ -32,17 +32,13 @@ def nmap_scan(target):
 
 def is_firewall_enabled():
     """Check if FILTER INPUT chain contains any rule"""
-    try:
-        chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
-        return len(chain.rules) > 0
-    except iptc.ip4tc.IPTCError:
-        print('IPTC ERROR')
-        return False
+    chain = iptc_helper.dump_chain('filter', 'INPUT')
+    return len(chain) > 0 if chain else False
 
 
 def get_firewall_rules():
     """Get all FILTER table rules"""
-    return iptc.easy.dump_table('filter')
+    return iptc_helper.dump_table('filter')
 
 
 def netstat_scan():
@@ -127,10 +123,10 @@ def prepare_iptables():
 
     :return: None
     """
-    if not iptc.easy.has_chain(TABLE, DROP_CHAIN):
-        iptc.easy.add_chain(TABLE, DROP_CHAIN)
-        iptc.easy.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}})
-        iptc.easy.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'})
+    if not iptc_helper.has_chain(TABLE, DROP_CHAIN):
+        iptc_helper.add_chain(TABLE, DROP_CHAIN)
+        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}})
+        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'})
 
 
 def update_iptables(table, chain, rules):
@@ -143,13 +139,13 @@ def update_iptables(table, chain, rules):
     :param rules: a list of rules in iptc.easy format
     :return: None
     """
-    existing = iptc.easy.dump_chain(table, chain)
+    existing = iptc_helper.dump_chain(table, chain)
     for r in existing:
         if r.get('comment', None) == WOTT_COMMENT and r not in rules:
-            iptc.easy.delete_rule(table, chain, r)
+            iptc_helper.delete_rule(table, chain, r)
     for r in rules:
         if r not in existing:
-            iptc.easy.add_rule(table, chain, r)
+            iptc_helper.add_rule(table, chain, r)
 
 
 def block_ports(port_list):

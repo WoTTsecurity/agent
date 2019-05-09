@@ -148,20 +148,22 @@ def update_iptables(table, chain, rules):
             iptc_helper.add_rule(table, chain, r)
 
 
-def block_ports(port_list):
+def block_ports(ports_data):
     """
-    Block incoming TCP packets to the ports supplied in the list,
+    Block incoming TCP/UDP packets to the ports supplied in the list,
     unblock previously blocked.
 
-    :param port_list: list of ports to be blocked
+    :param ports_data: dict of protocols/ports to be blocked
     :return: None
     """
     prepare_iptables()
-    rules = [{'protocol': 'tcp',
-              'tcp': {'dport': str(p)},
-              'target': DROP_CHAIN,
-              'comment': WOTT_COMMENT}
-             for p in port_list]
+    rules = []
+    for protocol in ports_data:
+        for p in ports_data[protocol]:
+            rules.append({'protocol': protocol,
+                          'tcp': {'dport': str(p)},
+                          'target': DROP_CHAIN,
+                          'comment': WOTT_COMMENT})
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 

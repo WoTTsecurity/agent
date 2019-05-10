@@ -34,7 +34,7 @@ jobs:
       - deploy:
           command: |
               if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                sudo gem install rake package_cloud
+                gem install rake package_cloud
                 package_cloud push wott/agent/debian/stretch /tmp/deb/*.deb
                 package_cloud push wott/agent/raspbian/stretch /tmp/deb/*.deb
               fi

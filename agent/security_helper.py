@@ -161,7 +161,7 @@ def block_ports(ports_data):
     for protocol in ports_data:
         for p in ports_data[protocol]:
             rules.append({'protocol': protocol,
-                          'tcp': {'dport': str(p)},
+                          protocol: {'dport': str(p)},
                           'target': DROP_CHAIN,
                           'comment': WOTT_COMMENT})
     update_iptables(TABLE, INPUT_CHAIN, rules)

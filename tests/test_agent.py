@@ -367,6 +367,9 @@ def test_block_networks(ipt_networks, ipt_rules):
     rule1, rule2 = ipt_rules
     net1, net2 = ipt_networks
 
+    # Initial state: no networks are blocked
+    # Input: two networks (net1, net2)
+    # Result: net1 and net2 are blocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
             mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
@@ -381,6 +384,9 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
+    # Initial state: net1 is blocked
+    # Input: another network: net2
+    # Result: net2 gets blocked, net1 gets unblocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
             mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
@@ -398,6 +404,9 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
+    # Initial state: two networks (net1, net2) are blocked
+    # Input: two networks (net1, net2)
+    # Result: nothing happens
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
             mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
@@ -411,6 +420,9 @@ def test_block_networks(ipt_networks, ipt_rules):
         add_rule.assert_not_called()
         delete_rule.assert_not_called()
 
+    # Initial state: two networks (net1, net2)
+    # Input: empty
+    # Result: net1 and net2 are unblocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
             mock.patch('agent.iptc_helper.add_rule') as add_rule,\
@@ -427,6 +439,9 @@ def test_block_networks(ipt_networks, ipt_rules):
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
+    # Initial state: empty
+    # Input: empty
+    # Result: nothing happens
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
             mock.patch('agent.iptc_helper.add_rule') as add_rule,\

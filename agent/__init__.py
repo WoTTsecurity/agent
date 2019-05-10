@@ -268,7 +268,7 @@ def send_ping(debug=False, dev=False):
         return
 
     pong = ping.json()
-    security_helper.block_ports(pong.get('block_ports', []))
+    security_helper.block_ports(pong.get('block_ports', {'tcp': [], 'udp': []}))
     security_helper.block_networks(pong.get('block_networks', []))
 
 

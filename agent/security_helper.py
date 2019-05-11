@@ -163,7 +163,7 @@ def block_ports(ports_data):
         'dst': host,
         'target': DROP_CHAIN,
         'comment': WOTT_COMMENT
-    } for host,proto,port in ports_data]
+    } for host, proto, port in ports_data]
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 

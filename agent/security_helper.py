@@ -1,7 +1,10 @@
 from . import iptc_helper
-import psutil
+
 import socket
 from xml.etree import ElementTree as ET
+
+import iptc
+import psutil
 from sh import nmap
 
 
@@ -114,7 +117,7 @@ TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
 OUTPUT_CHAIN = 'OUTPUT'
 INPUT_CHAIN = 'INPUT'
-WOTT_COMMENT = {'comment': 'added by WoTT'}
+WOTT_COMMENT = 'added by WoTT'
 
 
 def prepare_iptables():
@@ -139,13 +142,22 @@ def update_iptables(table, chain, rules):
     :param rules: a list of rules in iptc.easy format
     :return: None
     """
-    existing = iptc_helper.dump_chain(table, chain)
-    for r in existing:
-        if r.get('comment', None) == WOTT_COMMENT and r not in rules:
-            iptc_helper.delete_rule(table, chain, r)
+    iptc_helper.batch_begin()
+    tbl = iptc.Table('filter')
+    tbl.autocommit = False
+    ch = iptc.Chain(tbl, chain)
+
+    for r in ch.rules:
+        for m in r.matches:
+            if m.comment == WOTT_COMMENT:
+                print('deleting')
+                ch.delete_rule(r)
+                break
+
     for r in rules:
-        if r not in existing:
-            iptc_helper.add_rule(table, chain, r)
+        iptc_helper.add_rule(table, chain, r)
+
+    iptc_helper.batch_end()
 
 
 def block_ports(ports_data):

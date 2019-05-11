@@ -134,8 +134,8 @@ def prepare_iptables():
 
 def update_iptables(table, chain, rules):
     """
-    Insert new rules from the supplied list,
-    remove those which are not supplied.
+    Delete all rules marked by WOTT_COMMENT.
+    Then insert new rules from the supplied list.
 
     :param table: table name
     :param chain: chain name
@@ -143,7 +143,7 @@ def update_iptables(table, chain, rules):
     :return: None
     """
     iptc_helper.batch_begin()
-    tbl = iptc.Table('filter')
+    tbl = iptc.Table(table)
     tbl.autocommit = False
     ch = iptc.Chain(tbl, chain)
 

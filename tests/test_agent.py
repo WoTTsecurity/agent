@@ -8,7 +8,7 @@ import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import nmap_scan, is_firewall_enabled, \
-    block_networks
+    block_networks, update_iptables, WOTT_COMMENT
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -371,14 +371,12 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Input: two networks (net1, net2)
     # Result: net1 and net2 are blocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
-            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule:
+            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('iptc.Table'), \
+            mock.patch('iptc.Chain'):
         has_chain.return_value = True
-        dump_chain.return_value = ([])
 
         block_networks([net1, net2])
-        delete_rule.assert_not_called()
         add_rule.assert_has_calls([
             mock.call('filter', 'OUTPUT', rule1),
             mock.call('filter', 'OUTPUT', rule2)
@@ -387,68 +385,51 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Initial state: net1 is blocked
     # Input: another network: net2
     # Result: net2 gets blocked, net1 gets unblocked
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
-            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
+            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('iptc.Table'), \
+            mock.patch('iptc.Chain'):
         has_chain.return_value = True
-        dump_chain.return_value = ([
-            rule1
-        ])
 
         block_networks([net2])
-        delete_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule1)
-        ])
         add_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule2)
-        ])
-
-    # Initial state: two networks (net1, net2) are blocked
-    # Input: two networks (net1, net2)
-    # Result: nothing happens
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
-            mock.patch('agent.iptc_helper.delete_rule') as delete_rule,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule:
-        has_chain.return_value = True
-        dump_chain.return_value = ([
-            rule1, rule2
-        ])
-
-        block_networks([net1, net2])
-        add_rule.assert_not_called()
-        delete_rule.assert_not_called()
-
-    # Initial state: two networks (net1, net2)
-    # Input: empty
-    # Result: net1 and net2 are unblocked
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule,\
-            mock.patch('agent.iptc_helper.delete_rule') as delete_rule:
-        has_chain.return_value = True
-        dump_chain.return_value = ([
-            rule1, rule2
-        ])
-
-        block_networks([])
-        add_rule.assert_not_called()
-        delete_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule1),
             mock.call('filter', 'OUTPUT', rule2)
         ])
 
     # Initial state: empty
     # Input: empty
     # Result: nothing happens
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.dump_chain') as dump_chain,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule,\
-            mock.patch('agent.iptc_helper.delete_rule') as delete_rule:
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
+            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('iptc.Table'), \
+            mock.patch('iptc.Chain'):
         has_chain.return_value = True
-        dump_chain.return_value = ([])
 
         block_networks([])
         add_rule.assert_not_called()
-        delete_rule.assert_not_called()
+
+
+def test_delete_rules():
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
+            mock.patch('agent.iptc_helper.batch_begin'), \
+            mock.patch('agent.iptc_helper.batch_end'), \
+            mock.patch('iptc.Table'), \
+            mock.patch('iptc.Chain') as iptcChain:
+        has_chain.return_value = True
+
+        # Initial state: one rule (r) marked by WOTT_COMMENT, another rule (r0) unmarked
+        # Input: empty
+        # Result: the marked rule (r) gets deleted, unmarked one (r0) stays
+        r = mock.Mock()
+        r0 = mock.Mock()
+        m = mock.Mock()
+        ch = mock.Mock()
+        m.comment = WOTT_COMMENT
+        r.matches = [m]
+        r0.matches = [mock.Mock()]
+        ch.rules = [r, r0]
+        iptcChain.return_value = ch
+
+        update_iptables('filter', 'INPUT', [])
+
+        ch.delete_rule.assert_called_with(r)

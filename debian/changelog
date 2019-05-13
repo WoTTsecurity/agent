@@ -1,3 +1,11 @@
+wott-agent (0.1.4.4) stable; urgency=medium
+
+  * Fix failure in pitables rule removal caused by a bug in iptc.easy.
+  * Block host:port combo instead of just port.
+  * Support blocking UDP (and any other protocol).
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Mon, 13 May 2019 10:39:56 +0000
+
 wott-agent (0.1.4.3) stable; urgency=medium
 
   * Revert python-iptables dependency to the version provided for Stretch.

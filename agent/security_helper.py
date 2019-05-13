@@ -157,13 +157,13 @@ def block_ports(ports_data):
     :return: None
     """
     prepare_iptables()
-    rules = []
-    for protocol in ports_data:
-        for p in ports_data[protocol]:
-            rules.append({'protocol': protocol,
-                          protocol: {'dport': str(p)},
-                          'target': DROP_CHAIN,
-                          'comment': WOTT_COMMENT})
+    rules = [{
+        'protocol': proto,
+        proto: {'dport': str(port)},
+        'dst': host,
+        'target': DROP_CHAIN,
+        'comment': WOTT_COMMENT
+    } for host, proto, port in ports_data]
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 

@@ -56,7 +56,7 @@ def netstat_scan():
         'remote_address': c.raddr,
         'status': c.status if c.type == socket.SOCK_STREAM else None,
         'pid': c.pid
-    } for c in connections]
+    } for c in connections if c.raddr and c.laddr]
 
 
 def process_scan():

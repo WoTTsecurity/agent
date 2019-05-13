@@ -273,6 +273,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     mock.patch('agent.security_helper.process_scan') as ps, \
     mock.patch('agent.security_helper.block_ports') as bp, \
     mock.patch('agent.security_helper.block_networks') as bn, \
+    mock.patch('agent.journal_helper.logins_last_hour') as logins, \
     mock.patch('builtins.print') as prn, \
     mock.patch(
         'builtins.open',
@@ -286,6 +287,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
         getfqdn.return_value = 'localhost'
         bp.return_value = None
         bn.return_value = None
+        logins.return_value = {}
         ping = agent.send_ping()
         assert ping is None
         assert prn.call_count == 0 or (prn.call_count == 1 and mock.call('Ping failed.') in prn.mock_calls)

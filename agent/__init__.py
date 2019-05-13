@@ -238,6 +238,7 @@ def send_ping(debug=False, dev=False):
         'processes': security_helper.process_scan(),
         'firewall_enabled': security_helper.is_firewall_enabled(),
         'firewall_rules': security_helper.get_firewall_rules(),
+        'selinux_status': security_helper.selinux_status(),
         'app_armor_enabled': security_helper.is_app_armor_enabled()
     }
 

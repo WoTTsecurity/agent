@@ -119,7 +119,7 @@ TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
 OUTPUT_CHAIN = 'OUTPUT'
 INPUT_CHAIN = 'INPUT'
-WOTT_COMMENT = 'added by WoTT'
+WOTT_COMMENT = 'Added by WoTT'
 
 
 def prepare_iptables():

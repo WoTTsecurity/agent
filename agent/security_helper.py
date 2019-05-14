@@ -41,12 +41,9 @@ def is_firewall_enabled():
 
 def get_firewall_rules():
     """Get all FILTER table rules"""
-    res = {}
-    for chain_name, chain in iptc_helper.dump_table('filter').items():
-        if chain_name == DROP_CHAIN:
-            continue
-        res[chain_name] = [r for r in chain if r.get('comment') != {'comment': WOTT_COMMENT}]
-    return res
+    table = iptc_helper.dump_table('filter').items()
+    return {chain_name: [rule for rule in chain if rule.get('comment') != {'comment': WOTT_COMMENT}]
+            for chain_name, chain in table if chain_name != DROP_CHAIN}
 
 
 def netstat_scan():
@@ -155,7 +152,6 @@ def update_iptables(table, chain, rules):
     for r in ch.rules:
         for m in r.matches:
             if m.comment == WOTT_COMMENT:
-                print('deleting')
                 ch.delete_rule(r)
                 break
 

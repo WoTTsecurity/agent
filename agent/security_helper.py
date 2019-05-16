@@ -10,11 +10,12 @@ from sh import nmap
 from . import iptc_helper
 
 
-def check_for_default_passwords():
+def check_for_default_passwords(config_path):
     """
     Check if the 'pi' user current password hash is in our list of default password hashes.
     """
-    pass_hashes_file_path = Path('/opt/wott/pass_hashes.txt')  # For deb installation.
+    base_dir = Path(config_path)
+    pass_hashes_file_path = base_dir.joinpath('pass_hashes.txt')  # For deb installation.
     if not pass_hashes_file_path.is_file():
         base_dir = Path(__file__).resolve().parent.parent
         pass_hashes_file_path = base_dir.joinpath('misc/pass_hashes.txt')

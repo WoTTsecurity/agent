@@ -76,14 +76,16 @@ def test_nmap_scan(nmap_fixture):
 
 def test_is_bootstrapping_stat_file(tmpdir):
     agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(tmpdir / 'client.crt')
     with mock.patch('builtins.print') as prn:
         assert agent.is_bootstrapping()
         assert mock.call('No certificate found on disk.') in prn.mock_calls
 
 
 def test_is_bootstrapping_create_dir(tmpdir):
-    notexistent_dir = str(tmpdir / 'notexistent')
-    agent.CERT_PATH = notexistent_dir
+    notexistent_dir = tmpdir / 'notexistent'
+    agent.CERT_PATH = str(notexistent_dir)
+    agent.CLIENT_CERT_PATH = str(notexistent_dir / 'client.crt')
     with mock.patch('os.makedirs') as md, \
             mock.patch('os.chmod') as chm, \
             mock.patch('builtins.print') as prn:

@@ -14,8 +14,10 @@ def check_for_default_passwords():
     """
     Check if the 'pi' user current password hash is in our list of default password hashes.
     """
-    base_dir = Path(__file__).resolve().parent.parent
-    pass_hashes_file_path = base_dir.joinpath('misc/pass_hashes.txt')
+    pass_hashes_file_path = Path('/opt/wott/pass_hashes.txt')  # For deb installation.
+    if not pass_hashes_file_path.is_file():
+        base_dir = Path(__file__).resolve().parent.parent
+        pass_hashes_file_path = base_dir.joinpath('misc/pass_hashes.txt')
     with pass_hashes_file_path.open() as f:
         read_data = f.read()
     hashes = read_data.splitlines()

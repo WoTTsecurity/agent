@@ -241,7 +241,8 @@ def send_ping(debug=False, dev=False):
         'firewall_rules': security_helper.get_firewall_rules(),
         'selinux_status': security_helper.selinux_status(),
         'app_armor_enabled': security_helper.is_app_armor_enabled(),
-        'logins': journal_helper.logins_last_hour()
+        'logins': journal_helper.logins_last_hour(),
+        'default_password': security_helper.check_for_default_passwords()
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

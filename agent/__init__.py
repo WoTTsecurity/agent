@@ -486,3 +486,5 @@ def run(ping=True, debug=False, dev=False):
     with open(INI_PATH, 'w') as configfile:
         config.write(configfile)
     os.chmod(INI_PATH, 0o600)
+
+    send_ping(debug=debug, dev=dev)

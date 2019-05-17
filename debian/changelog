@@ -1,3 +1,9 @@
+wott-agent (0.1.4.7) stable; urgency=medium
+
+  * Merges in multiple PRs.
+
+ -- Viktor Petersson <v@wott.io>  Fri, 17 May 2019 15:56:46 +0600
+
 wott-agent (0.1.4.6) stable; urgency=medium
 
   * Add missing dependency on python-systemd.

@@ -2,13 +2,15 @@ import datetime
 import json
 from unittest import mock
 from pathlib import Path
+
 import pytest
 import freezegun
+
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import nmap_scan, is_firewall_enabled, \
-    block_networks, update_iptables, WOTT_COMMENT
+from agent.security_helper import nmap_scan, is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT
+from agent.security_helper import check_for_default_passwords
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -76,14 +78,16 @@ def test_nmap_scan(nmap_fixture):
 
 def test_is_bootstrapping_stat_file(tmpdir):
     agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(tmpdir / 'client.crt')
     with mock.patch('builtins.print') as prn:
         assert agent.is_bootstrapping()
         assert mock.call('No certificate found on disk.') in prn.mock_calls
 
 
 def test_is_bootstrapping_create_dir(tmpdir):
-    notexistent_dir = str(tmpdir / 'notexistent')
-    agent.CERT_PATH = notexistent_dir
+    notexistent_dir = tmpdir / 'notexistent'
+    agent.CERT_PATH = str(notexistent_dir)
+    agent.CLIENT_CERT_PATH = str(notexistent_dir / 'client.crt')
     with mock.patch('os.makedirs') as md, \
             mock.patch('os.chmod') as chm, \
             mock.patch('builtins.print') as prn:
@@ -270,6 +274,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
     mock.patch('agent.security_helper.nmap_scan') as nm, \
     mock.patch('agent.security_helper.is_firewall_enabled') as fw, \
     mock.patch('agent.security_helper.get_firewall_rules') as fr, \
+    mock.patch('agent.security_helper.check_for_default_passwords') as chdf, \
     mock.patch('agent.security_helper.process_scan') as ps, \
     mock.patch('agent.security_helper.block_ports') as bp, \
     mock.patch('agent.security_helper.block_networks') as bn, \
@@ -283,6 +288,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
         nm.return_value = []
         fw.return_value = False
         fr.return_value = {}
+        chdf.return_value = False
         ps.return_value = []
         getfqdn.return_value = 'localhost'
         bp.return_value = None
@@ -363,6 +369,20 @@ def test_firewall_enabled_neg():
     with mock.patch('agent.iptc_helper.dump_chain') as dump_chain:
         dump_chain.return_value = []
         assert is_firewall_enabled() is False
+
+
+def test_check_for_default_passwords_pos():
+    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='hash1')),\
+            mock.patch('spwd.getspnam') as getspnam:
+        getspnam.return_value.sp_pwdp = 'hash1'
+        assert check_for_default_passwords('/doesntmatter/file.txt')
+
+
+def test_check_for_default_passwords_neg():
+    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='hash1')),\
+            mock.patch('spwd.getspnam') as getspnam:
+        getspnam.return_value.sp_pwdp = 'hash2'
+        assert not check_for_default_passwords('/doesntmatter/file.txt')
 
 
 def test_block_networks(ipt_networks, ipt_rules):

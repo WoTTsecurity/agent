@@ -1,8 +1,20 @@
-wott-agent (0.1.4.7) stable; urgency=medium
+wott-agent (0.1.4.9) stable; urgency=medium
 
   * Merges in multiple PRs.
 
  -- Viktor Petersson <v@wott.io>  Fri, 17 May 2019 15:56:46 +0600
+
+wott-agent (0.1.4.8) stable; urgency=medium
+
+  * Check for default password of user pi.
+
+ -- Roman P <pythonpro@gmail.com>  Thu, 16 May 2019 15:04:09 +0000
+
+wott-agent (0.1.4.7) stable; urgency=medium
+
+  * Send ping after bootstrap.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Thu, 16 May 2019 12:05:08 +0000
 
 wott-agent (0.1.4.6) stable; urgency=medium
 

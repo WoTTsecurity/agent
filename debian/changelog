@@ -1,3 +1,9 @@
+wott-agent (0.1.4.8) stable; urgency=medium
+
+  * Check for default password of user pi.
+
+ -- Roman P <pythonpro@gmail.com>  Thu, 16 May 2019 15:04:09 +0000
+
 wott-agent (0.1.4.7) stable; urgency=medium
 
   * Send ping after bootstrap.

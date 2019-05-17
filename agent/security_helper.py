@@ -1,11 +1,35 @@
-from . import iptc_helper
-
 import socket
-from xml.etree import ElementTree as ET
+from pathlib import Path
+import spwd
 
+from xml.etree import ElementTree as ET
 import iptc
 import psutil
 from sh import nmap
+
+from . import iptc_helper
+
+
+def check_for_default_passwords(config_path):
+    """
+    Check if the 'pi' user current password hash is in our list of default password hashes.
+    """
+    base_dir = Path(config_path)
+    pass_hashes_file_path = base_dir.joinpath('pass_hashes.txt')  # For deb installation.
+    if not pass_hashes_file_path.is_file():
+        base_dir = Path(__file__).resolve().parent.parent
+        pass_hashes_file_path = base_dir.joinpath('misc/pass_hashes.txt')
+    with pass_hashes_file_path.open() as f:
+        read_data = f.read()
+    hashes = read_data.splitlines()
+    try:
+        hash = spwd.getspnam('pi').sp_pwdp
+    except KeyError:
+        pass
+    else:
+        if hash in hashes:
+            return True
+    return False
 
 
 def nmap_scan(target):

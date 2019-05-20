@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="wott-agent",
-    version='0.1.4',
+    version='0.1.5',
 
     author="Viktor Petersson",
     author_email="v@viktopia.io",

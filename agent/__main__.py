@@ -48,8 +48,8 @@ or renews it if necessary.
         print(actions[args.action][0]())
 
 
-PING_INTERVAL = 60*60
-PING_TIMEOUT = 10*60
+PING_INTERVAL = 60 * 60
+PING_TIMEOUT = 10 * 60
 
 
 def run_daemon(debug, dev):

@@ -24,7 +24,7 @@ class Executor():
         Periodic process executor. Calls func and sleeps for interval,
         repeatedly. Kills the process after a timeout.
         Call schedule() to put it into asyncio loop.
-        :param interval: sleep interval between calls, in seconds
+        :param interval: sleep interval between calls, in seconds. If None, Executor will only execute once.
         :param func: the function to call
         :param fargs: function args (tuple) or a single arg
         :param timeout: kill the process after this many seconds

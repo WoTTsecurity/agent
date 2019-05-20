@@ -54,7 +54,7 @@ PING_TIMEOUT = 10*60
 
 def run_daemon(debug, dev):
     exe = executor.Executor(PING_INTERVAL, run, (True, debug, dev),
-                            timeout=PING_TIMEOUT)
+                            timeout=PING_TIMEOUT, debug=debug)
     executor.schedule(exe)
     executor.spin()
 

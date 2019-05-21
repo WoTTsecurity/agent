@@ -44,6 +44,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
+CREDS_PATH = os.path.join(CONFIG_PATH, 'creds.ini')
 
 
 def is_bootstrapping():
@@ -402,6 +403,35 @@ def renew_expired_cert(csr, device_id, debug=False):
         'claim_token': res['claim_token'],
         'fallback_token': res['fallback_token']
     }
+
+
+def fetch_creds(debug, dev):
+    print('Fetching credentials...')
+    can_read_cert()
+
+    creds_req = requests.get(
+        '{}/v0.2/creds'.format(MTLS_ENDPOINT),
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        headers={
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
+        } if dev else {}
+    )
+    if not creds_req.ok:
+        print('Fetching failed.')
+        if debug:
+            print("[RECEIVED] Fetch creds: code {}".format(creds_req.status_code))
+            print("[RECEIVED] Fetch creds: {}".format(creds_req.content))
+    creds = creds_req.json()
+
+    print('Credentials retreived.')
+    if debug:
+        print('Creds: {}'.format(creds))
+
+    config = configparser.ConfigParser()
+    with open(CREDS_PATH, 'w') as configfile:
+        config.write(configfile)
+    os.chmod(CREDS_PATH, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):

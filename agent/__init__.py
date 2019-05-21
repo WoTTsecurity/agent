@@ -422,6 +422,7 @@ def fetch_creds(debug, dev):
         if debug:
             print("[RECEIVED] Fetch creds: code {}".format(creds_req.status_code))
             print("[RECEIVED] Fetch creds: {}".format(creds_req.content))
+        return
     creds = creds_req.json()
 
     print('Credentials retreived.')
@@ -429,6 +430,7 @@ def fetch_creds(debug, dev):
         print('Creds: {}'.format(creds))
 
     config = configparser.ConfigParser()
+    config['DEFAULT'] = creds
     with open(CREDS_PATH, 'w') as configfile:
         config.write(configfile)
     os.chmod(CREDS_PATH, 0o600)

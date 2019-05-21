@@ -1,6 +1,16 @@
 [Unit]
 Description=WoTT Agent
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=200
+StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/wott-agent
+ExecStart=/usr/bin/wott-agent daemon
+Restart=always
+RestartSec=1
+
+[Install]
+Alias=wott-agent
+WantedBy=multi-user.target

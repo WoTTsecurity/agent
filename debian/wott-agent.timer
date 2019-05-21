@@ -1,9 +1,0 @@
-[Unit]
-Description=Run wott-agent hourly
-
-[Timer]
-OnCalendar=hourly
-Persistent=true
-
-[Install]
-WantedBy=timers.target

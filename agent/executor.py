@@ -37,12 +37,12 @@ class Executor():
                        'daemon': daemon}
         self.process = None
         self.oneshot = interval is None
-        self.shouldStop = False
+        self.should_stop = False
         self.debug = debug
 
     async def start(self):
         """ start calling the process periodically """
-        while not self.shouldStop:
+        while not self.should_stop:
             self.executor.submit(self._submit_unpack_kwargs, self.params)
             if self.oneshot:
                 break
@@ -50,7 +50,7 @@ class Executor():
 
     def stop(self):
         """ terminate running process """
-        self.shouldStop = True
+        self.should_stop = True
         if self.process:
             self.process.terminate()
 

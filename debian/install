@@ -1,2 +1,1 @@
-debian/wott-agent.timer lib/systemd/system
 misc/pass_hashes.txt opt/wott

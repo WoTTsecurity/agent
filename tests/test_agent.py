@@ -9,7 +9,7 @@ import freezegun
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import nmap_scan, is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT
+from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT
 from agent.security_helper import check_for_default_passwords
 
 
@@ -67,13 +67,6 @@ def test_failed_logins():
         ]
         result = logins_last_hour()
         assert result == {}
-
-
-def test_nmap_scan(nmap_fixture):
-    with mock.patch('agent.security_helper.nmap') as nmap:
-        nmap.return_value.stdout = nmap_fixture
-        result = nmap_scan('localhost')
-        assert len(result) == 4  # TODO: test keys/values
 
 
 def test_is_bootstrapping_stat_file(tmpdir):

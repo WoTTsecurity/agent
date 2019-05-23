@@ -1,11 +1,11 @@
 import socket
 from pathlib import Path
+from socket import SocketKind
 import spwd
 
 from xml.etree import ElementTree as ET
 import iptc
 import psutil
-from sh import nmap
 
 from . import iptc_helper
 
@@ -32,31 +32,6 @@ def check_for_default_passwords(config_path):
     return False
 
 
-def nmap_scan(target):
-    """
-    Performs an nmap portscan against the
-    target on all TCP/UDP ports.
-    """
-    scan = nmap([target, '-sS', '-sU', '-oX', '-'])
-    dom = ET.fromstring(scan.stdout)
-    result = []
-
-    for dhost in dom.findall('host'):
-        host = dhost.find('address').get('addr')
-        for dport in dhost.findall('ports/port'):
-            proto = dport.get('protocol')
-            port = int(dport.get('portid'))
-            state = dport.find('state').get('state')
-
-            result.append({
-                'host': host,
-                'proto': proto,
-                'port': port,
-                'state': state
-            })
-    return result
-
-
 def is_firewall_enabled():
     """Check if FILTER INPUT chain contains any rule"""
     chain = iptc_helper.dump_chain('filter', 'INPUT')
@@ -75,14 +50,22 @@ def netstat_scan():
     Returns all open inet connections with their addresses and PIDs.
     """
     connections = psutil.net_connections(kind='inet')
-    return [{
-        'ip_version': 4 if c.family == socket.AF_INET else 6,
-        'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
-        'local_address': c.laddr,
-        'remote_address': c.raddr,
-        'status': c.status if c.type == socket.SOCK_STREAM else None,
-        'pid': c.pid
-    } for c in connections]
+    return (
+        [{
+            'ip_version': 4 if c.family == socket.AF_INET else 6,
+            'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
+            'local_address': c.laddr,
+            'remote_address': c.raddr,
+            'status': c.status if c.type == socket.SOCK_STREAM else None,
+            'pid': c.pid
+        } for c in connections if c.raddr],
+        [{
+            'host': c.laddr[0],
+            'port': c.laddr[1],
+            'proto': {SocketKind.SOCK_STREAM: 'tcp', SocketKind.SOCK_DGRAM: 'udp'}.get(c.type),
+            'state': c.status if c.type == socket.SOCK_STREAM else None,
+        } for c in connections if not c.raddr and c.laddr]
+    )
 
 
 def process_scan():

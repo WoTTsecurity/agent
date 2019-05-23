@@ -3,7 +3,6 @@ from pathlib import Path
 from socket import SocketKind
 import spwd
 
-from xml.etree import ElementTree as ET
 import iptc
 import psutil
 

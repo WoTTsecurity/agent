@@ -222,14 +222,14 @@ def get_uptime():
 
 
 def get_open_ports():
-    connections,ports = security_helper.netstat_scan()
+    connections, ports = security_helper.netstat_scan()
     return ports
 
 
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    connections,ports = security_helper.netstat_scan()
+    connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),

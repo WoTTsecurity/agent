@@ -238,19 +238,15 @@ def test_get_ca_cert_none_on_fail():
     assert prn.call_count == 3
 
 
-def test_get_open_ports(nmap_fixture, netif_gateways, netif_ifaddresses):
-    with mock.patch('agent.security_helper.nmap') as nmap, \
-            mock.patch('netifaces.gateways') as gw, \
-            mock.patch('netifaces.ifaddresses') as ifaddr:
-        nmap.return_value.stdout = nmap_fixture
-        gw.return_value = netif_gateways
-        ifaddr.return_value = netif_ifaddresses
-        result = agent.get_open_ports()
-        assert len(result) == 4  # TODO: test keys/values
+def test_get_open_ports(net_connections_fixture, netstat_result):
+    with mock.patch('psutil.net_connections') as net_connections:
+        net_connections.return_value = net_connections_fixture
+        connections_ports = agent.get_open_ports()
+        assert connections_ports == [netstat_result[1]]
 
 
 @pytest.mark.vcr
-def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
+def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, net_connections_fixture):
     crt_path = tmpdir / 'client.crt'
     key_path = tmpdir / 'client.key'
     agent.CERT_PATH = str(tmpdir)
@@ -264,7 +260,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
             create=True
     ), \
     mock.patch('socket.getfqdn') as getfqdn, \
-    mock.patch('agent.security_helper.nmap_scan') as nm, \
+    mock.patch('psutil.net_connections') as net_connections, \
     mock.patch('agent.security_helper.is_firewall_enabled') as fw, \
     mock.patch('agent.security_helper.get_firewall_rules') as fr, \
     mock.patch('agent.security_helper.check_for_default_passwords') as chdf, \
@@ -278,7 +274,7 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, nmap_stdout):
         mock.mock_open(read_data=uptime),
         create=True
     ):  # noqa E213
-        nm.return_value = []
+        net_connections.return_value = net_connections_fixture[0],
         fw.return_value = False
         fr.return_value = {}
         chdf.return_value = False

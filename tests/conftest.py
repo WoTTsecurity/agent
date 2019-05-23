@@ -1,5 +1,7 @@
 import pytest
+import socket
 from agent.security_helper import DROP_CHAIN, WOTT_COMMENT
+from unittest.mock import Mock
 
 
 RASPBERRY_FIXTURE = """
@@ -177,3 +179,41 @@ def ipt_rules():
 @pytest.fixture
 def ipt_networks():
     return ('10.10.10.10', '10.20.10.20')
+
+
+@pytest.fixture
+def net_connections_fixture():
+    return [
+        Mock(family=socket.AF_INET,
+             type=socket.SOCK_STREAM,
+             laddr=('192.168.1.1', 1234),
+             raddr=('192.168.1.2', 1234),
+             status='CONNECTED',
+             pid=1234),
+        Mock(family=socket.AF_INET,
+             type=socket.SOCK_STREAM,
+             laddr=('192.168.1.1', 1234),
+             raddr=(),
+             status='LISTENING',
+             pid=1234)
+    ]
+
+
+@pytest.fixture
+def netstat_result():
+    return (
+        {
+            'ip_version': 4,
+            'type': 'tcp',
+            'local_address': ('192.168.1.1', 1234),
+            'remote_address': ('192.168.1.2', 1234),
+            'status': 'CONNECTED',
+            'pid': 1234
+        },
+        {
+            'host': '192.168.1.1',
+            'port': 1234,
+            'proto': 'tcp',
+            'state': 'LISTENING',
+        }
+    )

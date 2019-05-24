@@ -222,20 +222,21 @@ def get_uptime():
 
 
 def get_open_ports():
-    target = get_primary_ip()
-    return security_helper.nmap_scan(target)
+    connections, ports = security_helper.netstat_scan()
+    return ports
 
 
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
+    connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
-        'scan_info': get_open_ports(),
-        'netstat': security_helper.netstat_scan(),
+        'scan_info': ports,
+        'netstat': connections,
         'processes': security_helper.process_scan(),
         'firewall_enabled': security_helper.is_firewall_enabled(),
         'firewall_rules': security_helper.get_firewall_rules(),

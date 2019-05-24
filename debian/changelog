@@ -1,3 +1,9 @@
+wott-agent (0.1.5.1) stable; urgency=medium
+
+  * Remove nmap dependency.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Fri, 24 May 2019 05:53:29 +0000
+
 wott-agent (0.1.5.0) stable; urgency=medium
 
   * Homegrown periodic process runner.

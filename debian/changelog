@@ -1,3 +1,9 @@
+wott-agent (0.1.5.2) stable; urgency=medium
+
+  * Don't filter out port block rules and WOTT_LOG_DROP.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Fri, 24 May 2019 14:42:24 +0000
+
 wott-agent (0.1.5.1) stable; urgency=medium
 
   * Remove nmap dependency.

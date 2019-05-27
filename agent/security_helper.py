@@ -61,6 +61,7 @@ def netstat_scan():
             'pid': c.pid
         } for c in connections if c.raddr],
         [{
+            'ip_version': 4 if c.family == socket.AF_INET else 6,
             'host': c.laddr[0],
             'port': c.laddr[1],
             'proto': {SocketKind.SOCK_STREAM: 'tcp', SocketKind.SOCK_DGRAM: 'udp'}.get(c.type),

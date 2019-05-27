@@ -1,3 +1,9 @@
+wott-agent (0.1.5.3) stable; urgency=medium
+
+  * Allow blocking ipv6 ports and networks.
+
+ -- Artem Martynovich <artem.martynovich@gmail.com>  Mon, 27 May 2019 06:29:48 +0000
+
 wott-agent (0.1.5.2) stable; urgency=medium
 
   * Don't filter out port block rules and WOTT_LOG_DROP.

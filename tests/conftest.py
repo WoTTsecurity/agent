@@ -178,7 +178,7 @@ def ipt_rules():
 
 @pytest.fixture
 def ipt_networks():
-    return ('10.10.10.10', '10.20.10.20')
+    return (('10.10.10.10', False), ('10.20.10.20', False))
 
 
 @pytest.fixture

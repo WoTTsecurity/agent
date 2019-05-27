@@ -383,14 +383,17 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: net1 and net2 are blocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('agent.iptc_helper.batch_begin'), \
+            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
+            mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
         has_chain.return_value = True
 
         block_networks([net1, net2])
         add_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule1),
-            mock.call('filter', 'OUTPUT', rule2)
+            mock.call('filter', 'OUTPUT', rule1, ipv6=False),
+            mock.call('filter', 'OUTPUT', rule2, ipv6=False)
         ])
 
     # Initial state: net1 is blocked
@@ -398,13 +401,16 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: net2 gets blocked, net1 gets unblocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('agent.iptc_helper.batch_begin'), \
+            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
+            mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
         has_chain.return_value = True
 
         block_networks([net2])
         add_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule2)
+            mock.call('filter', 'OUTPUT', rule2, ipv6=False)
         ])
 
     # Initial state: empty
@@ -412,7 +418,10 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: nothing happens
     with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('agent.iptc_helper.batch_begin'), \
+            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
+            mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
         has_chain.return_value = True
 
@@ -425,6 +434,7 @@ def test_delete_rules():
             mock.patch('agent.iptc_helper.batch_begin'), \
             mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
+            mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain') as iptcChain:
         has_chain.return_value = True
 

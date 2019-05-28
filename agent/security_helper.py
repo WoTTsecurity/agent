@@ -153,15 +153,12 @@ def update_iptables(table, chain, rules):
     :param rules: a list of rules in iptc.easy format
     :return: None
     """
-    iptc_helper.batch_begin(table, ipv6=False)
-    iptc_helper.batch_begin(table, ipv6=True)
-
     tbl4 = iptc.Table(table)
-    ch4 = iptc.Chain(tbl4, chain)
     tbl6 = iptc.Table6(table)
-    ch6 = iptc.Chain(tbl6, chain)
 
-    for ch in (ch4, ch6):
+    for t in (tbl4, tbl6):
+        t.autocommit = False
+        ch = iptc.Chain(t, chain)
         for r in ch.rules:
             for m in r.matches:
                 if m.comment == WOTT_COMMENT:
@@ -171,8 +168,10 @@ def update_iptables(table, chain, rules):
     for r, ipv6 in rules:
         iptc_helper.add_rule(table, chain, r, ipv6=ipv6)
 
-    iptc_helper.batch_end(table, ipv6=True)
-    iptc_helper.batch_end(table, ipv6=False)
+    for t in (tbl4, tbl6):
+        t.commit()
+        t.refresh()
+        t.autocommit = True
 
 
 def block_ports(ports_data: List[Tuple[str, str, int, bool]]):

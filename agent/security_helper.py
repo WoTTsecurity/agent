@@ -153,13 +153,12 @@ def update_iptables(table, chain, rules):
     :param rules: a list of rules in iptc.easy format
     :return: None
     """
-    iptc_helper.batch_begin(table, ipv6=False)
-    iptc_helper.batch_begin(table, ipv6=True)
-
     tbl4 = iptc.Table(table)
+    tbl4.autocommit = False
     ch4 = iptc.Chain(tbl4, chain)
     tbl6 = iptc.Table6(table)
     ch6 = iptc.Chain(tbl6, chain)
+    tbl6.autocommit = False
 
     for ch in (ch4, ch6):
         for r in ch.rules:
@@ -171,8 +170,12 @@ def update_iptables(table, chain, rules):
     for r, ipv6 in rules:
         iptc_helper.add_rule(table, chain, r, ipv6=ipv6)
 
-    iptc_helper.batch_end(table, ipv6=True)
-    iptc_helper.batch_end(table, ipv6=False)
+    tbl4.commit()
+    tbl4.refresh()
+    tbl4.autocommit = True
+    tbl6.commit()
+    tbl6.refresh()
+    tbl6.autocommit = True
 
 
 def block_ports(ports_data: List[Tuple[str, str, int, bool]]):

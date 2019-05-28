@@ -405,7 +405,17 @@ def renew_expired_cert(csr, device_id, debug=False):
     }
 
 
+def setup_endpoints(dev):
+    if dev:
+        global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
+        endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
+        DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
+        WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
+        MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
+
+
 def fetch_creds(debug, dev):
+    setup_endpoints(dev)
     print('Fetching credentials...')
     can_read_cert()
 
@@ -430,20 +440,18 @@ def fetch_creds(debug, dev):
         print('Creds: {}'.format(creds))
 
     config = configparser.ConfigParser()
-    config['DEFAULT'] = creds
+    for c in creds:
+        name, key, value = c['name'], c['key'], c['value']
+        if name not in config:
+            config[name] = {}
+        config[name][key] = value
     with open(CREDS_PATH, 'w') as configfile:
         config.write(configfile)
     os.chmod(CREDS_PATH, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):
-    if dev:
-        global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
-        endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
-        DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
-        WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
-        MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
-
+    setup_endpoints(dev)
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:

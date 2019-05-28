@@ -211,6 +211,7 @@ def netstat_result():
             'pid': 1234
         },
         {
+            'ip_version': 4,
             'host': '192.168.1.1',
             'port': 1234,
             'proto': 'tcp',

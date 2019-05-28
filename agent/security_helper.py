@@ -1,11 +1,11 @@
 import socket
 from pathlib import Path
-from socket import SocketKind
 import spwd
-from typing import List, Tuple
 
+from xml.etree import ElementTree as ET
 import iptc
 import psutil
+from sh import nmap
 
 from . import iptc_helper
 
@@ -32,6 +32,31 @@ def check_for_default_passwords(config_path):
     return False
 
 
+def nmap_scan(target):
+    """
+    Performs an nmap portscan against the
+    target on all TCP/UDP ports.
+    """
+    scan = nmap([target, '-sS', '-sU', '-oX', '-'])
+    dom = ET.fromstring(scan.stdout)
+    result = []
+
+    for dhost in dom.findall('host'):
+        host = dhost.find('address').get('addr')
+        for dport in dhost.findall('ports/port'):
+            proto = dport.get('protocol')
+            port = int(dport.get('portid'))
+            state = dport.find('state').get('state')
+
+            result.append({
+                'host': host,
+                'proto': proto,
+                'port': port,
+                'state': state
+            })
+    return result
+
+
 def is_firewall_enabled():
     """Check if FILTER INPUT chain contains any rule"""
     chain = iptc_helper.dump_chain('filter', 'INPUT')
@@ -41,9 +66,8 @@ def is_firewall_enabled():
 def get_firewall_rules():
     """Get all FILTER table rules"""
     table = iptc_helper.dump_table('filter').items()
-    return {chain_name: [rule for rule in chain
-                         if chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]
-            for chain_name, chain in table}
+    return {chain_name: [rule for rule in chain if rule.get('comment') != {'comment': WOTT_COMMENT}]
+            for chain_name, chain in table if chain_name != DROP_CHAIN}
 
 
 def netstat_scan():
@@ -51,23 +75,14 @@ def netstat_scan():
     Returns all open inet connections with their addresses and PIDs.
     """
     connections = psutil.net_connections(kind='inet')
-    return (
-        [{
-            'ip_version': 4 if c.family == socket.AF_INET else 6,
-            'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
-            'local_address': c.laddr,
-            'remote_address': c.raddr,
-            'status': c.status if c.type == socket.SOCK_STREAM else None,
-            'pid': c.pid
-        } for c in connections if c.raddr],
-        [{
-            'ip_version': 4 if c.family == socket.AF_INET else 6,
-            'host': c.laddr[0],
-            'port': c.laddr[1],
-            'proto': {SocketKind.SOCK_STREAM: 'tcp', SocketKind.SOCK_DGRAM: 'udp'}.get(c.type),
-            'state': c.status if c.type == socket.SOCK_STREAM else None,
-        } for c in connections if not c.raddr and c.laddr]
-    )
+    return [{
+        'ip_version': 4 if c.family == socket.AF_INET else 6,
+        'type': 'udp' if c.type == socket.SOCK_DGRAM else 'tcp',
+        'local_address': c.laddr,
+        'remote_address': c.raddr,
+        'status': c.status if c.type == socket.SOCK_STREAM else None,
+        'pid': c.pid
+    } for c in connections]
 
 
 def process_scan():
@@ -131,16 +146,16 @@ INPUT_CHAIN = 'INPUT'
 WOTT_COMMENT = 'Added by WoTT'
 
 
-def prepare_iptables(ipv6: bool):
+def prepare_iptables():
     """
     Add a log-drop chain which will log a packet and drop it.
 
     :return: None
     """
-    if not iptc_helper.has_chain(TABLE, DROP_CHAIN, ipv6=ipv6):
-        iptc_helper.add_chain(TABLE, DROP_CHAIN, ipv6=ipv6)
-        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}}, ipv6=ipv6)
-        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'}, ipv6=ipv6)
+    if not iptc_helper.has_chain(TABLE, DROP_CHAIN):
+        iptc_helper.add_chain(TABLE, DROP_CHAIN)
+        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}})
+        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'})
 
 
 def update_iptables(table, chain, rules):
@@ -153,28 +168,24 @@ def update_iptables(table, chain, rules):
     :param rules: a list of rules in iptc.easy format
     :return: None
     """
-    tbl4 = iptc.Table(table)
-    tbl6 = iptc.Table6(table)
+    iptc_helper.batch_begin()
+    tbl = iptc.Table(table)
+    tbl.autocommit = False
+    ch = iptc.Chain(tbl, chain)
 
-    for t in (tbl4, tbl6):
-        t.autocommit = False
-        ch = iptc.Chain(t, chain)
-        for r in ch.rules:
-            for m in r.matches:
-                if m.comment == WOTT_COMMENT:
-                    ch.delete_rule(r)
-                    break
+    for r in ch.rules:
+        for m in r.matches:
+            if m.comment == WOTT_COMMENT:
+                ch.delete_rule(r)
+                break
 
-    for r, ipv6 in rules:
-        iptc_helper.add_rule(table, chain, r, ipv6=ipv6)
+    for r in rules:
+        iptc_helper.add_rule(table, chain, r)
 
-    for t in (tbl4, tbl6):
-        t.commit()
-        t.refresh()
-        t.autocommit = True
+    iptc_helper.batch_end()
 
 
-def block_ports(ports_data: List[Tuple[str, str, int, bool]]):
+def block_ports(ports_data):
     """
     Block incoming TCP/UDP packets to the ports supplied in the list,
     unblock previously blocked.
@@ -182,19 +193,18 @@ def block_ports(ports_data: List[Tuple[str, str, int, bool]]):
     :param ports_data: dict of protocols/ports to be blocked
     :return: None
     """
-    prepare_iptables(False)
-    prepare_iptables(True)
-    rules = [({'protocol': proto,
-               proto: {'dport': str(port)},
-               'dst': host,
-               'target': DROP_CHAIN,
-               'comment': WOTT_COMMENT
-               }, ipv6)
-             for host, proto, port, ipv6 in ports_data]
+    prepare_iptables()
+    rules = [{
+        'protocol': proto,
+        proto: {'dport': str(port)},
+        'dst': host,
+        'target': DROP_CHAIN,
+        'comment': WOTT_COMMENT
+    } for host, proto, port in ports_data]
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 
-def block_networks(network_list: List[Tuple[str, bool]]):
+def block_networks(network_list):
     """
     Block outgoing packets to the networks supplied in the list,
     unblock previously blocked.
@@ -202,11 +212,9 @@ def block_networks(network_list: List[Tuple[str, bool]]):
     :param network_list: list of IPs in dot-notation or subnets (<IP>/<mask>)
     :return: None
     """
-    prepare_iptables(False)
-    prepare_iptables(True)
-    rules = [({'dst': n,
-               'target': DROP_CHAIN,
-               'comment': WOTT_COMMENT
-               }, ipv6)
-             for n, ipv6 in network_list]
+    prepare_iptables()
+    rules = [{'dst': n,
+              'target': DROP_CHAIN,
+              'comment': WOTT_COMMENT}
+             for n in network_list]
     update_iptables(TABLE, OUTPUT_CHAIN, rules)

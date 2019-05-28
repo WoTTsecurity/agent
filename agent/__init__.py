@@ -6,6 +6,7 @@ import pytz
 import platform
 import socket
 import netifaces
+import json
 
 from agent import journal_helper
 from agent import rpi_helper
@@ -44,6 +45,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
+CREDS_PATH = os.path.join(CONFIG_PATH, 'credentials')
 
 
 def is_bootstrapping():
@@ -222,21 +224,20 @@ def get_uptime():
 
 
 def get_open_ports():
-    connections, ports = security_helper.netstat_scan()
-    return ports
+    target = get_primary_ip()
+    return security_helper.nmap_scan(target)
 
 
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
-        'scan_info': ports,
-        'netstat': connections,
+        'scan_info': get_open_ports(),
+        'netstat': security_helper.netstat_scan(),
         'processes': security_helper.process_scan(),
         'firewall_enabled': security_helper.is_firewall_enabled(),
         'firewall_rules': security_helper.get_firewall_rules(),
@@ -402,6 +403,57 @@ def renew_expired_cert(csr, device_id, debug=False):
         'claim_token': res['claim_token'],
         'fallback_token': res['fallback_token']
     }
+
+
+def fetch_creds(debug, dev):
+
+    print('Fetching credentials...')
+    can_read_cert()
+
+    creds_req = requests.get(
+        '{}/v0.2/creds'.format(MTLS_ENDPOINT),
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        headers={
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
+        } if dev else {}
+    )
+    if not creds_req.ok:
+        print('Fetching failed.')
+        if debug:
+            print("[RECEIVED] Fetch creds: code {}".format(creds_req.status_code))
+            print("[RECEIVED] Fetch creds: {}".format(creds_req.content))
+        return
+    creds = creds_req.json()
+
+    print('Credentials retreived.')
+    if debug:
+        print('Creds: {}'.format(creds))
+
+    by_names = {}
+    for cred in creds:
+        name = cred['name']
+        if name not in by_names:
+            by_names[name] = {}
+        by_names[name][cred['key']] = cred['value']
+
+    for name in by_names:
+        creds_fname = os.path.join(CREDS_PATH, "{}.json".format(name))
+        stored_creds = {}
+        if os.path.isfile(creds_fname):
+            with open(creds_fname) as json_file:
+                stored_creds = json.load(json_file)
+
+        for cred in by_names[name]:
+            stored_creds[cred] = by_names[name][cred]
+
+        if debug:
+            print('Store credentials: to {} \n {}'.format(creds_fname, stored_creds))
+
+        with open(creds_fname, 'w') as outfile:
+            json.dump(stored_creds, outfile)
+
+        os.chmod(creds_fname, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):

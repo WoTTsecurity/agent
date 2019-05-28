@@ -454,3 +454,85 @@ def test_delete_rules():
         update_iptables('filter', 'INPUT', [])
 
         ch.delete_rule.assert_called_with(r)
+
+
+def test_fetch_creds():
+
+    m = f1 = mock.mock_open()  # That create a handle for the first file
+    f2 = mock.mock_open()
+    m.side_effect = [f1.return_value, f2.return_value]
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(
+        return_value=[
+            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
+            {'name': 'name2', 'key': 'key1', 'value': 'v21'}
+        ]
+    )
+    mock_resp.return_value.ok = True
+
+    with mock.patch('builtins.print'), \
+            mock.patch('agent.can_read_cert') as cr, \
+            mock.patch('requests.get') as req, \
+            mock.patch('builtins.print'), \
+            mock.patch('os.path.isfile') as isf1, \
+            mock.patch('os.path.isfile') as isf2, \
+            mock.patch('builtins.open', m, create=True), \
+            mock.patch('os.chmod'):
+
+        cr.return_value = True
+        req.return_value = mock_resp
+        isf1.return_value = False
+        isf2.return_value = False
+        agent.fetch_creds(False, False)
+
+        f2_check = [
+            mock.call("{}/name2.json".format(agent.CREDS_PATH), "w"),
+            mock.call().__enter__(),
+            mock.call().write('{'),
+            mock.call().write('"key1"'),
+            mock.call().write(': '),
+            mock.call().write('"v21"'),
+            mock.call().write('}'),
+            mock.call().__exit__(None, None, None),
+        ]
+        f1_check = [
+            mock.call("{}/name1.json".format(agent.CREDS_PATH), "w"),
+            mock.call().__enter__(),
+            mock.call().write('{'),
+            mock.call().write('"key1"'),
+            mock.call().write(': '),
+            mock.call().write('"v1"'),
+            mock.call().write('}'),
+            mock.call().__exit__(None, None, None),
+        ]
+
+        f1_first = (f1.mock_calls[0] == f1_check[0])
+        f1_accumulate = []
+        f2_accumulate = []
+
+        for call in f1.mock_calls:
+            if f1_first:
+                f1_accumulate.append(call)
+            else:
+                f2_accumulate.append(call)
+        for call in f2.mock_calls:
+            if f1_first:
+                f2_accumulate.append(call)
+            else:
+                f1_accumulate.append(call)
+
+        if f1_first:
+            f2_accumulate.insert(0, f1_accumulate[-1])
+            del f1_accumulate[-1]
+        else:
+            f1_accumulate.insert(0, f2_accumulate[-1])
+            del f2_accumulate[-1]
+
+        for i in range(len(f1_check)):
+            assert f1_check[i] == f1_accumulate[i]
+
+        for i in range(len(f2_check)):
+            assert f2_check[i] == f2_accumulate[i]
+

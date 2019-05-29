@@ -6,6 +6,7 @@ import pytz
 import platform
 import socket
 import netifaces
+import json
 
 from agent import journal_helper
 from agent import rpi_helper
@@ -44,7 +45,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
-CREDS_PATH = os.path.join(CONFIG_PATH, 'creds.ini')
+CREDS_PATH = os.path.join(CONFIG_PATH, 'credentials')
 
 
 def is_bootstrapping():
@@ -415,7 +416,7 @@ def setup_endpoints(dev):
 
 
 def fetch_creds(debug, dev):
-    setup_endpoints(dev)
+
     print('Fetching credentials...')
     can_read_cert()
 
@@ -439,15 +440,30 @@ def fetch_creds(debug, dev):
     if debug:
         print('Creds: {}'.format(creds))
 
-    config = configparser.ConfigParser()
-    for c in creds:
-        name, key, value = c['name'], c['key'], c['value']
-        if name not in config:
-            config[name] = {}
-        config[name][key] = value
-    with open(CREDS_PATH, 'w') as configfile:
-        config.write(configfile)
-    os.chmod(CREDS_PATH, 0o600)
+    by_names = {}
+    for cred in creds:
+        name = cred['name']
+        if name not in by_names:
+            by_names[name] = {}
+        by_names[name][cred['key']] = cred['value']
+
+    for name in by_names:
+        creds_fname = os.path.join(CREDS_PATH, "{}.json".format(name))
+        stored_creds = {}
+        if os.path.isfile(creds_fname):
+            with open(creds_fname) as json_file:
+                stored_creds = json.load(json_file)
+
+        for cred in by_names[name]:
+            stored_creds[cred] = by_names[name][cred]
+
+        if debug:
+            print('Store credentials: to {} \n {}'.format(creds_fname, stored_creds))
+
+        with open(creds_fname, 'w') as outfile:
+            json.dump(stored_creds, outfile)
+
+        os.chmod(creds_fname, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):

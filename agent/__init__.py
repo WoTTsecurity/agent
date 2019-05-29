@@ -443,9 +443,9 @@ def fetch_credentials(debug, dev):
 
     if not os.path.exists(CREDS_PATH):
         os.mkdir(CREDS_PATH, 0x700)
-        
+
     if not os.path.isdir(CREDS_PATH):
-        print("there is file named as our credentials dir({}), that's strange...delete it".format(CREDS_PATH))
+        print("there is file named as our credentials dir({}), that's strange...".format(CREDS_PATH))
         exit(1)
 
     for f in os.listdir(os.path.join(CREDS_PATH)):

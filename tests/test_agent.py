@@ -456,8 +456,7 @@ def test_delete_rules():
         ch.delete_rule.assert_called_with(r)
 
 
-def test_fetch_credentials_dir_ok(tmpdir):
-
+def test_fetch_credentials(tmpdir):
     agent.CREDS_PATH = str(tmpdir)
     json3_path_str = str(tmpdir / 'name3.json')
     json3_path = Path(json3_path_str)
@@ -490,7 +489,6 @@ def test_fetch_credentials_dir_ok(tmpdir):
 
 
 def test_fetch_credentials_no_dir(tmpdir):
-
     agent.CREDS_PATH = str(tmpdir / 'notexist')
     file_path1 = tmpdir / 'notexist' / 'name1.json'
     file_path2 = tmpdir / 'notexist' / 'name2.json'
@@ -518,4 +516,3 @@ def test_fetch_credentials_no_dir(tmpdir):
         assert Path.exists(file_path2)
         assert Path.read_bytes(file_path1) == b'{"key1": "v1"}'
         assert Path.read_bytes(file_path2) == b'{"key1": "v21"}'
-

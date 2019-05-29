@@ -1,6 +1,6 @@
 import argparse
 from . import run, get_device_id, get_open_ports, say_hello,\
-    get_claim_token, get_claim_url, executor, fetch_creds
+    get_claim_token, get_claim_url, executor, fetch_credentials
 
 
 def main():
@@ -59,7 +59,7 @@ def run_daemon(debug, dev):
                                  timeout=PING_TIMEOUT, debug=debug)
     executor.schedule(ping_exe)
 
-    creds_exe = executor.Executor(CREDS_INTERVAL, fetch_creds, (debug, dev),
+    creds_exe = executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev),
                                   timeout=CREDS_TIMEOUT, debug=debug)
     executor.schedule(creds_exe)
 

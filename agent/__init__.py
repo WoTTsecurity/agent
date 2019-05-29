@@ -415,8 +415,9 @@ def setup_endpoints(dev):
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
 
 
-def fetch_creds(debug, dev):
+def fetch_credentials(debug, dev):
 
+    setup_endpoints(dev)
     print('Fetching credentials...')
     can_read_cert()
 

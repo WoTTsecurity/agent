@@ -456,7 +456,7 @@ def test_delete_rules():
         ch.delete_rule.assert_called_with(r)
 
 
-def test_fetch_creds():
+def test_fetch_credentials():
 
     m = f1 = mock.mock_open()  # That create a handle for the first file
     f2 = mock.mock_open()
@@ -485,7 +485,7 @@ def test_fetch_creds():
         req.return_value = mock_resp
         isf1.return_value = False
         isf2.return_value = False
-        agent.fetch_creds(False, False)
+        agent.fetch_credentials(False, False)
 
         f2_check = [
             mock.call("{}/name2.json".format(agent.CREDS_PATH), "w"),

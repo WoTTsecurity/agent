@@ -538,4 +538,3 @@ def test_fetch_credentials():
 
         for i in range(len(f2_check)):
             assert f2_check[i] == f2_accumulate[i]
-

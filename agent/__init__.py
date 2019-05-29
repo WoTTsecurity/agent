@@ -450,7 +450,7 @@ def fetch_credentials(debug, dev):
 
     for f in os.listdir(os.path.join(CREDS_PATH)):
         if f.endswith(".json"):
-            os.remove(os.path.join(dir, f))
+            os.remove(os.path.join(CREDS_PATH, f))
 
     by_names = {}
     for cred in creds:

@@ -456,11 +456,12 @@ def test_delete_rules():
         ch.delete_rule.assert_called_with(r)
 
 
-def test_fetch_credentials():
+def test_fetch_credentials_dir_ok(tmpdir):
 
-    m = f1 = mock.mock_open()  # That create a handle for the first file
-    f2 = mock.mock_open()
-    m.side_effect = [f1.return_value, f2.return_value]
+    agent.CREDS_PATH = str(tmpdir)
+    json3_path_str = str(tmpdir / 'name3.json')
+    json3_path = Path(json3_path_str)
+    json3_path.write_text('nonzero')
 
     mock_resp = mock.Mock()
     mock_resp.raise_status = 200
@@ -471,70 +472,52 @@ def test_fetch_credentials():
         ]
     )
     mock_resp.return_value.ok = True
-
     with mock.patch('builtins.print'), \
             mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.get') as req, \
-            mock.patch('builtins.print'), \
-            mock.patch('os.path.exists') as dir_exist_mock, \
-            mock.patch('os.mkdir'), \
-            mock.patch('os.path.isdir') as isdir_mock, \
-            mock.patch('os.listdir') as list_dir_mock, \
-            mock.patch('builtins.open', m, create=True), \
-            mock.patch('os.chmod'):
+            mock.patch('builtins.print'):
 
         cr.return_value = True
         req.return_value = mock_resp
-        list_dir_mock.return_value = []
+        mock_resp.return_value.ok = True
         agent.fetch_credentials(False, False)
-        dir_exist_mock.return_value = False
-        isdir_mock.return_value = True
 
-        f2_check = [
-            mock.call("{}/name2.json".format(agent.CREDS_PATH), "w"),
-            mock.call().__enter__(),
-            mock.call().write('{'),
-            mock.call().write('"key1"'),
-            mock.call().write(': '),
-            mock.call().write('"v21"'),
-            mock.call().write('}'),
-            mock.call().__exit__(None, None, None),
+        assert Path.exists(tmpdir / 'name1.json')
+        assert Path.exists(tmpdir / 'name2.json')
+        assert Path.exists(json3_path) is False
+        assert Path.read_bytes(tmpdir / 'name1.json') == b'{"key1": "v1"}'
+        assert Path.read_bytes(tmpdir / 'name2.json') == b'{"key1": "v21"}'
+
+def test_fetch_credentials_no_dir(tmpdir):
+
+    agent.CREDS_PATH = str(tmpdir / 'notexist')
+    file_path1 = tmpdir / 'notexist' / 'name1.json'
+    file_path2 = tmpdir / 'notexist' / 'name2.json'
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(
+        return_value=[
+            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
+            {'name': 'name2', 'key': 'key1', 'value': 'v21'}
         ]
-        f1_check = [
-            mock.call("{}/name1.json".format(agent.CREDS_PATH), "w"),
-            mock.call().__enter__(),
-            mock.call().write('{'),
-            mock.call().write('"key1"'),
-            mock.call().write(': '),
-            mock.call().write('"v1"'),
-            mock.call().write('}'),
-            mock.call().__exit__(None, None, None),
-        ]
+    )
+    mock_resp.return_value.ok = True
+    with mock.patch('builtins.print'), \
+            mock.patch('agent.can_read_cert') as cr, \
+            mock.patch('requests.get') as req, \
+            mock.patch('builtins.print'):
 
-        f1_first = (f1.mock_calls[0] == f1_check[0])
-        f1_accumulate = []
-        f2_accumulate = []
+        cr.return_value = True
+        req.return_value = mock_resp
+        mock_resp.return_value.ok = True
+        agent.fetch_credentials(False, False)
 
-        for call in f1.mock_calls:
-            if f1_first:
-                f1_accumulate.append(call)
-            else:
-                f2_accumulate.append(call)
-        for call in f2.mock_calls:
-            if f1_first:
-                f2_accumulate.append(call)
-            else:
-                f1_accumulate.append(call)
+        assert Path.exists(file_path1)
+        assert Path.exists(file_path2)
+        assert Path.read_bytes(file_path1) == b'{"key1": "v1"}'
+        assert Path.read_bytes(file_path2) == b'{"key1": "v21"}'
 
-        if f1_first:
-            f2_accumulate.insert(0, f1_accumulate[-1])
-            del f1_accumulate[-1]
-        else:
-            f1_accumulate.insert(0, f2_accumulate[-1])
-            del f2_accumulate[-1]
 
-        for i in range(len(f1_check)):
-            assert f1_check[i] == f1_accumulate[i]
 
-        for i in range(len(f2_check)):
-            assert f2_check[i] == f2_accumulate[i]
+

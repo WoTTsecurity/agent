@@ -488,6 +488,7 @@ def test_fetch_credentials_dir_ok(tmpdir):
         assert Path.read_bytes(tmpdir / 'name1.json') == b'{"key1": "v1"}'
         assert Path.read_bytes(tmpdir / 'name2.json') == b'{"key1": "v21"}'
 
+
 def test_fetch_credentials_no_dir(tmpdir):
 
     agent.CREDS_PATH = str(tmpdir / 'notexist')
@@ -517,7 +518,4 @@ def test_fetch_credentials_no_dir(tmpdir):
         assert Path.exists(file_path2)
         assert Path.read_bytes(file_path1) == b'{"key1": "v1"}'
         assert Path.read_bytes(file_path2) == b'{"key1": "v21"}'
-
-
-
 

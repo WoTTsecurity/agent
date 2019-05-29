@@ -476,6 +476,9 @@ def test_fetch_credentials():
             mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.get') as req, \
             mock.patch('builtins.print'), \
+            mock.patch('os.path.exists') as dir_exist_mock, \
+            mock.patch('os.mkdir'), \
+            mock.patch('os.path.isdir') as isdir_mock, \
             mock.patch('os.listdir') as list_dir_mock, \
             mock.patch('builtins.open', m, create=True), \
             mock.patch('os.chmod'):
@@ -484,6 +487,8 @@ def test_fetch_credentials():
         req.return_value = mock_resp
         list_dir_mock.return_value = []
         agent.fetch_credentials(False, False)
+        dir_exist_mock.return_value = False
+        isdir_mock.return_value = True
 
         f2_check = [
             mock.call("{}/name2.json".format(agent.CREDS_PATH), "w"),
@@ -533,3 +538,4 @@ def test_fetch_credentials():
 
         for i in range(len(f2_check)):
             assert f2_check[i] == f2_accumulate[i]
+

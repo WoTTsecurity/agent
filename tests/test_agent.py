@@ -476,15 +476,13 @@ def test_fetch_credentials():
             mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.get') as req, \
             mock.patch('builtins.print'), \
-            mock.patch('os.path.isfile') as isf1, \
-            mock.patch('os.path.isfile') as isf2, \
+            mock.patch('os.listdir') as list_dir_mock, \
             mock.patch('builtins.open', m, create=True), \
             mock.patch('os.chmod'):
 
         cr.return_value = True
         req.return_value = mock_resp
-        isf1.return_value = False
-        isf2.return_value = False
+        list_dir_mock.return_value = []
         agent.fetch_credentials(False, False)
 
         f2_check = [

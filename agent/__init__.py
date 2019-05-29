@@ -441,6 +441,10 @@ def fetch_credentials(debug, dev):
     if debug:
         print('Creds: {}'.format(creds))
 
+    for f in os.listdir(os.path.join(CREDS_PATH)):
+        if f.endswith(".json"):
+            os.remove(os.path.join(dir, f))
+
     by_names = {}
     for cred in creds:
         name = cred['name']
@@ -451,9 +455,6 @@ def fetch_credentials(debug, dev):
     for name in by_names:
         creds_fname = os.path.join(CREDS_PATH, "{}.json".format(name))
         stored_creds = {}
-        if os.path.isfile(creds_fname):
-            with open(creds_fname) as json_file:
-                stored_creds = json.load(json_file)
 
         for cred in by_names[name]:
             stored_creds[cred] = by_names[name][cred]

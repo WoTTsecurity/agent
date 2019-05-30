@@ -9,7 +9,7 @@ import freezegun
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT
+from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT, block_ports
 from agent.security_helper import check_for_default_passwords
 
 
@@ -383,8 +383,6 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: net1 and net2 are blocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('agent.iptc_helper.batch_begin'), \
-            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
             mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
@@ -401,8 +399,6 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: net2 gets blocked, net1 gets unblocked
     with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('agent.iptc_helper.batch_begin'), \
-            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
             mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
@@ -418,8 +414,6 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Result: nothing happens
     with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
             mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('agent.iptc_helper.batch_begin'), \
-            mock.patch('agent.iptc_helper.batch_end'), \
             mock.patch('iptc.Table'), \
             mock.patch('iptc.Table6'), \
             mock.patch('iptc.Chain'):
@@ -427,6 +421,21 @@ def test_block_networks(ipt_networks, ipt_rules):
 
         block_networks([])
         add_rule.assert_not_called()
+
+
+def test_block_ports(ipt_ports, ipt_ports_rules):
+    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
+            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
+            mock.patch('iptc.Table'), \
+            mock.patch('iptc.Table6'), \
+            mock.patch('iptc.Chain'):
+        has_chain.return_value = True
+
+        block_ports(ipt_ports)
+        add_rule.assert_has_calls([
+            mock.call('filter', 'INPUT', r, ipv6=ipv6)
+            for r, ipv6 in ipt_ports_rules
+        ])
 
 
 def test_delete_rules():

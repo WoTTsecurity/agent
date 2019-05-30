@@ -184,13 +184,20 @@ def block_ports(ports_data: List[Tuple[str, str, int, bool]]):
     """
     prepare_iptables(False)
     prepare_iptables(True)
-    rules = [({'protocol': proto,
-               proto: {'dport': str(port)},
-               'dst': host,
-               'target': DROP_CHAIN,
-               'comment': WOTT_COMMENT
-               }, ipv6)
-             for host, proto, port, ipv6 in ports_data]
+
+    def remove_unspecified(r):
+        if r['dst'] in ['0.0.0.0', '::']:
+            del(r['dst'])
+        return r
+
+    rules = [(remove_unspecified({
+        'protocol': proto,
+        proto: {'dport': str(port)},
+        'dst': host,
+        'target': DROP_CHAIN,
+        'comment': WOTT_COMMENT
+    }), ipv6)
+        for host, proto, port, ipv6 in ports_data]
     update_iptables(TABLE, INPUT_CHAIN, rules)
 
 

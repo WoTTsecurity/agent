@@ -45,7 +45,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
-CREDS_PATH = os.path.join(CONFIG_PATH, 'credentials')
+CREDENTIALS_PATH = os.path.join(CONFIG_PATH, 'credentials')
 
 
 def is_bootstrapping():
@@ -421,7 +421,7 @@ def fetch_credentials(debug, dev):
     print('Fetching credentials...')
     can_read_cert()
 
-    creds_req = requests.get(
+    credentials_req = requests.get(
         '{}/v0.2/creds'.format(MTLS_ENDPOINT),
         cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
         headers={
@@ -429,50 +429,51 @@ def fetch_credentials(debug, dev):
             'SSL-CLIENT-VERIFY': 'SUCCESS'
         } if dev else {}
     )
-    if not creds_req.ok:
+    if not credentials_req.ok:
         print('Fetching failed.')
         if debug:
-            print("[RECEIVED] Fetch creds: code {}".format(creds_req.status_code))
-            print("[RECEIVED] Fetch creds: {}".format(creds_req.content))
+            print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
+            print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
         return
-    creds = creds_req.json()
+    credentials = credentials_req.json()
 
     print('Credentials retreived.')
     if debug:
-        print('Creds: {}'.format(creds))
+        print('Credentials: {}'.format(credentials))
 
-    if not os.path.exists(CREDS_PATH):
-        os.mkdir(CREDS_PATH, 0o700)
+    if not os.path.exists(CREDENTIALS_PATH):
+        os.mkdir(CREDENTIALS_PATH, 0o700)
 
-    if not os.path.isdir(CREDS_PATH):
-        print("there is file named as our credentials dir({}), that's strange...".format(CREDS_PATH))
+    if not os.path.isdir(CREDENTIALS_PATH):
+        print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
         exit(1)
 
-    for f in os.listdir(os.path.join(CREDS_PATH)):
+    for f in os.listdir(os.path.join(CREDENTIALS_PATH)):
         if f.endswith(".json"):
-            os.remove(os.path.join(CREDS_PATH, f))
+            os.remove(os.path.join(CREDENTIALS_PATH, f))
 
-    by_names = {}
-    for cred in creds:
+    # group received credentials, by name
+    credentials_by_name = {}
+    for cred in credentials:
         name = cred['name']
-        if name not in by_names:
-            by_names[name] = {}
-        by_names[name][cred['key']] = cred['value']
+        if name not in credentials_by_name:
+            credentials_by_name[name] = {}
+        credentials_by_name[name][cred['key']] = cred['value']
 
-    for name in by_names:
-        creds_fname = os.path.join(CREDS_PATH, "{}.json".format(name))
-        stored_creds = {}
+    for name in credentials_by_name:
+        credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
+        file_credentials = {}
 
-        for cred in by_names[name]:
-            stored_creds[cred] = by_names[name][cred]
+        for cred in credentials_by_name[name]:
+            file_credentials[cred] = credentials_by_name[name][cred]
 
         if debug:
-            print('Store credentials: to {} \n {}'.format(creds_fname, stored_creds))
+            print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
 
-        with open(creds_fname, 'w') as outfile:
-            json.dump(stored_creds, outfile)
+        with open(credential_file_path, 'w') as outfile:
+            json.dump(file_credentials, outfile)
 
-        os.chmod(creds_fname, 0o600)
+        os.chmod(credential_file_path, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):

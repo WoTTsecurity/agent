@@ -457,7 +457,7 @@ def test_delete_rules():
 
 
 def test_fetch_credentials(tmpdir):
-    agent.CREDS_PATH = str(tmpdir)
+    agent.CREDENTIALS_PATH = str(tmpdir)
     json3_path_str = str(tmpdir / 'name3.json')
     json3_path = Path(json3_path_str)
     json3_path.write_text('nonzero')
@@ -467,7 +467,8 @@ def test_fetch_credentials(tmpdir):
     mock_resp.json = mock.Mock(
         return_value=[
             {'name': 'name1', 'key': 'key1', 'value': 'v1'},
-            {'name': 'name2', 'key': 'key1', 'value': 'v21'}
+            {'name': 'name2', 'key': 'key1', 'value': 'v21'},
+            {'name': 'name2', 'key': 'key2', 'value': 'v22'},
         ]
     )
     mock_resp.return_value.ok = True
@@ -484,12 +485,15 @@ def test_fetch_credentials(tmpdir):
         assert Path.exists(tmpdir / 'name1.json')
         assert Path.exists(tmpdir / 'name2.json')
         assert Path.exists(json3_path) is False
-        assert Path.read_bytes(tmpdir / 'name1.json') == b'{"key1": "v1"}'
-        assert Path.read_bytes(tmpdir / 'name2.json') == b'{"key1": "v21"}'
+        with open(str(tmpdir / 'name1.json')) as f:
+            assert json.load(f) == {"key1": "v1"}
+
+        with open(str(tmpdir / 'name2.json')) as f:
+            assert json.load(f) == {"key1": "v21", "key2": "v22"}
 
 
 def test_fetch_credentials_no_dir(tmpdir):
-    agent.CREDS_PATH = str(tmpdir / 'notexist')
+    agent.CREDENTIALS_PATH = str(tmpdir / 'notexist')
     file_path1 = tmpdir / 'notexist' / 'name1.json'
     file_path2 = tmpdir / 'notexist' / 'name2.json'
 
@@ -514,5 +518,9 @@ def test_fetch_credentials_no_dir(tmpdir):
 
         assert Path.exists(file_path1)
         assert Path.exists(file_path2)
-        assert Path.read_bytes(file_path1) == b'{"key1": "v1"}'
-        assert Path.read_bytes(file_path2) == b'{"key1": "v21"}'
+        with open(str(file_path1)) as f:
+            assert json.load(f) == {"key1": "v1"}
+
+        with open( str(file_path2) ) as f:
+            assert json.load(f) == {"key1": "v21"}
+

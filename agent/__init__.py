@@ -6,6 +6,7 @@ import pytz
 import platform
 import socket
 import netifaces
+import json
 
 from agent import journal_helper
 from agent import rpi_helper
@@ -44,6 +45,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
+CREDENTIALS_PATH = os.path.join(CONFIG_PATH, 'credentials')
 
 
 def is_bootstrapping():
@@ -404,7 +406,7 @@ def renew_expired_cert(csr, device_id, debug=False):
     }
 
 
-def run(ping=True, debug=False, dev=False):
+def setup_endpoints(dev):
     if dev:
         global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
         endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
@@ -412,6 +414,70 @@ def run(ping=True, debug=False, dev=False):
         WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
 
+
+def fetch_credentials(debug, dev):
+
+    setup_endpoints(dev)
+    print('Fetching credentials...')
+    can_read_cert()
+
+    credentials_req = requests.get(
+        '{}/v0.2/creds'.format(MTLS_ENDPOINT),
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        headers={
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
+        } if dev else {}
+    )
+    if not credentials_req.ok:
+        print('Fetching failed.')
+        if debug:
+            print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
+            print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
+        return
+    credentials = credentials_req.json()
+
+    print('Credentials retreived.')
+    if debug:
+        print('Credentials: {}'.format(credentials))
+
+    if not os.path.exists(CREDENTIALS_PATH):
+        os.mkdir(CREDENTIALS_PATH, 0o700)
+
+    if not os.path.isdir(CREDENTIALS_PATH):
+        print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
+        exit(1)
+
+    for f in os.listdir(os.path.join(CREDENTIALS_PATH)):
+        if f.endswith(".json"):
+            os.remove(os.path.join(CREDENTIALS_PATH, f))
+
+    # group received credentials, by name
+    credentials_by_name = {}
+    for cred in credentials:
+        name = cred['name']
+        if name not in credentials_by_name:
+            credentials_by_name[name] = {}
+        credentials_by_name[name][cred['key']] = cred['value']
+
+    for name in credentials_by_name:
+        credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
+        file_credentials = {}
+
+        for cred in credentials_by_name[name]:
+            file_credentials[cred] = credentials_by_name[name][cred]
+
+        if debug:
+            print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+
+        with open(credential_file_path, 'w') as outfile:
+            json.dump(file_credentials, outfile)
+
+        os.chmod(credential_file_path, 0o600)
+
+
+def run(ping=True, debug=False, dev=False):
+    setup_endpoints(dev)
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:

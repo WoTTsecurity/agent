@@ -454,3 +454,72 @@ def test_delete_rules():
         update_iptables('filter', 'INPUT', [])
 
         ch.delete_rule.assert_called_with(r)
+
+
+def test_fetch_credentials(tmpdir):
+    agent.CREDENTIALS_PATH = str(tmpdir)
+    json3_path_str = str(tmpdir / 'name3.json')
+    json3_path = Path(json3_path_str)
+    json3_path.write_text('nonzero')
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(
+        return_value=[
+            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
+            {'name': 'name2', 'key': 'key1', 'value': 'v21'},
+            {'name': 'name2', 'key': 'key2', 'value': 'v22'},
+        ]
+    )
+    mock_resp.return_value.ok = True
+    with mock.patch('builtins.print'), \
+            mock.patch('agent.can_read_cert') as cr, \
+            mock.patch('requests.get') as req, \
+            mock.patch('builtins.print'):
+
+        cr.return_value = True
+        req.return_value = mock_resp
+        mock_resp.return_value.ok = True
+        agent.fetch_credentials(False, False)
+
+        assert Path.exists(tmpdir / 'name1.json')
+        assert Path.exists(tmpdir / 'name2.json')
+        assert Path.exists(json3_path) is False
+        with open(str(tmpdir / 'name1.json')) as f:
+            assert json.load(f) == {"key1": "v1"}
+
+        with open(str(tmpdir / 'name2.json')) as f:
+            assert json.load(f) == {"key1": "v21", "key2": "v22"}
+
+
+def test_fetch_credentials_no_dir(tmpdir):
+    agent.CREDENTIALS_PATH = str(tmpdir / 'notexist')
+    file_path1 = tmpdir / 'notexist' / 'name1.json'
+    file_path2 = tmpdir / 'notexist' / 'name2.json'
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(
+        return_value=[
+            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
+            {'name': 'name2', 'key': 'key1', 'value': 'v21'}
+        ]
+    )
+    mock_resp.return_value.ok = True
+    with mock.patch('builtins.print'), \
+            mock.patch('agent.can_read_cert') as cr, \
+            mock.patch('requests.get') as req, \
+            mock.patch('builtins.print'):
+
+        cr.return_value = True
+        req.return_value = mock_resp
+        mock_resp.return_value.ok = True
+        agent.fetch_credentials(False, False)
+
+        assert Path.exists(file_path1)
+        assert Path.exists(file_path2)
+        with open(str(file_path1)) as f:
+            assert json.load(f) == {"key1": "v1"}
+
+        with open(str(file_path2)) as f:
+            assert json.load(f) == {"key1": "v21"}

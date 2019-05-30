@@ -521,6 +521,5 @@ def test_fetch_credentials_no_dir(tmpdir):
         with open(str(file_path1)) as f:
             assert json.load(f) == {"key1": "v1"}
 
-        with open( str(file_path2) ) as f:
+        with open(str(file_path2)) as f:
             assert json.load(f) == {"key1": "v21"}
-

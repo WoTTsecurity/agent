@@ -25,8 +25,8 @@ WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
 DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
 DASH_DEV_PORT = 8000
-WOTT_DEV_PORT = 8000
-MTLS_DEV_PORT = 8000
+WOTT_DEV_PORT = 8001
+MTLS_DEV_PORT = 8002
 
 # Conditional handling for if we're running
 # inside a Snap.
@@ -125,6 +125,28 @@ def generate_device_id(debug=False):
     return device_id_request['device_id']
 
 
+def get_remote_claim_status(debug=False):
+    """
+    Returns the WoTT Device Claim status from the back-end
+    """
+
+    is_claimed_request = requests.get(
+        '{}/v0.2/claimed'.format(MTLS_ENDPOINT),
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        headers={
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
+        } if True else {}
+    )
+    if debug:
+        print("[RECEIVED] Get Device Claim Status: {}".format(is_claimed_request))
+
+    if is_claimed_request.ok:
+        return is_claimed_request.json()['claimed']
+    else:
+        return None
+
+
 def get_device_id():
     """
     Returns the WoTT Device ID (i.e. fqdn) by reading the first subject from
@@ -196,6 +218,12 @@ def get_claim_token():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
     return config['DEFAULT'].get('claim_token', None)
+
+
+def get_claim_status():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].getboolean('claimed', False)
 
 
 def get_fallback_token():
@@ -323,7 +351,7 @@ def sign_cert(csr, device_id, debug=False):
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
         'fallback_token': res['fallback_token'],
-        'is_claimed': False,
+        'claimed': False,
     }
 
 
@@ -364,7 +392,7 @@ def renew_cert(csr, device_id, debug=False):
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
         'fallback_token': res['fallback_token'],
-        'is_claimed': res['is_claimed'],
+        'claimed': res['claimed'],
     }
 
 
@@ -405,22 +433,26 @@ def renew_expired_cert(csr, device_id, debug=False):
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
         'fallback_token': res['fallback_token'],
-        'is_claimed': res['is_claimed'],
+        'claimed': res['claimed'],
     }
 
 
-def setup_endpoints(dev):
+def setup_endpoints(dev, debug):
     if dev:
         global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
         endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
         DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
         WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
+    if debug:
+        print("DASH_ENDPOINT: {}\nWOTT_ENDPOINT: {}\nMTLS_ENDPOINT: {}".format(
+              DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
+              ))
 
 
 def fetch_credentials(debug, dev):
 
-    setup_endpoints(dev)
+    setup_endpoints(dev, debug)
     print('Fetching credentials...')
     can_read_cert()
 
@@ -480,7 +512,7 @@ def fetch_credentials(debug, dev):
 
 
 def run(ping=True, debug=False, dev=False):
-    setup_endpoints(dev)
+    setup_endpoints(dev, debug)
     bootstrapping = is_bootstrapping()
 
     if bootstrapping:
@@ -488,6 +520,17 @@ def run(ping=True, debug=False, dev=False):
         print('Got WoTT ID: {}'.format(device_id))
     else:
         if not time_for_certificate_renewal() and not is_certificate_expired():
+            if not get_claim_status():
+                claimed = get_remote_claim_status(debug=debug)
+                if claimed and str(claimed).lower() == 'true':
+                    config = configparser.ConfigParser()
+                    config.read(INI_PATH)
+                    config['DEFAULT']['claim_token'] = ''
+                    config['DEFAULT']['claimed'] = str(claimed)
+                    with open(INI_PATH, 'w') as configfile:
+                        config.write(configfile)
+                    os.chmod(INI_PATH, 0o600)
+
             if ping:
                 send_ping(debug=debug, dev=dev)
                 time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
@@ -551,9 +594,9 @@ def run(ping=True, debug=False, dev=False):
     print("Writing config...")
     config = configparser.ConfigParser()
     config['DEFAULT'] = {
-        'claim_token': crt['claim_token'],
+        'claim_token': crt['claim_token'] if str(crt['claimed']) == 'False' else '',
         'fallback_token': crt['fallback_token'],
-        'is_claimed': crt['is_claimed'],
+        'claimed': crt['claimed'],
     }
     with open(INI_PATH, 'w') as configfile:
         config.write(configfile)

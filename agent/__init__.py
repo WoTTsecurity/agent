@@ -25,8 +25,8 @@ WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')
 DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
 DASH_DEV_PORT = 8000
-WOTT_DEV_PORT = 8001
-MTLS_DEV_PORT = 8002
+WOTT_DEV_PORT = 8000
+MTLS_DEV_PORT = 8000
 
 # Conditional handling for if we're running
 # inside a Snap.
@@ -322,7 +322,8 @@ def sign_cert(csr, device_id, debug=False):
     return {
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
-        'fallback_token': res['fallback_token']
+        'fallback_token': res['fallback_token'],
+        'is_claimed': False,
     }
 
 
@@ -362,7 +363,8 @@ def renew_cert(csr, device_id, debug=False):
     return {
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
-        'fallback_token': res['fallback_token']
+        'fallback_token': res['fallback_token'],
+        'is_claimed': res['is_claimed'],
     }
 
 
@@ -402,7 +404,8 @@ def renew_expired_cert(csr, device_id, debug=False):
     return {
         'crt': res['certificate'],
         'claim_token': res['claim_token'],
-        'fallback_token': res['fallback_token']
+        'fallback_token': res['fallback_token'],
+        'is_claimed': res['is_claimed'],
     }
 
 
@@ -549,7 +552,8 @@ def run(ping=True, debug=False, dev=False):
     config = configparser.ConfigParser()
     config['DEFAULT'] = {
         'claim_token': crt['claim_token'],
-        'fallback_token': crt['fallback_token']
+        'fallback_token': crt['fallback_token'],
+        'is_claimed': crt['is_claimed'],
     }
     with open(INI_PATH, 'w') as configfile:
         config.write(configfile)

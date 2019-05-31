@@ -182,6 +182,26 @@ def ipt_networks():
 
 
 @pytest.fixture
+def ipt_ports():
+    return [
+        ('0.0.0.0', 'tcp', 80, False),
+        ('::', 'tcp', 80, True),
+        ('192.168.1.1', 'tcp', 80, False),
+        ('fe80::adf3:7685:af9f:c151', 'tcp', 80, True)
+    ]
+
+
+@pytest.fixture
+def ipt_ports_rules():
+    return [
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, False),
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, True),
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'dst': '192.168.1.1', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, False),
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'dst': 'fe80::adf3:7685:af9f:c151', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, True),
+    ]
+
+
+@pytest.fixture
 def net_connections_fixture():
     return [
         Mock(family=socket.AF_INET,

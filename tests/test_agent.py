@@ -361,16 +361,18 @@ def test_firewall_enabled_neg():
 
 
 def test_check_for_default_passwords_pos():
-    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='hash1')),\
+    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='raspberry')),\
             mock.patch('spwd.getspnam') as getspnam:
-        getspnam.return_value.sp_pwdp = 'hash1'
+        # this is a real shadow record for password "raspberry"
+        getspnam.return_value.sp_pwdp = '$6$2tSrLNr4$XblkH.twWBJB.6zxbtyDM4z3Db55SOqdi3MBYPwNXF1Kv5FCGS6jCDdVNsr50kctHZk/W0u2AtyomcQ16EVZQ/'
         assert check_for_default_passwords('/doesntmatter/file.txt')
 
 
 def test_check_for_default_passwords_neg():
-    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='hash1')),\
+    with mock.patch('pathlib.Path.open', mock.mock_open(read_data='raspberry')),\
             mock.patch('spwd.getspnam') as getspnam:
-        getspnam.return_value.sp_pwdp = 'hash2'
+        # this is a real shadow record for password which is not "raspberry"
+        getspnam.return_value.sp_pwdp = '$6$/3W/.H6/$nncROMeVQxTEKRcjCfOwft08WPJm.JLnrlli0mutPZ737kImtHhcROgrYz7k6osr0XwuPDlwRfY.r584iQ425/'
         assert not check_for_default_passwords('/doesntmatter/file.txt')
 
 

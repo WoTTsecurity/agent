@@ -231,6 +231,24 @@ def get_open_ports():
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
+    ping = requests.get(
+        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
+        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+        headers={
+            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+            'SSL-CLIENT-VERIFY': 'SUCCESS'
+        } if dev else {}
+    )
+    if debug:
+        print("[RECEIVED] GET Ping: {}".format(ping.status_code))
+        print("[RECEIVED] GET Ping: {}".format(ping.content))
+    if not ping.ok:
+        print('Ping failed.')
+        return
+    blocklist = ping.json()
+    security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
+    security_helper.block_networks(blocklist.get('block_networks', []))
+
     connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
@@ -254,7 +272,7 @@ def send_ping(debug=False, dev=False):
         payload['device_model'] = rpi_metadata['hardware_model']
 
     if debug:
-        print("[GATHER] Ping: {}".format(payload))
+        print("[GATHER] POST Ping: {}".format(payload))
 
     ping = requests.post(
         '{}/v0.2/ping'.format(MTLS_ENDPOINT),
@@ -267,16 +285,12 @@ def send_ping(debug=False, dev=False):
     )
 
     if debug:
-        print("[RECEIVED] Ping: {}".format(ping.status_code))
-        print("[RECEIVED] Ping: {}".format(ping.content))
+        print("[RECEIVED] POST Ping: {}".format(ping.status_code))
+        print("[RECEIVED] POST Ping: {}".format(ping.content))
 
     if not ping.ok:
         print('Ping failed.')
         return
-
-    pong = ping.json()
-    security_helper.block_ports(pong.get('block_ports', {'tcp': [], 'udp': []}))
-    security_helper.block_networks(pong.get('block_networks', []))
 
 
 def say_hello():

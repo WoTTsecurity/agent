@@ -28,6 +28,7 @@ jobs:
       - run:
           name: Build dpkg packages
           command: |
+            python3 -c 'import version; version.write_changelog()'
             debuild  -i -us -uc -b
             mkdir -p /tmp/deb
             mv ../*.deb /tmp/deb

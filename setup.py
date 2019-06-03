@@ -1,9 +1,12 @@
 from setuptools import setup, find_packages
+import version
 
+
+ver, _, commit = version.version()
 
 setup(
     name="wott-agent",
-    version='0.1.5',
+    version=ver + commit,
 
     author="Viktor Petersson",
     author_email="v@viktopia.io",
@@ -33,10 +36,13 @@ setup(
         'cryptography',
         'idna',
         'netifaces',
+        'psutil',
         'pyOpenSSL',
+        'python-iptables',
         'requests',
         'sh',
-        'pytz'
+        'pytz',
+        'systemd-python'
     ],
 
     entry_points={

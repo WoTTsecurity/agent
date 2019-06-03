@@ -10,16 +10,22 @@ def version():
     master = heads.master
     msg = master.commit.message
     commit = str(master.commit)
-    return ver, msg, commit
+    ncommits = len(list(repo.iter_commits()))
+    return ver, msg, commit, ncommits
+
+
+def version_string(ver, msg, commit, n):
+    return '{}-{}~{}'.format(ver, commit[:7], n), msg
 
 
 def write_changelog():
     import debian.changelog
 
-    ver, msg, commit = version()
+    ver, msg, commit, n = version()
+    ver_str = version_string(ver, msg, commit, n)
     ch = debian.changelog.Changelog(open('debian/changelog'))
     ch.new_block(package='wott-agent',
-                 version=ver + commit,
+                 version=ver_str,
                  distributions='stable',
                  urgency='medium',
                  author="%s <%s>" % debian.changelog.get_maintainer(),

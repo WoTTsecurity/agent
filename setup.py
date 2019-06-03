@@ -2,11 +2,9 @@ from setuptools import setup, find_packages
 import version
 
 
-ver, _, commit = version.version()
-
 setup(
     name="wott-agent",
-    version=ver + commit,
+    version=version.version_string(*version.version()),
 
     author="Viktor Petersson",
     author_email="v@viktopia.io",

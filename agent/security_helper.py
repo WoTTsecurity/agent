@@ -45,10 +45,9 @@ def is_firewall_enabled():
 def get_firewall_rules():
     """Get all FILTER table rules"""
     table = iptc_helper.dump_table('filter').items()
-    return {chain_name: {'rules': [rule for rule in chain if chain_name != 'OUTPUT' or
-                                   rule.get('comment') != {'comment': WOTT_COMMENT}],
-                         'policy': iptc_helper.get_policy('filter', chain_name)}
-            for chain_name, chain in table}
+    return {chain_name: {'rules': [rule for rule in chain if
+                                   chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}],
+                         'policy': iptc_helper.get_policy('filter', chain_name)} for chain_name, chain in table}
 
 
 def netstat_scan():

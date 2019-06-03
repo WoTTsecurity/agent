@@ -349,14 +349,14 @@ def test_uptime(uptime):
 
 
 def test_firewall_enabled_pos():
-    with mock.patch('agent.iptc_helper.dump_chain') as dump_chain:
-        dump_chain.return_value = [{'dst': 'DROP'}]
+    with mock.patch('agent.iptc_helper.get_policy') as get_policy:
+        get_policy.return_value = 'DROP'
         assert is_firewall_enabled() is True
 
 
 def test_firewall_enabled_neg():
-    with mock.patch('agent.iptc_helper.dump_chain') as dump_chain:
-        dump_chain.return_value = []
+    with mock.patch('agent.iptc_helper.get_policy') as get_policy:
+        get_policy.return_value = 'ACCEPT'
         assert is_firewall_enabled() is False
 
 

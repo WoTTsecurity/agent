@@ -15,7 +15,7 @@ def version():
 
 
 def version_string(ver, msg, commit, n):
-    return '{}-{}~{}'.format(ver, commit[:7], n), msg
+    return '{}-{}~{}'.format(ver, n, commit[:7])
 
 
 def write_changelog():

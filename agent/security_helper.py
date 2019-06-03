@@ -33,16 +33,21 @@ def check_for_default_passwords(config_path):
 
 
 def is_firewall_enabled():
-    """Check if FILTER INPUT chain contains any rule"""
-    chain = iptc_helper.dump_chain('filter', 'INPUT')
-    return len(chain) > 0 if chain else False
+    """Check if FILTER INPUT chain has DROP policy enabled"""
+    try:
+        policy = iptc_helper.get_policy('filter', 'INPUT')
+    except (iptc.IPTCError, AttributeError):
+        return False
+    else:
+        return policy == 'DROP'
 
 
 def get_firewall_rules():
     """Get all FILTER table rules"""
     table = iptc_helper.dump_table('filter').items()
-    return {chain_name: [rule for rule in chain
-                         if chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]
+    return {chain_name: {'rules': [rule for rule in chain if chain_name != 'OUTPUT' or
+                                   rule.get('comment') != {'comment': WOTT_COMMENT}],
+                         'policy': iptc_helper.get_policy('filter', chain_name)}
             for chain_name, chain in table}
 
 

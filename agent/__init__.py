@@ -3,6 +3,7 @@ import os
 import requests
 import datetime
 import pytz
+import pkg_resources
 import platform
 import socket
 import netifaces
@@ -20,6 +21,13 @@ from cryptography.x509.oid import NameOID
 from math import floor
 from pathlib import Path
 from sys import exit
+
+
+try:
+    __version__ = pkg_resources.get_distribution('wott-agent')
+except pkg_resources.DistributionNotFound:
+    __version__ = (Path(__file__).parents[1] / 'VERSION').read_text().strip()
+
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 MTLS_ENDPOINT = WOTT_ENDPOINT.replace('api', 'mtls')

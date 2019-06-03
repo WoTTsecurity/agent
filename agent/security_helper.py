@@ -1,3 +1,4 @@
+import crypt
 import socket
 from pathlib import Path
 from socket import SocketKind
@@ -21,14 +22,27 @@ def check_for_default_passwords(config_path):
         pass_hashes_file_path = base_dir.joinpath('misc/pass_hashes.txt')
     with pass_hashes_file_path.open() as f:
         read_data = f.read()
-    hashes = read_data.splitlines()
-    try:
-        hash = spwd.getspnam('pi').sp_pwdp
-    except KeyError:
-        pass
-    else:
-        if hash in hashes:
-            return True
+
+    known_passwords = {}
+    for username_password in read_data.splitlines():
+        username, password = username_password.split(':', maxsplit=1)
+        pw = known_passwords.get(username, [])
+        pw.append(password)
+        known_passwords[username] = pw
+
+    def hash_matches(pwdp, plaintext_password):
+        i = pwdp.rfind('$')
+        salt = pwdp[:i]
+        crypted = crypt.crypt(plaintext_password, salt)
+        return crypted == pwdp
+
+    for shadow in spwd.getspall():
+        encrypted_password = shadow.sp_pwdp
+
+        for password in known_passwords.get(shadow.sp_namp, []):
+            if hash_matches(encrypted_password, password):
+                return True
+
     return False
 
 

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  main:
+    command: bash
+    build:
+      context: .
+      dockerfile: Dockerfile
+    cap_add:
+      - ALL
+    tty: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - .:/usr/src/app
+      - ./opt:/opt/wott
+
+networks:
+  default:
+    external:
+      name: wott

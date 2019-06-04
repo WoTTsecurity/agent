@@ -1,7 +1,7 @@
 import argparse
 from . import run, get_device_id, get_open_ports, say_hello, \
-     get_claim_token, get_claim_url, executor, fetch_credentials, \
-     get_claim_status
+    get_claim_token, get_claim_url, executor, fetch_credentials, \
+    get_claim_status
 
 
 def main():

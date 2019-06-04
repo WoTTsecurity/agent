@@ -1,6 +1,7 @@
 import argparse
-from . import run, get_device_id, get_open_ports, say_hello,\
-    get_claim_token, get_claim_url, executor, fetch_credentials
+from . import run, get_device_id, get_open_ports, say_hello, \
+    get_claim_token, get_claim_url, executor, fetch_credentials, \
+    get_claim_status
 
 
 def main():
@@ -10,7 +11,9 @@ def main():
         'test-cert': (say_hello, "Validate device certificate."),
         'claim-token': (get_claim_token, "Print claim token."),
         'claim-url': (get_claim_url, "Print claim URL."),
-        'daemon': (run_daemon, "Run as daemon")
+        'daemon': (run_daemon, "Run as daemon"),
+        'is-claimed': (get_claim_status, "Check if device is already claimed."),
+
     }
     help_string = "One of the following:\n\n" + "\n".join(
         ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])

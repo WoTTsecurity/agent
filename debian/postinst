@@ -1,5 +1,22 @@
 #DEBHELPER#
 
+CLAIMED=$(wott-agent is-claimed)
+
+if [ "${CLAIMED}" == "True" ]; then
+HELLO="
+Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
+
+Your device is already connected at https://dash.wott.io.
+
+Your device's unique ID is: $(wott-agent whoami)
+
+For more information, visit wott.io/getting-started or drop us a line at hey@wott.io.
+
+Regards,
+The WoTT Team
+
+"
+else
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
@@ -16,5 +33,6 @@ Regards,
 The WoTT Team
 
 "
+fi
 
 printf "$HELLO"

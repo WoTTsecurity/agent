@@ -1,5 +1,6 @@
 import crypt
 import socket
+from itertools import product
 from pathlib import Path
 from socket import SocketKind
 import spwd
@@ -58,16 +59,19 @@ def is_firewall_enabled():
 
 def get_firewall_rules():
     """Get all FILTER table rules"""
-    table = iptc_helper.dump_table('filter').items()
-    chains = {}
-    for chain_name, chain in table:
-        policy = iptc_helper.get_policy('filter', chain_name)
-        rules = {'rules': [rule for rule in chain if
-                 chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]}
-        if policy:
-            rules['policy'] = policy
-        chains[chain_name] = rules
-    return chains
+    tables = {'v6': {}, 'v4': {}}
+    for table_name, ipv6 in product(('filter', 'nat', 'mangle'), (False, True)):
+        table = iptc_helper.dump_table(table_name, ipv6=ipv6).items()
+        chains = {}
+        for chain_name, chain in table:
+            policy = iptc_helper.get_policy(table_name, chain_name, ipv6=ipv6)
+            rules = {'rules': [rule for rule in chain if
+                     chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]}
+            if policy:
+                rules['policy'] = policy
+            chains[chain_name] = rules
+        tables['v6' if ipv6 else 'v4'][table_name] = chains
+    return tables
 
 
 def netstat_scan():

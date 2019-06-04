@@ -27,6 +27,10 @@ setup(
         'Topic :: Utilities',
     ],
 
+    setup_requires=[
+        'GitPython'
+    ],
+
     install_requires=[
         'certifi',
         'cffi',
@@ -40,6 +44,7 @@ setup(
         'requests',
         'sh',
         'pytz',
+        'setuptools',
         'systemd-python'
     ],
 

@@ -218,9 +218,9 @@ def test_target(name, value, ipv6=False):
 def get_policy(table, chain, ipv6=False):
     """ Return the default policy of chain in a table """
     iptc_chain = _iptc_getchain(table, chain, ipv6)
-    p = iptc_chain.get_policy()
-    if p:
-        return p.name
+    policy = iptc_chain.get_policy()
+    if policy:
+        return policy.name
 
 
 def set_policy(table, chain, policy='ACCEPT', ipv6=False):

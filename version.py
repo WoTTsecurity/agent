@@ -1,3 +1,5 @@
+from os import getenv
+
 import git
 import textwrap
 
@@ -5,13 +7,11 @@ import textwrap
 def version():
     ver = open('VERSION').read().strip()
     repo = git.Repo('.')
-    assert not repo.bare
-    heads = repo.heads
-    master = heads.master
-    msg = master.commit.message
-    commit = str(master.commit)
-    ncommits = len(list(repo.iter_commits()))
-    return ver, msg, commit, ncommits
+    head = repo.head.object
+    msg = head.message
+    commit = str(head)
+    build_number = getenv('CIRCLE_BUILD_NUM', '0')
+    return ver, msg, commit, build_number
 
 
 def version_string(ver, msg, commit, n):

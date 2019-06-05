@@ -481,6 +481,7 @@ def test_delete_rules():
 
 
 def test_fetch_credentials(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
     agent.CREDENTIALS_PATH = str(tmpdir)
     json3_path_str = str(tmpdir / 'name3.json')
     json3_path = Path(json3_path_str)
@@ -517,6 +518,7 @@ def test_fetch_credentials(tmpdir):
 
 
 def test_fetch_credentials_no_dir(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
     agent.CREDENTIALS_PATH = str(tmpdir / 'notexist')
     file_path1 = tmpdir / 'notexist' / 'name1.json'
     file_path2 = tmpdir / 'notexist' / 'name2.json'

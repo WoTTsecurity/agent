@@ -63,11 +63,11 @@ def run_daemon(debug, dev):
         executor.Executor(PING_INTERVAL, run, (True, debug, dev), timeout=PING_TIMEOUT, debug=debug),
         executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev), timeout=CREDS_TIMEOUT, debug=debug)
     ]
-    futs = [executor.schedule(exe) for exe in exes]
+    futures = [executor.schedule(exe) for exe in exes]
 
     def stop_exe():
         print('Stopping all tasks...')
-        for fut in futs:
+        for fut in futures:
             fut.cancel()
         for exe in exes:
             exe.stop()

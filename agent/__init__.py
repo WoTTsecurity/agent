@@ -44,6 +44,10 @@ if os.getenv('SNAP_NAME'):
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
     CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+
+if not os.path.isdir(CONFIG_PATH):
+    os.makedirs(CONFIG_PATH)
+    os.chmod(CONFIG_PATH, 0o700)
 Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
@@ -508,9 +512,9 @@ def fetch_credentials(debug, dev):
             print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
             exit(1)
 
-        for f in os.listdir(os.path.join(CREDENTIALS_PATH)):
-            if f.endswith(".json"):
-                os.remove(os.path.join(CREDENTIALS_PATH, f))
+        for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
+            if file.endswith(".json"):
+                os.remove(os.path.join(CREDENTIALS_PATH, file))
 
         # group received credentials, by name
         credentials_by_name = {}

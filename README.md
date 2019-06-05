@@ -2,16 +2,17 @@
 
 # WoTT IoT Agent
 
-**WARNING:** This software is yet not ready for production.
+**WARNING:** WoTT is currently in beta. Use in production at your own risk.
 
 ## What is this?
 
-**tl;dr** Let's Encrypt for IoT (with more bells and whistles).
+**tl;dr** Simplified security for IoT developers
 
-The goals for WoTT Agent is to do two things:
+The goals for WoTT Agent is to:
 
  * Simplify encryption of device communication
  * Provide cryptographic identity of sender (such that the receiver can trust that the sender is who it claims to be)
+ * Enable you to remove hard coded credentials from your application and firmware
 
 The first build-block we need in order to facilitate encrypted communication between two peers is a cryptographic certificate [1]. This is provisioned automatically through the WoTT agent. At its core, this serves both as the means to enable encrypted communication, as well as each unique device’s identity.
 
@@ -38,10 +39,7 @@ $ sudo apt install wott-agent
 
 #### Alternative runtime environments
 
- * [Snap](https://github.com/WoTTsecurity/wott-agent-snap)
- * [Docker](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation-docker-runtime)
  * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advance://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
- * [Balena](https://github.com/WoTTsecurity/wott-agent-balena)
 
 ## Use Cases
 

@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import time, os, threading
 from . import run, get_device_id, get_open_ports, say_hello, \
     get_claim_token, get_claim_url, executor, fetch_credentials, \
     get_claim_status
@@ -57,21 +56,6 @@ PING_INTERVAL = 60 * 60
 PING_TIMEOUT = 10 * 60
 CREDS_INTERVAL = 15 * 60
 CREDS_TIMEOUT = 1 * 60
-
-
-
-def sleeper(lock):
-    if lock:
-        with executor.Locker():
-            pid = '[{}] '.format(os.getpid())
-            print(pid + 'sleeping')
-            time.sleep(0.1)
-            print(pid + 'done')
-    else:
-        pid = '[{}] '.format(os.getpid())
-        print(pid + 'sleeping')
-        time.sleep(0.1)
-        print(pid + 'done')
 
 
 def run_daemon(debug, dev):

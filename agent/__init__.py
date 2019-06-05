@@ -12,6 +12,7 @@ import json
 from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
+from agent.executor import Locker
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -474,7 +475,7 @@ def setup_endpoints(dev, debug):
 
 
 def fetch_credentials(debug, dev):
-    with Locker():
+    with Locker('credentials'):
         setup_endpoints(dev, debug)
         print('Fetching credentials...')
         can_read_cert()
@@ -535,7 +536,7 @@ def fetch_credentials(debug, dev):
 
 
 def run(ping=True, debug=False, dev=False):
-    with Locker():
+    with Locker('ping'):
         setup_endpoints(dev, debug)
         bootstrapping = is_bootstrapping()
 

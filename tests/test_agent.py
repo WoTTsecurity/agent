@@ -1,7 +1,10 @@
+import asyncio
 import datetime
 import json
 from unittest import mock
 from pathlib import Path
+import os
+import time
 
 import pytest
 import freezegun
@@ -11,6 +14,7 @@ from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT, block_ports
 from agent.security_helper import check_for_default_passwords
+from agent import executor
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -563,3 +567,72 @@ def test_get_remote_claim_status(tmpdir, cert, key):
         mock_resp.return_value.ok = True
         claimed = agent.get_remote_claim_status(debug=False)
         assert claimed == 'True'
+
+
+def _is_parallel(tmpdir, use_lock):
+    def _work(f: Path):
+        pid = os.getpid()
+        pid = '[{}] '.format(pid)
+        print(pid + 'sleeping')
+        of = f.open('a+')
+        of.write('{} begin\n'.format(time.time()))
+        time.sleep(0.1)
+        of.write('{} end\n'.format(time.time()))
+        print(pid + 'done')
+
+    def sleeper(lock: bool, f: Path):
+        if lock:
+            with executor.Locker():
+                _work(f)
+        else:
+            _work(f)
+
+    test_files = [tmpdir / 'test_locker_' + str(i) for i in range(2)]
+    exes = [executor.Executor(0.1, sleeper, (use_lock, test_file)) for test_file in test_files]
+    futs = [executor.schedule(exe) for exe in exes]
+
+    def stop_exe():
+        print('STOPPING')
+        for fut in futs:
+            fut.cancel()
+        for exe in exes:
+            exe.stop()
+        asyncio.get_event_loop().stop()
+        print('STOPPED')
+
+    asyncio.get_event_loop().call_later(3, stop_exe)
+    executor.spin()
+    print('SPIN END ' + str(tmpdir))
+    if use_lock:
+        time.sleep(3)
+
+    file_time_pairs = []
+    for f in test_files:
+        of = f.open('r')
+        times = [float(line.split()[0]) for line in of.read().splitlines()]
+        time_pairs = zip(times[0::2], times[1::2])
+        file_time_pairs.append(time_pairs)
+
+    first_pairs, second_pairs = file_time_pairs
+    parallel = False
+    for begin1, end1 in first_pairs:
+        # find a pair in second_pairs such that
+        # begin2 <= begin1 <= end2 or
+        # begin2 <= end1 <= end2 or
+        for begin2, end2 in second_pairs:
+            if begin2 <= begin1 <= end2 or begin2 <= end1 <= end2:
+                print('PARALLEL EXECUTION')
+                parallel = True
+                break
+        if parallel:
+            break
+
+    return parallel
+
+
+def test_locker(tmpdir):
+    assert not _is_parallel(tmpdir, True)
+
+
+def test_no_locker(tmpdir):
+    assert _is_parallel(tmpdir, False)

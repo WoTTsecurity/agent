@@ -3,7 +3,6 @@ import datetime
 import json
 from unittest import mock
 from pathlib import Path
-import os
 import time
 
 import pytest
@@ -569,65 +568,75 @@ def test_get_remote_claim_status(tmpdir, cert, key):
         assert claimed == 'True'
 
 
-def _is_parallel(tmpdir, use_lock):
+def _is_parallel(tmpdir, use_lock: bool):
+    """
+    Execute two "sleepers" at once.
+    :param tmpdir: temp directory where logs and locks will be stored (provided by pytest)
+    :param use_lock: use executor.Locker to execute exclusively
+    :return: whether the two tasks were seen executing in parallel (boolean value)
+    """
     def _work(f: Path):
-        pid = os.getpid()
-        pid = '[{}] '.format(pid)
-        print(pid + 'sleeping')
+        """The actual workload: sleep and write before/after timestamps to provided file"""
         of = f.open('a+')
-        of.write('{} begin\n'.format(time.time()))
+        of.write('{} '.format(time.time()))
         time.sleep(0.1)
-        of.write('{} end\n'.format(time.time()))
-        print(pid + 'done')
+        of.write('{}\n'.format(time.time()))
 
     def sleeper(lock: bool, f: Path):
+        """This task will be executed by executor."""
+        executor.Locker.LOCKDIR = str(tmpdir)  # can't use /var/lock in CircleCI environment
         if lock:
             with executor.Locker():
                 _work(f)
         else:
             _work(f)
 
-    test_files = [tmpdir / 'test_locker_' + str(i) for i in range(2)]
-    exes = [executor.Executor(0.1, sleeper, (use_lock, test_file)) for test_file in test_files]
-    futs = [executor.schedule(exe) for exe in exes]
-
     def stop_exe():
-        print('STOPPING')
+        """Stop execution of tasks launched by executor."""
         for fut in futs:
             fut.cancel()
         for exe in exes:
             exe.stop()
         asyncio.get_event_loop().stop()
-        print('STOPPED')
 
+    def find_parallel(first_pairs, second_pairs):
+        parallel = False
+        for begin1, end1 in first_pairs:
+            # Find a pair in second_pairs overlapping with first_pair.
+            # That means execution was overlapped (parallel).
+            for begin2, end2 in second_pairs:
+                if begin2 <= begin1 <= end2 or begin2 <= end1 <= end2:
+                    parallel = True
+                    break
+            if parallel:
+                break
+        return parallel
+
+    # Schedule two identical tasks to executor. They will write before/after timestamps
+    # to their files every 100 ms.
+    test_files = [tmpdir / 'test_locker_' + str(i) for i in range(2)]
+    exes = [executor.Executor(0.1, sleeper, (use_lock, test_file)) for test_file in test_files]
+    futs = [executor.schedule(exe) for exe in exes]
+
+    # Stop this after 3 seconds
     asyncio.get_event_loop().call_later(3, stop_exe)
     executor.spin()
-    print('SPIN END ' + str(tmpdir))
     if use_lock:
+        # When using Locker the tasks need some additional time to stop.
         time.sleep(3)
 
+    # Parse timestamp files. Split them into (begin, end) tuples.
     file_time_pairs = []
     for f in test_files:
         of = f.open('r')
-        times = [float(line.split()[0]) for line in of.read().splitlines()]
-        time_pairs = zip(times[0::2], times[1::2])
-        file_time_pairs.append(time_pairs)
+        times = []
+        for line in of.read().splitlines():
+            begin, end = line.split()
+            times.append((float(begin), float(end)))
+        file_time_pairs.append(times)
 
     first_pairs, second_pairs = file_time_pairs
-    parallel = False
-    for begin1, end1 in first_pairs:
-        # find a pair in second_pairs such that
-        # begin2 <= begin1 <= end2 or
-        # begin2 <= end1 <= end2 or
-        for begin2, end2 in second_pairs:
-            if begin2 <= begin1 <= end2 or begin2 <= end1 <= end2:
-                print('PARALLEL EXECUTION')
-                parallel = True
-                break
-        if parallel:
-            break
-
-    return parallel
+    return find_parallel(first_pairs, second_pairs) or find_parallel(second_pairs, first_pairs)
 
 
 def test_locker(tmpdir):

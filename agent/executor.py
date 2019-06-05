@@ -133,9 +133,12 @@ def spin():
 
 
 class Locker:
+    LOCKDIR = '/var/lock'
+
     def __enter__(self):
-        self.f = os.open('/var/lock/wott.lock', os.O_WRONLY)
+        self.f = os.open(self.LOCKDIR + '/wott.lock', os.O_WRONLY | os.O_CREAT)
         fcntl.lockf(self.f, fcntl.LOCK_EX)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         fcntl.lockf(self.f, fcntl.LOCK_UN)
+        os.close(self.f)

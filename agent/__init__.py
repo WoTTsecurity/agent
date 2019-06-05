@@ -43,7 +43,8 @@ if os.getenv('SNAP_NAME'):
     CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
-    CONFIG_PATH = os.getenv('CERT_PATH', '/opt/wott')
+    CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.

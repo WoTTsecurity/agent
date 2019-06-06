@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
+import version
 
 
 setup(
     name="wott-agent",
-    version='0.1.5',
+    version=version.version_string(*version.version()),
 
     author="Viktor Petersson",
     author_email="v@viktopia.io",
@@ -26,6 +27,10 @@ setup(
         'Topic :: Utilities',
     ],
 
+    setup_requires=[
+        'GitPython'
+    ],
+
     install_requires=[
         'certifi',
         'cffi',
@@ -33,10 +38,14 @@ setup(
         'cryptography',
         'idna',
         'netifaces',
+        'psutil',
         'pyOpenSSL',
+        'python-iptables',
         'requests',
         'sh',
-        'pytz'
+        'pytz',
+        'setuptools',
+        'systemd-python'
     ],
 
     entry_points={

@@ -2,7 +2,7 @@
 
 CLAIMED=$(wott-agent is-claimed)
 
-if [ "${CLAIMED}" == "True" ]; then
+if [ "${CLAIMED}" = "True" ]; then
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 

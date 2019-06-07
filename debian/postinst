@@ -6,7 +6,7 @@ if [ "${CLAIMED}" = "True" ]; then
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
-Your device is already connected at https://dash.wott.io.
+Your device has already been claimed in the WoTT dashboard (https://dash.wott.io).
 
 Your device's unique ID is: $(wott-agent whoami)
 

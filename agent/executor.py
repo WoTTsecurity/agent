@@ -1,6 +1,7 @@
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+import fcntl
 from multiprocessing import Process
 from multiprocessing import Queue
 from typing import Callable
@@ -122,8 +123,29 @@ def schedule(executor: Executor) -> asyncio.Future:
     :param executor:
     :return: executor.start() wrapped in Future
     """
-    return asyncio.ensure_future(executor.start())
+    awaitable = executor.start()
+    future = asyncio.ensure_future(awaitable)
+    return future
 
 
 def spin():
     asyncio.get_event_loop().run_forever()
+
+
+class Locker:
+    LOCKDIR = '/var/lock'
+    LOCKFILE = 'wott.lock'
+
+    def __init__(self, name=None):
+        if name:
+            self.filename = name + '-' + self.LOCKFILE
+        else:
+            self.filename = self.LOCKFILE
+
+    def __enter__(self):
+        self.f = os.open(self.LOCKDIR + '/' + self.filename, os.O_WRONLY | os.O_CREAT)
+        fcntl.lockf(self.f, fcntl.LOCK_EX)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        fcntl.lockf(self.f, fcntl.LOCK_UN)
+        os.close(self.f)

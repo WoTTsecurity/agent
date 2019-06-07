@@ -12,6 +12,7 @@ import json
 from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
+from agent.executor import Locker
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -42,7 +43,12 @@ if os.getenv('SNAP_NAME'):
     CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
-    CONFIG_PATH = os.getenv('CERT_PATH', '/opt/wott')
+    CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+
+if not os.path.isdir(CONFIG_PATH):
+    os.makedirs(CONFIG_PATH)
+    os.chmod(CONFIG_PATH, 0o700)
+Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
@@ -300,7 +306,7 @@ def send_ping(debug=False, dev=False):
         'app_armor_enabled': security_helper.is_app_armor_enabled(),
         'logins': journal_helper.logins_last_hour(),
         'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
-        'agent_version': __version__
+        'agent_version': str(__version__)
     }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()
@@ -474,155 +480,156 @@ def setup_endpoints(dev, debug):
 
 
 def fetch_credentials(debug, dev):
+    with Locker('credentials'):
+        setup_endpoints(dev, debug)
+        print('Fetching credentials...')
+        can_read_cert()
 
-    setup_endpoints(dev, debug)
-    print('Fetching credentials...')
-    can_read_cert()
+        credentials_req = requests.get(
+            '{}/v0.2/creds'.format(MTLS_ENDPOINT),
+            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+            headers={
+                'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+                'SSL-CLIENT-VERIFY': 'SUCCESS'
+            } if dev else {}
+        )
+        if not credentials_req.ok:
+            print('Fetching failed.')
+            if debug:
+                print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
+                print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
+            return
+        credentials = credentials_req.json()
 
-    credentials_req = requests.get(
-        '{}/v0.2/creds'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
-    if not credentials_req.ok:
-        print('Fetching failed.')
+        print('Credentials retreived.')
         if debug:
-            print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
-            print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
-        return
-    credentials = credentials_req.json()
+            print('Credentials: {}'.format(credentials))
 
-    print('Credentials retreived.')
-    if debug:
-        print('Credentials: {}'.format(credentials))
+        if not os.path.exists(CREDENTIALS_PATH):
+            os.mkdir(CREDENTIALS_PATH, 0o700)
 
-    if not os.path.exists(CREDENTIALS_PATH):
-        os.mkdir(CREDENTIALS_PATH, 0o700)
+        if not os.path.isdir(CREDENTIALS_PATH):
+            print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
+            exit(1)
 
-    if not os.path.isdir(CREDENTIALS_PATH):
-        print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
-        exit(1)
+        for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
+            if file.endswith(".json"):
+                os.remove(os.path.join(CREDENTIALS_PATH, file))
 
-    for f in os.listdir(os.path.join(CREDENTIALS_PATH)):
-        if f.endswith(".json"):
-            os.remove(os.path.join(CREDENTIALS_PATH, f))
+        # group received credentials, by name
+        credentials_by_name = {}
+        for cred in credentials:
+            name = cred['name']
+            if name not in credentials_by_name:
+                credentials_by_name[name] = {}
+            credentials_by_name[name][cred['key']] = cred['value']
 
-    # group received credentials, by name
-    credentials_by_name = {}
-    for cred in credentials:
-        name = cred['name']
-        if name not in credentials_by_name:
-            credentials_by_name[name] = {}
-        credentials_by_name[name][cred['key']] = cred['value']
+        for name in credentials_by_name:
+            credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
+            file_credentials = {}
 
-    for name in credentials_by_name:
-        credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
-        file_credentials = {}
+            for cred in credentials_by_name[name]:
+                file_credentials[cred] = credentials_by_name[name][cred]
 
-        for cred in credentials_by_name[name]:
-            file_credentials[cred] = credentials_by_name[name][cred]
+            if debug:
+                print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
 
-        if debug:
-            print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+            with open(credential_file_path, 'w') as outfile:
+                json.dump(file_credentials, outfile)
 
-        with open(credential_file_path, 'w') as outfile:
-            json.dump(file_credentials, outfile)
-
-        os.chmod(credential_file_path, 0o600)
+            os.chmod(credential_file_path, 0o600)
 
 
 def run(ping=True, debug=False, dev=False):
-    setup_endpoints(dev, debug)
-    bootstrapping = is_bootstrapping()
+    with Locker('ping'):
+        setup_endpoints(dev, debug)
+        bootstrapping = is_bootstrapping()
 
-    if bootstrapping:
-        device_id = generate_device_id(debug=debug)
-        print('Got WoTT ID: {}'.format(device_id))
-    else:
-        if not time_for_certificate_renewal() and not is_certificate_expired():
-            if not get_claim_status():
-                claimed = get_remote_claim_status(debug=debug)
-                if claimed and str(claimed).lower() == 'true':
-                    config = configparser.ConfigParser()
-                    config.read(INI_PATH)
-                    config['DEFAULT']['claim_token'] = ''
-                    config['DEFAULT']['claimed'] = str(claimed)
-                    with open(INI_PATH, 'w') as configfile:
-                        config.write(configfile)
-                    os.chmod(INI_PATH, 0o600)
+        if bootstrapping:
+            device_id = generate_device_id(debug=debug)
+            print('Got WoTT ID: {}'.format(device_id))
+        else:
+            if not time_for_certificate_renewal() and not is_certificate_expired():
+                if not get_claim_status():
+                    claimed = get_remote_claim_status(debug=debug)
+                    if claimed and str(claimed).lower() == 'true':
+                        config = configparser.ConfigParser()
+                        config.read(INI_PATH)
+                        config['DEFAULT']['claim_token'] = ''
+                        config['DEFAULT']['claimed'] = str(claimed)
+                        with open(INI_PATH, 'w') as configfile:
+                            config.write(configfile)
+                        os.chmod(INI_PATH, 0o600)
 
-            if ping:
-                send_ping(debug=debug, dev=dev)
-                time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
-                print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
-                    time_to_cert_expires.days,
-                    floor(time_to_cert_expires.seconds / 60 / 60),
-                    RENEWAL_THRESHOLD,
-                ))
-                exit(0)
-            else:
-                return
-        device_id = get_device_id()
-        print('My WoTT ID is: {}'.format(device_id))
+                if ping:
+                    send_ping(debug=debug, dev=dev)
+                    time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
+                    print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
+                        time_to_cert_expires.days,
+                        floor(time_to_cert_expires.seconds / 60 / 60),
+                        RENEWAL_THRESHOLD,
+                    ))
+                    exit(0)
+                else:
+                    return
+            device_id = get_device_id()
+            print('My WoTT ID is: {}'.format(device_id))
 
-    print('Generating certificate...')
-    gen_key = generate_cert(device_id)
+        print('Generating certificate...')
+        gen_key = generate_cert(device_id)
 
-    ca = get_ca_cert(debug=debug)
-    if not ca:
-        print('Unable to retrieve CA cert. Exiting.')
-        exit(1)
+        ca = get_ca_cert(debug=debug)
+        if not ca:
+            print('Unable to retrieve CA cert. Exiting.')
+            exit(1)
 
-    print('Submitting CSR...')
+        print('Submitting CSR...')
 
-    if bootstrapping:
-        crt = sign_cert(gen_key['csr'], device_id, debug=debug)
-    elif is_certificate_expired():
-        crt = renew_expired_cert(gen_key['csr'], device_id, debug=debug)
-    else:
-        crt = renew_cert(gen_key['csr'], device_id, debug=debug)
+        if bootstrapping:
+            crt = sign_cert(gen_key['csr'], device_id, debug=debug)
+        elif is_certificate_expired():
+            crt = renew_expired_cert(gen_key['csr'], device_id, debug=debug)
+        else:
+            crt = renew_cert(gen_key['csr'], device_id, debug=debug)
 
-    if not crt:
-        print('Unable to sign CSR. Exiting.')
-        exit(1)
+        if not crt:
+            print('Unable to sign CSR. Exiting.')
+            exit(1)
 
-    print('Got Claim Token: {}'.format(crt['claim_token']))
-    print('Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
-        WOTT_ENDPOINT=DASH_ENDPOINT,
-        device_id=device_id,
-        claim_token=crt['claim_token']
-    )
-    )
-    print('Writing certificate and key to disk...')
-    with open(CLIENT_CERT_PATH, 'w') as f:
-        f.write(crt['crt'])
-    os.chmod(CLIENT_CERT_PATH, 0o644)
+        print('Got Claim Token: {}'.format(crt['claim_token']))
+        print('Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+            WOTT_ENDPOINT=DASH_ENDPOINT,
+            device_id=device_id,
+            claim_token=crt['claim_token']
+        )
+        )
+        print('Writing certificate and key to disk...')
+        with open(CLIENT_CERT_PATH, 'w') as f:
+            f.write(crt['crt'])
+        os.chmod(CLIENT_CERT_PATH, 0o644)
 
-    with open(CA_CERT_PATH, 'w') as f:
-        f.write(ca)
-    os.chmod(CA_CERT_PATH, 0o644)
+        with open(CA_CERT_PATH, 'w') as f:
+            f.write(ca)
+        os.chmod(CA_CERT_PATH, 0o644)
 
-    with open(CLIENT_KEY_PATH, 'w') as f:
-        f.write(gen_key['key'])
-    os.chmod(CLIENT_KEY_PATH, 0o600)
+        with open(CLIENT_KEY_PATH, 'w') as f:
+            f.write(gen_key['key'])
+        os.chmod(CLIENT_KEY_PATH, 0o600)
 
-    with open(COMBINED_PEM_PATH, 'w') as f:
-        f.write(gen_key['key'])
-        f.write(crt['crt'])
-    os.chmod(COMBINED_PEM_PATH, 0o600)
+        with open(COMBINED_PEM_PATH, 'w') as f:
+            f.write(gen_key['key'])
+            f.write(crt['crt'])
+        os.chmod(COMBINED_PEM_PATH, 0o600)
 
-    print("Writing config...")
-    config = configparser.ConfigParser()
-    config['DEFAULT'] = {
-        'claim_token': crt['claim_token'] if str(crt['claimed']) == 'False' else '',
-        'fallback_token': crt['fallback_token'],
-        'claimed': crt['claimed'],
-    }
-    with open(INI_PATH, 'w') as configfile:
-        config.write(configfile)
-    os.chmod(INI_PATH, 0o600)
+        print("Writing config...")
+        config = configparser.ConfigParser()
+        config['DEFAULT'] = {
+            'claim_token': crt['claim_token'] if str(crt['claimed']) == 'False' else '',
+            'fallback_token': crt['fallback_token'],
+            'claimed': crt['claimed'],
+        }
+        with open(INI_PATH, 'w') as configfile:
+            config.write(configfile)
+        os.chmod(INI_PATH, 0o600)
 
-    send_ping(debug=debug, dev=dev)
+        send_ping(debug=debug, dev=dev)

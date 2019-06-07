@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 from . import run, get_device_id, get_open_ports, say_hello, \
     get_claim_token, get_claim_url, executor, fetch_credentials, \
     get_claim_status
@@ -58,15 +59,27 @@ CREDS_TIMEOUT = 1 * 60
 
 
 def run_daemon(debug, dev):
-    ping_exe = executor.Executor(PING_INTERVAL, run, (True, debug, dev),
-                                 timeout=PING_TIMEOUT, debug=debug)
-    executor.schedule(ping_exe)
+    exes = [
+        executor.Executor(PING_INTERVAL, run, (True, debug, dev), timeout=PING_TIMEOUT, debug=debug),
+        executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev), timeout=CREDS_TIMEOUT, debug=debug)
+    ]
+    futures = [executor.schedule(exe) for exe in exes]
 
-    creds_exe = executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev),
-                                  timeout=CREDS_TIMEOUT, debug=debug)
-    executor.schedule(creds_exe)
+    def stop_exe():
+        print('Stopping all tasks...')
+        for fut in futures:
+            fut.cancel()
+        for exe in exes:
+            exe.stop()
+        asyncio.get_event_loop().stop()
+        print('All tasks stopped.')
 
-    executor.spin()
+    try:
+        executor.spin()
+        print('Daemon exiting.')
+    except KeyboardInterrupt:
+        print('Daemon was interrupted!')
+        stop_exe()
 
 
 if __name__ == '__main__':

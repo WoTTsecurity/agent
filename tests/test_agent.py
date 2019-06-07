@@ -1,7 +1,9 @@
+import asyncio
 import datetime
 import json
 from unittest import mock
 from pathlib import Path
+import time
 
 import pytest
 import freezegun
@@ -11,6 +13,7 @@ from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT, block_ports
 from agent.security_helper import check_for_default_passwords
+from agent import executor
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -478,6 +481,7 @@ def test_delete_rules():
 
 
 def test_fetch_credentials(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
     agent.CREDENTIALS_PATH = str(tmpdir)
     json3_path_str = str(tmpdir / 'name3.json')
     json3_path = Path(json3_path_str)
@@ -514,6 +518,7 @@ def test_fetch_credentials(tmpdir):
 
 
 def test_fetch_credentials_no_dir(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
     agent.CREDENTIALS_PATH = str(tmpdir / 'notexist')
     file_path1 = tmpdir / 'notexist' / 'name1.json'
     file_path2 = tmpdir / 'notexist' / 'name2.json'
@@ -563,3 +568,106 @@ def test_get_remote_claim_status(tmpdir, cert, key):
         mock_resp.return_value.ok = True
         claimed = agent.get_remote_claim_status(debug=False)
         assert claimed == 'True'
+
+
+def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
+    """
+    Execute two "sleepers" at once.
+    :param tmpdir: temp directory where logs and locks will be stored (provided by pytest)
+    :param use_lock: use executor.Locker to execute exclusively
+    :return: whether the two tasks were seen executing in parallel (boolean value)
+    """
+    def _work(f: Path):
+        """The actual workload: sleep and write before/after timestamps to provided file"""
+        of = f.open('a+')
+        of.write('{} '.format(time.time()))
+        time.sleep(0.1)
+        of.write('{}\n'.format(time.time()))
+
+    def sleeper(lock: bool, f: Path, lockname: str):
+        """This task will be executed by executor."""
+        executor.Locker.LOCKDIR = str(tmpdir)  # can't use /var/lock in CircleCI environment
+        if lock:
+            with executor.Locker(lockname):
+                _work(f)
+        else:
+            _work(f)
+
+    def stop_exe():
+        """Stop execution of tasks launched by executor."""
+        for fut in futs:
+            fut.cancel()
+        for exe in exes:
+            exe.stop()
+        asyncio.get_event_loop().stop()
+
+    def find_parallel(first_pairs, second_pairs):
+        parallel = False
+        for begin1, end1 in first_pairs:
+            # Find a pair in second_pairs overlapping with first_pair.
+            # That means execution was overlapped (parallel).
+            for begin2, end2 in second_pairs:
+                if begin2 <= begin1 <= end2 or begin2 <= end1 <= end2:
+                    parallel = True
+                    break
+            if parallel:
+                break
+        return parallel
+
+    def is_parallel(timestamp_files):
+        # Parse timestamp files. Split them into (begin, end) tuples.
+        file_time_pairs = []
+        for f in timestamp_files:
+            of = f.open('r')
+            times = []
+            for line in of.read().splitlines():
+                begin, end = line.split()
+                times.append((float(begin), float(end)))
+            file_time_pairs.append(times)
+
+        first_pairs, second_pairs = file_time_pairs
+        return find_parallel(first_pairs, second_pairs) or find_parallel(second_pairs, first_pairs)
+
+    # Schedule two identical tasks to executor. They will write before/after timestamps
+    # to their files every 100 ms.
+    test_files = [tmpdir / 'test_locker_' + str(i) for i in range(2)]
+    exes = [executor.Executor(0.1, sleeper, (use_lock, test_file, 'one')) for test_file in test_files]
+
+    # If testing independent locking, schedule another couple of tasks with another lock and another
+    # set of timestamp files.
+    if use_pairs:
+        test_files_2 = [tmpdir / 'test_locker_2_' + str(i) for i in range(2)]
+        exes += [executor.Executor(0.1, sleeper, (use_lock, test_file, 'two')) for test_file in test_files_2]
+
+    futs = [executor.schedule(exe) for exe in exes]
+
+    # Stop this after 3 seconds
+    asyncio.get_event_loop().call_later(3, stop_exe)
+    executor.spin()
+    if use_lock:
+        # When using Locker the tasks need some additional time to stop.
+        time.sleep(3)
+
+    if use_pairs:
+        # If testing independent locking, find out:
+        # - whether first couple of tasks were executed in parallel
+        # - whether second couple of tasks were executed in parallel
+        # - whether tasks from both couples were executed in parallel
+        return is_parallel(test_files), \
+            is_parallel(test_files_2), \
+            is_parallel((test_files[0], test_files_2[0]))
+    else:
+        return is_parallel(test_files)
+
+
+def test_locker(tmpdir):
+    assert not _is_parallel(tmpdir, True)
+
+
+def test_no_locker(tmpdir):
+    assert _is_parallel(tmpdir, False)
+
+
+def test_independent_lockers(tmpdir):
+    one, two, both = _is_parallel(tmpdir, True, True)
+    assert (one, two, both) == (False, False, True)

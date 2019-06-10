@@ -45,6 +45,16 @@ $ sudo apt install wott-agent
 
 The certificates used for the WoTT agent can be use for a number of use cases. Here are some ideas to help you get started:
 
+### Credential Management
+
+ * To be written
+
+### TLS/mTLS Access Control
+
+* To be written
+
+### Outdated
+
  * [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp)
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
  * [Google Core IoT](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/google-core-iot)

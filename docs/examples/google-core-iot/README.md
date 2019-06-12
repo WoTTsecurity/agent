@@ -85,7 +85,7 @@ For information on how to update/rotate the key of your device, you need to issu
 
 To test the connection, we will use Google's [MQTT example code](https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/iot/api-client/mqtt_example).
 
-On your device, run the following commands
+On your device, run the following commands:
 
 ```
 $ sudo apt install -y git-core python3-pip wget
@@ -100,7 +100,10 @@ $ pip install -r requirements.txt
 $ wget https://pki.google.com/roots.pem
 ```
 
-We have now installed everything we need to start the agent, so let's give it a shot:
+We have now installed everything we need to start the agent, so let's give it a shot with an example.
+You will need to ensure you remain in the current directory. 
+
+Run the following (ensuring you substitute the correct details):
 
 
 ```
@@ -108,7 +111,7 @@ $ sudo -E ./venv/bin/python cloudiot_mqtt_example.py \
     --project=PROJECT_ID \
     --cloud_region=REGION \
     --registry=REGISTRY_ID \
-    --device=DEVICE_ID \
+    --device=GOOGLE_DEVICE_ID \
     --private_key_file=/opt/wott/certs/client.key \
     --algorithm ES256 \
     --ca_certs=roots.pem \
@@ -116,6 +119,7 @@ $ sudo -E ./venv/bin/python cloudiot_mqtt_example.py \
     device_demo
 ```
 
+You should now see that your device is publishing messages.
 
 ## Verify the connection
 

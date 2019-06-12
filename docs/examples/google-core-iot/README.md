@@ -2,7 +2,7 @@
 
 Before we get started, you need to install the `gcloud` tool. This is used to interact with Google's services. You can find installation instructions [here](https://cloud.google.com/iot/docs/how-tos/getting-started). Follow the instructions for your specific distribution.
 
-You will also need to have at least one device with the [WoTT agent installed](https://https://github.com/WoTTsecurity/agent) if you do not already. This will provide you with your unique device ID and token which can be added to the [WoTT dashboard](https://dash.wott.io) as per instructions.
+You will also need to have at least one device with the [WoTT agent installed](https://https://github.com/WoTTsecurity/agent) if you do not already. This will provide you with your unique Device ID and token which can be added to the [WoTT dashboard](https://dash.wott.io) as per instructions. You will need the Device ID later.
 
 Finally, you also need to have `curl` and `jq` installed (both should be available in your favorite package manager)
 
@@ -38,6 +38,7 @@ $ export DEVICE_ID=mydevice.d.wott.local
 $ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID" | jq -r '.certificate' > device.crt
 ```
 
+replacing `mydevice` with the relevant certificate of your device (which can be found on the WoTT dash).
 With the certificate downloaded, we can now enroll the device:
 
 ```
@@ -48,7 +49,7 @@ $ gcloud iot devices create "$DEVICE_ID" \
     --public-key path=device.crt,type=es256-x509-pem
 ```
 
-**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements), so you might need to prefix your devices, as the WoTT Device ID can start with a latter.
+**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements), so you might need to prefix your devices, as the WoTT Device ID can start with a letter.
 
 We now have our first device enrolled. Please do however note that the WoTT uses short-lived certificates (7 days), so you will need to upload these certificates every week.
 

@@ -30,7 +30,10 @@ That's it. We have now created a WoTT enabled Google CoreIoT registry. Now we ne
 
 ## Enrolling devices
 
-The first thing we need to do is to download the certificate of the device. To do that we issue an API call to WoTT's API:
+The first thing we need to do is to download the certificate of the device. To do that we nned to issue an API call to WoTT's API.
+To do this, you will need the Device ID of the WoTT agent-enabled device. The relevant information of your device can be found on the WoTT Dash. 
+
+If you do not have the dash set up, you can manually retrieve this information via command line using: `$ sudo wott-agent whoami` and substitute that value into `mydevice` as follows:
 
 
 ```
@@ -38,21 +41,7 @@ $ export DEVICE_ID=mydevice.d.wott.local
 $ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
 ```
 
-replacing `mydevice` with the relevant information of your device (which can be found on the WoTT dash). If you do not have the dash set up, you can manually retrieve this information via command line using:
-
-```
-$ sudo wott-agent whoami
-
-```
-and substitute that value into `mydevice`
-
-**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
-The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can either start with either a letter *or* a number. 
-
-Therefore, you will need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. 
-In order to communicate with either WoTT or Google services, you will need to use the corresponding Device ID for each service, however in many cases this will be the same.
-
-If your WoTT ID **does** start with a number, do the following commands instead:
+If your WoTT ID starts with a number, do the following commands instead:
 
 
 ```
@@ -64,6 +53,11 @@ $ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
 
 This achieves the same as before but gives you a valid Google Device ID that you can use to communicate with Google's services.
 
+**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
+The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can start with either a letter *or* a number. 
+
+Therefore, you will need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. 
+In order to communicate with either WoTT or Google services, you will need to use the corresponding Device ID for each service; however in many cases this will be the same.
 
 With the certificate downloaded, we can now enroll the device (ensure you use the correct Device ID):
 

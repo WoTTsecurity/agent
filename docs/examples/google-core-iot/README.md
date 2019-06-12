@@ -13,7 +13,7 @@ First we need to get the CA certificate:
 $ curl -s https://api.wott.io/v0.2/ca | jq -r '.ca_certificate' > ca.crt
 ```
 
-Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic. 
+Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic. Available regions for Cloud IoT are `us-central1`, `europe-west1`, and `asia-east1`. 
 
 ```
 $ gcloud iot registries create REGISTRY_ID \
@@ -25,7 +25,7 @@ $ gcloud iot registries create REGISTRY_ID \
     --state-pubsub-topic=wott-pubsub
 ```
 
-Available regions for Cloud IoT are `us-central1`, `europe-west1`, and `asia-east1`. That's it. We now have created a WoTT enabled Google CoreIoT registry. Now we need to enroll our first device.
+That's it. We have now created a WoTT enabled Google CoreIoT registry. Now we need to enroll our first device.
 
 
 ## Enrolling devices
@@ -35,24 +35,46 @@ The first thing we need to do is to download our the certificate of the device. 
 
 ```
 $ export DEVICE_ID=mydevice.d.wott.local
-$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"
+$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
 ```
 
-replacing `mydevice` with the relevant certificate of your device (which can be found on the WoTT dash).
-With the certificate downloaded, we can now enroll the device:
+replacing `mydevice` with the relevant information of your device (which can be found on the WoTT dash). If you do not have the dash set up, you can manually retrieve this information via command line using the following command: 
 
 ```
-$ gcloud iot devices create "$DEVICE_ID" \
+$ sudo wott-agent whoami
+
+```
+
+**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
+The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can either start with either a letter *or* a number. 
+
+Therefore, you will need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. 
+In order to communicate with either WoTT or Google services, you will need to use the corresponding Device ID for each service, however in many cases this will be the same.
+
+If your WoTT ID **does** start with a number, do the following commands instead:
+
+
+```
+$ export DEVICE_ID=mydevice.d.wott.local
+$ export GOOGLE_DEVICE_ID=$(echo $DEVICE_ID | sed 's/^[0-9]/a-/g')
+$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
+
+```
+
+This achieves the same as before but gives you a valid Google Device ID that you can use to communicate with Google's services.
+
+
+With the certificate downloaded, we can now enroll the device (ensure you use the correct Device ID):
+
+```
+$ gcloud iot devices create "$GOOGLE_DEVICE_ID" \
     --project=PROJECT_ID \
     --region=REGION \
     --registry=REGISTRY_ID \
     --public-key path=device.crt,type=es256-x509-pem
 ```
 
-**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
-The WoTT Device ID is unique and registered to your device and can either start with either a letter *or* a number. 
-You will need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. In order to communicate with either WoTT or Google services, you will need the correct Device ID for each. 
-However, in many cases this will be the same.
+
 
 We now have our first device enrolled. Please do however note that the WoTT uses short-lived certificates (7 days), so you will need to upload these certificates every week.
 
@@ -87,7 +109,7 @@ $ sudo -E ./venv/bin/python cloudiot_mqtt_example.py \
     --cloud_region=REGION \
     --registry=REGISTRY_ID \
     --device=DEVICE_ID \
-    --private_key_file=/var/snap/wott-agent/current/client.key \
+    --private_key_file=/opt/wott/certs/client.key \
     --algorithm ES256 \
     --ca_certs=roots.pem \
     --message_type state \

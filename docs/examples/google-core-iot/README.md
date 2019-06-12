@@ -35,7 +35,7 @@ The first thing we need to do is to download our the certificate of the device. 
 
 ```
 $ export DEVICE_ID=mydevice.d.wott.local
-$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID" | jq -r '.certificate' > device.crt
+$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"
 ```
 
 replacing `mydevice` with the relevant certificate of your device (which can be found on the WoTT dash).

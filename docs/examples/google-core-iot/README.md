@@ -13,7 +13,7 @@ First we need to get the CA certificate:
 $ curl -s https://api.wott.io/v0.2/ca | jq -r '.ca_certificate' > ca.crt
 ```
 
-Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic.
+Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic. 
 
 ```
 $ gcloud iot registries create REGISTRY_ID \
@@ -25,7 +25,7 @@ $ gcloud iot registries create REGISTRY_ID \
     --state-pubsub-topic=wott-pubsub
 ```
 
-That's it. We now have created a WoTT enabled Google CoreIoT registry. Now we need to enroll our first device.
+Available regions for Cloud IoT are `us-central1`, `europe-west1`, and `asia-east1`. That's it. We now have created a WoTT enabled Google CoreIoT registry. Now we need to enroll our first device.
 
 
 ## Enrolling devices
@@ -49,7 +49,10 @@ $ gcloud iot devices create "$DEVICE_ID" \
     --public-key path=device.crt,type=es256-x509-pem
 ```
 
-**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements), so you might need to prefix your devices, as the WoTT Device ID can start with a letter.
+**Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
+The WoTT Device ID is unique and registered to your device and can either start with either a letter *or* a number. 
+You will need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. In order to communicate with either WoTT or Google services, you will need the correct Device ID for each. 
+However, in many cases this will be the same.
 
 We now have our first device enrolled. Please do however note that the WoTT uses short-lived certificates (7 days), so you will need to upload these certificates every week.
 

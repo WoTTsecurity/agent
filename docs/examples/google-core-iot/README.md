@@ -1,6 +1,6 @@
 # Using WoTT with Google Core IoT
 
-Before we get started, you need to install the `gcloud` tool. This is used to interact with Google's services. You can find installation instructions [here](https://cloud.google.com/iot/docs/how-tos/getting-started). Follow the instructions for your specific distribution.
+Before we get started, you will need to install the `gcloud` tool. This is used to interact with Google's services. You can find installation instructions [here](https://cloud.google.com/iot/docs/how-tos/getting-started). Follow the instructions for your specific distribution.
 
 You will also need to have at least one device with the [WoTT agent installed](https://https://github.com/WoTTsecurity/agent) if you do not already. This will provide you with your unique Device ID and token which can be added to the [WoTT dashboard](https://dash.wott.io) as per instructions. You will need the Device ID later.
 
@@ -30,7 +30,7 @@ That's it. We have now created a WoTT enabled Google CoreIoT registry. Now we ne
 
 ## Enrolling devices
 
-The first thing we need to do is to download our the certificate of the device. To do that we issue an API call to WoTT's API:
+The first thing we need to do is to download the certificate of the device. To do that we issue an API call to WoTT's API:
 
 
 ```
@@ -38,12 +38,13 @@ $ export DEVICE_ID=mydevice.d.wott.local
 $ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
 ```
 
-replacing `mydevice` with the relevant information of your device (which can be found on the WoTT dash). If you do not have the dash set up, you can manually retrieve this information via command line using the following command: 
+replacing `mydevice` with the relevant information of your device (which can be found on the WoTT dash). If you do not have the dash set up, you can manually retrieve this information via command line using:
 
 ```
 $ sudo wott-agent whoami
 
 ```
+and substitute that value into `mydevice`
 
 **Note:** Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements).
 The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can either start with either a letter *or* a number. 
@@ -131,10 +132,15 @@ gcloud iot devices configs describe \
     --region=REGION \
     --registry=REGISTRY_ID \
     --device=DEVICE_ID
+```
 
+You should get a response similar to this: 
+
+```
 cloudUpdateTime: '2019-01-30T08:51:10.896665Z'
 deviceAckTime: '2019-01-30T11:57:15.586890Z'
 version: '1'
+
 ```
 
 ## Send a message

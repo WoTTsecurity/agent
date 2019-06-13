@@ -28,9 +28,9 @@ $ curl http://localhost:8080
 Hello from WoTT!
 ```
 
-This webserver is however insecure. The traffic to it is fully unencrypted. When communicating within the same device, this isn't a major security problem, but as soon as the communication leaves the local device (such as over the network, or even worse, over the internet), this becomes a big problem. It's then prone to a number of attacks, such as eavesdropping and impersonation attacks.
+However this webserver is insecure- the traffic to it is fully unencrypted. When communicating within the same device, this isn't a major security problem; but as soon as the communication leaves the local device (such as over the network, or even worse, over the internet), this becomes a big problem. It's then prone to a number of attacks, such as eavesdropping and impersonation attacks.
 
-To solve this, let's secure this service using the WoTT agent. To do this, we can either create a tunnel between the agent and server, or use the WoTT certificates directly in the client (such as in `curl`.). In this example, we'll opt for the former option (i.e. a tunnel).
+To solve this, we can secure this service using the WoTT agent. To do this, we can either create a tunnel between the agent and server, or use the WoTT certificates directly in the client (such as in `curl`). In this example, we'll opt for the former option (i.e. a tunnel).
 
 ## Setting up the server
 

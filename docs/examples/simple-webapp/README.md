@@ -53,10 +53,10 @@ This will create a secure reverse proxy that redirects incoming traffic on port 
 By default, the example allow will allow all clients with a valid certificate signed by WoTT. If we want to lock down the service further, we can for set a policy such that only a given device can access it using:
 
 ```
-$ export CONNECTION_POLICY='--allow-cn=x.d.wott.local'
-$ wott-agent.server
-[...]
+$ export CONNECTION_POLICY='--allow-cn=mydevice.d.wott.local'
+
 ```
+and then follow it up with the same command as above to establish the tunnel.
 
 ## Setting up the client
 

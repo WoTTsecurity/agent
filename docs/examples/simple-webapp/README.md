@@ -6,7 +6,7 @@ In the following example, we'll walk you through how to secure a simple WebApp u
 
 Before you begin, you need two devices with the [WoTT Agent installed](https://github.com/WoTTsecurity/agent). This can be a combination of devices that are either a Raspberry Pi or a desktop running a Debian distribution of Linux.
 
-The first thing that we need to do is to setup a simple Python WebApp on a Raspberry Pi. The following example is taken from the [WoTT Github](https://github.com/WoTTsecurity/agent).
+The first thing that we need to do is to setup a simple Python WebApp on a Raspberry Pi/Debian machine. The following example is taken from the [WoTT Github](https://github.com/WoTTsecurity/agent).
 
 ## Setting up the WebApp
 
@@ -21,24 +21,31 @@ $ python3 app.py
 [...]
 ```
 
-You now have a very simple webserver running on your Raspberry Pi. We can test it by running the following in another session:
+You now have a very simple webserver running on your Raspberry Pi. We can test it by running the following in another terminal session:
 
 ```
 $ curl http://localhost:8080
 Hello from WoTT!
 ```
 
-This webserver is however insecure. The traffic to it is fully unencrypted. When communicating on within the same device, this isn't a major security problem, but as soon as the communication leaves the local device (such as over the network, or even worse, over the internet), this is a big problem. It's then prone to a number of attacks, such as eavesdropping and impersonation attacks.
+This webserver is however insecure. The traffic to it is fully unencrypted. When communicating within the same device, this isn't a major security problem, but as soon as the communication leaves the local device (such as over the network, or even worse, over the internet), this becomes a big problem. It's then prone to a number of attacks, such as eavesdropping and impersonation attacks.
 
-Let's solve secure this service using the WoTT agent. To do this, we can either create a tunnel between the agent and server, or use the WoTT certificates directly in the client (such as in `curl`.). In this example, we'll opt for the former option (i.e. a tunnel).
+To solve this, let's secure this service using the WoTT agent. To do this, we can either create a tunnel between the agent and server, or use the WoTT certificates directly in the client (such as in `curl`.). In this example, we'll opt for the former option (i.e. a tunnel).
 
 ## Setting up the server
 
-While still leaving the session with our WebApp running, run the following command:
+While still leaving the session with our WebApp running, run the following command in a separate terminal:
 
 ```
-$ wott-agent.server
-[...]
+$ set -euo pipefail
+$ IFS=$'\n\t'
+
+$ ghostunnel server \
+    --listen 0.0.0.0:${LISTEN_PORT:-8443} \
+    --target 127.0.0.1:${TARGET_PORT:-8080} \
+    --keystore "$SNAP_DATA/combined.pem" \
+    --cacert "$SNAP_DATA/ca.crt" \
+    ${CONNECTION_POLICY:---allow-all} $@
 ```
 
 This will create a secure reverse proxy that redirects incoming traffic on port 8443 to the WebApp we started earlier (which is listening on localhost:8080). This will also automagically secure the service using mTLS. Hence, this means that not only is the connection encrypted and secure, it also doubles as a replacement for credentials since we can cryptographically identify the device making the request.

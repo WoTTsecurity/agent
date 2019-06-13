@@ -60,7 +60,7 @@ and then follow it up with the tunnel command from above.
 
 ## Setting up the client
 
-With the server up and running, we can now move on to the client. This should be another device (either another Raspberry Pi, or a desktop running Linux).
+With the server up and running, we can now move on to the client. This should be another device (either another Raspberry Pi, or a desktop running Debian).
 
 In order to connect to the server, we need to know the following:
 

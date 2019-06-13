@@ -48,15 +48,15 @@ $ ghostunnel server \
     ${CONNECTION_POLICY:---allow-all} $@
 ```
 
-This will create a secure reverse proxy that redirects incoming traffic on port 8443 to the WebApp we started earlier (which is listening on localhost:8080). This will also automagically secure the service using mTLS. Hence, this means that not only is the connection encrypted and secure, it also doubles as a replacement for credentials since we can cryptographically identify the device making the request.
+This will create a secure reverse proxy that redirects incoming traffic on port 8443 to the WebApp we started earlier in the first session (listening at localhost:8080). This will also automatically secure the service using mTLS. Hence, this means that not only is the connection encrypted and secure, it also doubles as a replacement for credentials since we can cryptographically identify the device making the request.
 
-By default, the example allow will allow all clients with a valid certificate signed by WoTT. If we want to lock down the service further, we can for set a policy such that only a given device can access it using:
-
-```
-$ export CONNECTION_POLICY='--allow-cn=mydevice.d.wott.local'
+By default, the example will allow all clients with a valid certificate signed by WoTT to make connections to the device. If we want to lock down the service further, we can for set a policy such that only a given device can access it using:
 
 ```
-and then follow it up with the same command as above to establish the tunnel.
+$ export CONNECTION_POLICY='--allow-cn=givendevice.d.wott.local'
+
+```
+and then follow it up with the tunnel command from above.
 
 ## Setting up the client
 
@@ -65,7 +65,7 @@ With the server up and running, we can now move on to the client. This should be
 In order to connect to the server, we need to know the following:
 
  * The IP of the device running the server
- * The WoTT ID of the server (you can get this by running `wott-agent.whoami`)
+ * The WoTT ID of the server (you can get this by running `wott-agent whoami`)
 
 Once we have this information, all we need to do is to start the client by running:
 

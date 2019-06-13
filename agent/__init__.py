@@ -36,10 +36,11 @@ DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
 DASH_DEV_PORT = 8000
 WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
+CONFINEMENT = rpi_helper.detect_confinement()
 
 # Conditional handling for if we're running
 # inside a Snap.
-if os.getenv('SNAP_NAME'):
+if CONFINEMENT['snap']:
     CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
@@ -287,9 +288,6 @@ def send_ping(debug=False, dev=False):
     if not ping.ok:
         print('Ping failed.')
         return
-    blocklist = ping.json()
-    security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
-    security_helper.block_networks(blocklist.get('block_networks', []))
 
     connections, ports = security_helper.netstat_scan()
     payload = {
@@ -297,17 +295,32 @@ def send_ping(debug=False, dev=False):
         'fqdn': socket.getfqdn(),
         'ipv4_address': get_primary_ip(),
         'uptime': get_uptime(),
-        'scan_info': ports,
-        'netstat': connections,
-        'processes': security_helper.process_scan(),
-        'firewall_enabled': security_helper.is_firewall_enabled(),
-        'firewall_rules': security_helper.get_firewall_rules(),
-        'selinux_status': security_helper.selinux_status(),
-        'app_armor_enabled': security_helper.is_app_armor_enabled(),
-        'logins': journal_helper.logins_last_hour(),
-        'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
         'agent_version': str(__version__)
     }
+
+    # Things we can't do within a Snap or Docker
+    if not (CONFINEMENT['snap'] or CONFINEMENT['docker']):
+        payload += {
+            'processes': security_helper.process_scan(),
+            'logins': journal_helper.logins_last_hour(),
+            'default_password': security_helper.check_for_default_passwords(
+                CONFIG_PATH),
+        }
+
+    # Things we cannot do in Docker
+    if not CONFINEMENT['docker']:
+        blocklist = ping.json()
+        security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
+        security_helper.block_networks(blocklist.get('block_networks', []))
+
+        payload += {
+            'selinux_status': security_helper.selinux_status(),
+            'app_armor_enabled': security_helper.is_app_armor_enabled(),
+            'firewall_enabled': security_helper.is_firewall_enabled(),
+            'firewall_rules': security_helper.get_firewall_rules(),
+            'scan_info': ports,
+            'netstat': connections,
+        }
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()
     if rpi_metadata['is_raspberry_pi']:

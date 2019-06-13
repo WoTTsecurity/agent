@@ -4,14 +4,14 @@
 
 In the following example, we'll walk you through how to secure a simple WebApp using WoTT.
 
-Before you begin, you need two devices with the [WoTT Agent installed](https://github.com/WoTTsecurity/agent). This can be either two Raspberry Pis; or a Raspberry Pi and a desktop computer running a Debian distribution of Linux.
+Before you begin, you need two devices with the [WoTT Agent installed](https://github.com/WoTTsecurity/agent). This can be a combination of devices that are either a Raspberry Pi or a desktop running a Debian distribution of Linux.
 
-The first thing that we will do is to setup a simple Python WebApp on a Raspberry Pi.
+The first thing that we need to do is to setup a simple Python WebApp on a Raspberry Pi. The following example is taken from the [WoTT Github](https://github.com/WoTTsecurity/agent).
 
 ## Setting up the WebApp
 
 ```
-$ apt-get update && apt-get install -y python3 python3-pip curl
+$ apt update && apt install -y python3 python3-pip curl
 $ mkdir ~/wott-webapp-example
 $ cd ~/wott-webapp-example
 $ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp/app.py

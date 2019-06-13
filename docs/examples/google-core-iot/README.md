@@ -41,7 +41,7 @@ $ export DEVICE_ID=mydevice.d.wott.local
 $ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID" > device.crt
 ```
 
-Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements). If your WoTT ID starts with a number, you will need to prefix it with a a character. In the example below, we prefix the Device ID with `a-` to circumvent this (but you can prefix it with anything you want as long as it starts with a character):
+Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements). If your WoTT ID starts with a number, you will need to prefix it with a character. In the example below, we prefix the Device ID with `a-` to circumvent this (but you can prefix it with anything you want as long as it starts with a character):
 
 ```
 $ export GOOGLE_DEVICE_ID=$(echo $DEVICE_ID | sed 's/^[0-9]/a-/g')

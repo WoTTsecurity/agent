@@ -57,3 +57,6 @@ support:support
 tech:tech
 ubnt:ubnt
 user:user
+pi:bodhilinux
+root:openelec
+root:raspberrypi

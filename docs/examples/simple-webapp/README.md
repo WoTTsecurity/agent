@@ -40,8 +40,8 @@ While still leaving the session with our WebApp running, run the following comma
 $ ghostunnel server \
     --listen 0.0.0.0:${LISTEN_PORT:-8443} \
     --target 127.0.0.1:${TARGET_PORT:-8080} \
-    --keystore "$/opt/wott/certs/combined.pem" \
-    --cacert "$/opt/wott/certs/ca.crt" \
+    --keystore "/opt/wott/certs/combined.pem" \
+    --cacert "/opt/wott/certs/ca.crt" \
     ${CONNECTION_POLICY:---allow-all} $@
 ```
 
@@ -69,13 +69,13 @@ Once we have this information, all we need to do is to start the client by runni
 ```
 $ ghostunnel client \
     --listen 127.0.0.1:${LISTEN_PORT:-8080} \
-    --target ${192.168.a.b}:${TARGET_PORT:-8443} \
-    --override-server-name=${serverdevice.d.wott.local} \
-    --keystore "$/opt/wot/certs/combined.pem" \
-    --cacert "$/opt/wott/certs/ca.crt"
+    --target MY_IP:${TARGET_PORT:-8443} \
+    --override-server-name=serverdevice.d.wott.local \
+    --keystore "/opt/wot/certs/combined.pem" \
+    --cacert "/opt/wott/certs/ca.crt"
 ```
 
-where `a` and `b` correspond to your own private IP (normally found on the back of a router) and you insert the server device ID into `serverdevice`.
+Inserting your the IP Address of the server which you can find by running `ip addr show` and the server device ID into `serverdevice`.
 
 Assuming you don't get any errors, there should now be an established secure tunnel between the client and server. The client is now proxying any request coming in on 127.0.0.1:8080 securely to the remote server (using mTLS).
 

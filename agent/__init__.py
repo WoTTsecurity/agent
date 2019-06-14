@@ -303,7 +303,7 @@ def send_ping(debug=False, dev=False):
         payload['processes'] = security_helper.process_scan(),
         payload['logins'] = journal_helper.logins_last_hour(),
         payload['default_password'] = security_helper.check_for_default_passwords(
-                CONFIG_PATH),
+                CONFIG_PATH)
 
     # Things we cannot do in Docker
     if not CONFINEMENT['docker']:

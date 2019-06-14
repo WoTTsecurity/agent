@@ -37,14 +37,11 @@ To solve this, we can secure this service using the WoTT agent. To do this, we c
 While still leaving the session with our WebApp running, run the following command in a separate terminal:
 
 ```
-$ set -euo pipefail
-$ IFS=$'\n\t'
-
 $ ghostunnel server \
     --listen 0.0.0.0:${LISTEN_PORT:-8443} \
     --target 127.0.0.1:${TARGET_PORT:-8080} \
-    --keystore "$SNAP_DATA/combined.pem" \
-    --cacert "$SNAP_DATA/ca.crt" \
+    --keystore "$/opt/wott/certs/combined.pem" \
+    --cacert "$/opt/wott/certs/ca.crt" \
     ${CONNECTION_POLICY:---allow-all} $@
 ```
 
@@ -70,15 +67,12 @@ In order to connect to the server, we need to know the following:
 Once we have this information, all we need to do is to start the client by running:
 
 ```
-$ set -euo pipefail
-$ IFS=$'\n\t'
-
 $ ghostunnel client \
     --listen 127.0.0.1:${LISTEN_PORT:-8080} \
     --target ${192.168.a.b}:${TARGET_PORT:-8443} \
     --override-server-name=${serverdevice.d.wott.local} \
-    --keystore "$SNAP_DATA/combined.pem" \
-    --cacert "$SNAP_DATA/ca.crt"
+    --keystore "$/opt/wot/certs/combined.pem" \
+    --cacert "$/opt/wott/certs/ca.crt"
 ```
 
 where `a` and `b` correspond to your own private IP (normally found on the back of a router) and you insert the server device ID into `serverdevice`.

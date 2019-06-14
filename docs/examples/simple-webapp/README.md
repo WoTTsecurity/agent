@@ -47,7 +47,7 @@ $ ghostunnel server \
 
 This will create a secure reverse proxy that redirects incoming traffic on port 8443 to the WebApp we started earlier in the first session (listening at localhost:8080). This will also automatically secure the service using mTLS. Hence, this means that not only is the connection encrypted and secure, it also doubles as a replacement for credentials since we can cryptographically identify the device making the request.
 
-By default, the example will allow all clients with a valid certificate signed by WoTT to make connections to the device. If we want to lock down the service further, we can for set a policy such that only a given device can access it using the same ghostunnel command as above but replacing `$$ {CONNECTION_POLICY:---allow-all} $@` with :
+By default, the example will allow all clients with a valid certificate signed by WoTT to make connections to the device. If we want to lock down the service further, we can for set a policy such that only a given device can access it using the same ghostunnel command as above but replacing `$ {CONNECTION_POLICY:---allow-all} $@` with :
 
 ```
 $ CONNECTION_POLICY='--allow-cn=givendevice.d.wott.local'

@@ -70,21 +70,18 @@ In order to connect to the server, we need to know the following:
 Once we have this information, all we need to do is to start the client by running:
 
 ```
-$ export TARGET_IP=192.168.a.b
-$ export TARGET_WOTT_ID=serverdevice.d.wott.local
-
 $ set -euo pipefail
 $ IFS=$'\n\t'
 
 $ ghostunnel client \
     --listen 127.0.0.1:${LISTEN_PORT:-8080} \
-    --target ${TARGET_IP}:${TARGET_PORT:-8443} \
-    --override-server-name=${TARGET_WOTT_ID} \
+    --target ${192.168.a.b}:${TARGET_PORT:-8443} \
+    --override-server-name=${serverdevice.d.wott.local} \
     --keystore "$SNAP_DATA/combined.pem" \
     --cacert "$SNAP_DATA/ca.crt"
 ```
 
-where `a` and `b` correspond to your own private IP (normally found on the back of a router).
+where `a` and `b` correspond to your own private IP (normally found on the back of a router) and you insert the server device ID into `serverdevice`.
 
 Assuming you don't get any errors, there should now be an established secure tunnel between the client and server. The client is now proxying any request coming in on 127.0.0.1:8080 securely to the remote server (using mTLS).
 

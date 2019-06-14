@@ -60,7 +60,7 @@ and then follow it up with the tunnel command from above.
 
 ## Setting up the client
 
-With the server up and running, we can now move on to the client. This should be another device (either another Raspberry Pi, or a desktop running Debian).
+With the server up and running, we can now move on to the client. This should be *another* device (either Raspberry Pi, or a desktop running Debian).
 
 In order to connect to the server, we need to know the following:
 
@@ -94,4 +94,4 @@ Hello from WoTT!
 
 ## Closing notes
 
-We have now proven how easy it is to setup a secure connection between two devices using WoTT. The WebApp above can simply be replaced with any other application. Just be mindful of that you should always bind your WebApp to on localhost to prevent it from being exposed to the world insecurely.
+We have now proven how easy it is to setup a secure connection between two devices using WoTT. The WebApp above can simply be replaced with any other application. Just be mindful of that you should always bind your WebApp to localhost to prevent it from being exposed to the world insecurely.

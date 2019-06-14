@@ -41,9 +41,21 @@ $ sudo apt install wott-agent
 
  * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advance://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
 
+
+The certificates used for the WoTT Agent can be use for a number of use cases. Here are some ideas to help you get started:
+
 ## Use Cases
 
-The certificates used for the WoTT agent can be use for a number of use cases. Here are some ideas to help you get started:
+See below for examples of how to set up and use WoTT Agent enabled devices in the following scenarios
+
+### [Google Core IoT](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/google-core-iot)
+
+Google Cloud Platform provides services that developers can use. Here we show you how to set up your WoTT Agent device and enroll it to your Google Cloud project to communicate with Google's services.
+
+
+### [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp)
+
+A simple example use case of securing a Python 3 WebApp using two WoTT Agent devices acting as server and client. This guide includes an example WebApp, but the principle applies to any WebApp that you develop yourself- just ensure you do the correct setup.
 
 ### Credential Management
 
@@ -55,7 +67,6 @@ The certificates used for the WoTT agent can be use for a number of use cases. H
 
 ### Outdated
 
- * [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp)
+ 
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
- * [Google Core IoT](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/google-core-iot)
  * [Nginx (mTLS)](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/nginx)

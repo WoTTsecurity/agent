@@ -50,9 +50,11 @@ This will create a secure reverse proxy that redirects incoming traffic on port 
 By default, the example will allow all clients with a valid certificate signed by WoTT to make connections to the device. If we want to lock down the service further, we can for set a policy such that only a given device can access it using the same ghostunnel command as above but replacing `$ {CONNECTION_POLICY:---allow-all} $@` with :
 
 ```
-$ CONNECTION_POLICY='--allow-cn=givendevice.d.wott.local'
+$ {CONNECTION_POLICY=--allow-cn=givendevice.d.wott.local} $@
 
 ```
+**Note:**
+If you are being denied permissions, use `sudo` before starting the ghostunnel.
 
 ## Setting up the client
 

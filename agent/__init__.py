@@ -300,12 +300,10 @@ def send_ping(debug=False, dev=False):
 
     # Things we can't do within a Snap or Docker
     if not (CONFINEMENT['snap'] or CONFINEMENT['docker']):
-        payload += {
-            'processes': security_helper.process_scan(),
-            'logins': journal_helper.logins_last_hour(),
-            'default_password': security_helper.check_for_default_passwords(
+        payload['processes'] = security_helper.process_scan(),
+        payload['logins'] = journal_helper.logins_last_hour(),
+        payload['default_password'] = security_helper.check_for_default_passwords(
                 CONFIG_PATH),
-        }
 
     # Things we cannot do in Docker
     if not CONFINEMENT['docker']:
@@ -313,14 +311,12 @@ def send_ping(debug=False, dev=False):
         security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
         security_helper.block_networks(blocklist.get('block_networks', []))
 
-        payload += {
-            'selinux_status': security_helper.selinux_status(),
-            'app_armor_enabled': security_helper.is_app_armor_enabled(),
-            'firewall_enabled': security_helper.is_firewall_enabled(),
-            'firewall_rules': security_helper.get_firewall_rules(),
-            'scan_info': ports,
-            'netstat': connections,
-        }
+        payload['selinux_status'] = security_helper.selinux_status()
+        payload['app_armor_enabled'] = security_helper.is_app_armor_enabled()
+        payload['firewall_enabled'] = security_helper.is_firewall_enabled()
+        payload['firewall_rules'] = security_helper.get_firewall_rules()
+        payload['scan_info'] = ports
+        payload['netstat'] = connections
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()
     if rpi_metadata['is_raspberry_pi']:

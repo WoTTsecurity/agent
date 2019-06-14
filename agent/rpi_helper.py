@@ -31,9 +31,9 @@ def detect_confinement():
     """
 
     metadata = {
-        'docker': None,
-        'balena': None,
-        'snap': None,
+        'docker': False,
+        'balena': False,
+        'snap': False,
     }
 
     # Detect if running inside Docker
@@ -42,11 +42,11 @@ def detect_confinement():
         metadata['docker'] = 'docker' in ifh.read()
 
     # Detect if running inside Balena
-    if os.getenv('BALENA', False) or os.getenv('RESIN', False):
+    if os.getenv('BALENA') or os.getenv('RESIN'):
         metadata['balena'] = True
 
     # Detect if running inside an Ubuntu Snap
-    if os.getenv('SNAP', False):
+    if os.getenv('SNAP'):
         metadata['snap'] = True
 
     return metadata

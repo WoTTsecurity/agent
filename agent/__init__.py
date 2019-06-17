@@ -36,11 +36,11 @@ DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
 DASH_DEV_PORT = 8000
 WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
-CONFINEMENT = rpi_helper.detect_confinement()
+CONFINEMENT = rpi_helper.DetectConfinement
 
 # Conditional handling for if we're running
 # inside a Snap.
-if CONFINEMENT['snap']:
+if CONFINEMENT.SNAP:
     CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
 else:
     CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
@@ -299,13 +299,13 @@ def send_ping(debug=False, dev=False):
     }
 
     # Things we can't do within a Snap or Docker
-    if not (CONFINEMENT['snap'] or CONFINEMENT['docker']):
+    if not (CONFINEMENT.SNAP or CONFINEMENT.DOCKER):
         payload['processes'] = security_helper.process_scan(),
         payload['logins'] = journal_helper.logins_last_hour(),
         payload['default_password'] = security_helper.check_for_default_passwords(CONFIG_PATH)
 
     # Things we cannot do in Docker
-    if not CONFINEMENT['docker']:
+    if not CONFINEMENT.DOCKER:
         blocklist = ping.json()
         security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
         security_helper.block_networks(blocklist.get('block_networks', []))

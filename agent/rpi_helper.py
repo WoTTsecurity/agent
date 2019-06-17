@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 
 
 def detect_raspberry_pi():
@@ -24,29 +25,28 @@ def detect_raspberry_pi():
     return metadata
 
 
-def detect_confinement():
+class DetectConfinement(Enum):
     """
     Returns the confinement environment.
     This function is used to control features.
     """
 
-    metadata = {
-        'docker': False,
-        'balena': False,
-        'snap': False,
-    }
-
     # Detect if running inside Docker
     # Credits: https://stackoverflow.com/a/42674935/346054
     with open('/proc/1/cgroup', 'rt') as ifh:
-        metadata['docker'] = 'docker' in ifh.read()
+        if 'docker' in ifh.read():
+            DOCKER = True
+        else:
+            DOCKER = False
 
     # Detect if running inside Balena
     if os.getenv('BALENA') or os.getenv('RESIN'):
-        metadata['balena'] = True
+        BALENA = True
+    else:
+        BALENA = False
 
     # Detect if running inside an Ubuntu Snap
     if os.getenv('SNAP'):
-        metadata['snap'] = True
-
-    return metadata
+        SNAP = True
+    else:
+        SNAP = False

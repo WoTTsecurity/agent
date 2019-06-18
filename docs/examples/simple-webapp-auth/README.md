@@ -1,14 +1,14 @@
-#Another simple WebApp example
+# Another simple WebApp example
 
-##Introduction
+## Introduction
 
 In a previous example we introduced you to setting up a [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp) using mTLS to provide security. In this example, we'll be using the same WebApp but using HTTP Basic Auth instead. 
 
-As with the previous example, you will need two devices with the WoTT Agent installed that are either a Raspberry Pi or a Debian machine. For this example, you will also need to have set up your devices on the [WoTT Dashboard(dash.wott.io)]
+As with the previous example, you will need two devices with the WoTT Agent installed that are either a Raspberry Pi or a Debian machine. For this example, you will also need to have set up your devices on the [WoTT Dashboard](dash.wott.io)
 
 *In order to set the WebApp up, you will be following similar instructions.*
 
-##Setting up the WebApp
+## Setting up the WebApp
 
 (directly cloned and adapted from simple web app)
 

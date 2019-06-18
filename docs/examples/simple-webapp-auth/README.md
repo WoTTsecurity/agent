@@ -10,7 +10,7 @@ As with the previous example, you will need two devices with the WoTT Agent inst
 
 ## Setting up the WebApp
 
-(directly cloned and adapted from simple web app)
+(directly cloned and adapted from simple web app. This won't work yet because it's on my branch)
 
 ```
 $ apt update && apt install -y python3 python3-pip curl

@@ -15,7 +15,7 @@ WoTT provides an online client that you can interface with to register your WoTT
 
 For this example, you will need to have the WoTT Dash set up, so if you haven't done so already, register with the link above and enrol your devices (done during the initial installation of the WoTT agent). If you already have done this, just log into the dashboard with your username and password.
 
-![Wott Login](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-login.png)
+![Wott Login](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-login.png)
 
 
 ## Adding Credentials
@@ -32,7 +32,7 @@ Value = username:password
 
 In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. If all is successful, the page should now look something like this:
 
-![Wott Credentials](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-dash.png)
+![Wott Credentials](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-dash.png)
 
 
 
@@ -77,7 +77,7 @@ Launch http://127.0.0.1:8080/ on your browser's device. Here, provided you have 
 
 With the correct details, you will be greeted with the following screen message: 
 
-![login success](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/hello.png)
+![login success](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/hello.png)
 
 And that's it, you've set up basic HTML auth on a WebApp!
 

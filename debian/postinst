@@ -1,8 +1,8 @@
 #DEBHELPER#
 
-CLAIMED=$(wott-agent is-claimed)
+CLAIM_URL=$(wott-agent claim-url)
 
-if [ "${CLAIMED}" = "True" ]; then
+if [ ${CLAIM_URL} ]; then
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
@@ -25,7 +25,7 @@ You're one step closer to building a secure device. Your device's unique ID is: 
 To unleash the value of WoTT, and to gain insight into the security of your device(s), connect your device at https://dash.wott.io.
 
 You can claim your device in the dashboard by visiting:
-$(wott-agent claim-url)
+${CLAIM_URL}
 
 For more information on how to get started, visit wott.io/getting-started or drop us a line at hey@wott.io.
 

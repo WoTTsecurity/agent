@@ -15,6 +15,8 @@ WoTT provides an online client that you can interface with to register your WoTT
 
 For this example, you will need to have the WoTT Dash set up, so if you haven't done so already, register with the link above and enrol your devices (done during the initial installation of the WoTT agent). If you already have done this, just log into the dashboard with your username and password.
 
+![Wott Login](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-login.png)
+
 
 ## Adding Credentials
 
@@ -29,7 +31,11 @@ Value = username:password
 
 ```
 
-In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. 
+In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. If all is successful, the page should now look something like this:
+
+![Wott Credentials](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-dash.png)
+
+
 
 The credentials are now ready to be used on all your WoTT enabled devices. On your server device, you will now need to relaunch the WoTT Agent to download the new credentials:
 
@@ -73,11 +79,9 @@ This will start your app on the server 127.0.0.1 at port 8080. You should receiv
 
 Launch http://127.0.0.1:8080/ on your browser's device. Here, provided you have encountered no errors, you'll be prompted to enter a username and password. If you have followed the steps so far the username should be `username` and the password `password`. 
 
-With the correct details, you will be greeted with the message: 
-```
-Login successful. Hello from WoTT!
+With the correct details, you will be greeted with the following screen message: 
 
-```
+![login success](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/hello.png)
 
 And that's it, you've set up basic HTML auth on a WebApp!
 
@@ -106,7 +110,7 @@ While making sure the server device is still running:
 
 Obtain your server device IP using `ip addr show` in a separate terminal if you do not know what it is already. The port we are calling is 8080. 
 
-You can either enter the IP address followed by `:8080` and enter the username and password through the WebApp; or you can use a curl command in your client device's terminal in the following format:
+You can either enter the IP address followed by `:8080` and enter the username and password through the WebApp and receive the same screen as before; or you can use a curl command in your client device's terminal in the following format:
 
 ```
 curl http://username:password@SERVER_IP:8080

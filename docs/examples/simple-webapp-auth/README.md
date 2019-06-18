@@ -44,9 +44,13 @@ The credentials are now ready to be used on all your WoTT enabled devices. On yo
 $ sudo service wott-agent restart
 
 ```
-There will now be a JSON file in your WoTT agent's credentials with your information.
+There will now be a JSON file in your WoTT agent's credentials with your information which the app will parse and process. 
+
+**Note:** If you change the name of credentials, you will need to edit the name JSON file within the app as it currently assumes you have named it `my_simple_web_app` as per instructions.
 
 ## Setting up the WebApp
+
+As with the other example, you will need to download the WebApp files into a new directory. Use `sudo` where necessary. 
 
 ```
 $ apt update && apt install -y python3 python3-pip curl
@@ -55,7 +59,7 @@ $ cd ~/wott-webapp-auth-example
 $ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp-auth/app.py
 $ curl -o requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp-auth/requirements.txt
 $ pip3 install -r requirements.txt
-$ python3 app.py
+$ sudo python3 app.py
 
 ```
 

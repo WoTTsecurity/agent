@@ -4,18 +4,21 @@
 from functools import wraps
 from flask import Flask, request, Response, json
 
-## Loading credentials from json file
-with open('/opt/wott/credentials/my_simple_web_app.json', 'r') as credentials:
-    credentials_info = json.load(credentials)
 
-credentials_values = credentials_info['web_app_credentials'].split(":")
-username = credentials_values[0]
-password = credentials_values[1]
 
 app = Flask(__name__)
 
 def check_auth(username,password):
-    return username and password 
+
+    ## Loading credentials from json file
+    with open('/opt/wott/credentials/my_simple_web_app.json', 'r') as credentials:
+        credentials_info = json.load(credentials)
+
+    credentials_values = credentials_info['web_app_credentials'].split(":")
+    new_username = credentials_values[0]
+    new_password = credentials_values[1]
+
+    return username == new_username and password == new_password
 
 def authenticate():
     return Response(
@@ -42,23 +45,4 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
-# def check_auth(username, password):
-#     """This function is called to check if a username /
-#     password combination is valid.
-#     """
-#     return username == 'admin' and password == 'secret'
-
-
-    
-
-# @app.route('/secret-page')
-# @requires_auth
-# def secret_page():
-#     return render_template('secret_page.html')
 

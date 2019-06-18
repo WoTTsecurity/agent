@@ -1,19 +1,13 @@
 # Another simple WebApp example
 
-My Simple WebApp
-Web App Credentials
-username:password
-
-curl command for logging in via terminal"
-curl http://username:password@serverIP:port
-
 ## Introduction
 
 In a previous example we introduced you to setting up a [Simple WebApp](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp) using mTLS to provide security. This is one of a few ways to secure connection between a client and a server.
 
 In this example, we'll be using another simple WebApp that instead uses HTTP Basic Auth to verify login and access.
 
-You will need 1 device (Raspberry Pi or Debian Machine) with the WoTT Agent installed and have it registered to the [WoTT Dashboard](dash.wott.io) and a web browser to access it (either on a different device or the same one).
+You will need 1 device (Raspberry Pi or Debian Machine) with the WoTT Agent installed and have it registered to the [WoTT Dashboard](dash.wott.io) and a web browser to access it (either on a different device or the same one) or the terminal of another WoTT agent device.
+
 
 ## Using WoTT Dashboard
 
@@ -24,15 +18,14 @@ For this example, you will need to have the WoTT Dash set up, so if you haven't 
 
 ## Adding Credentials
 
-
 Once you have your devices enrolled, you need to navigate to the Credentials page in the Dashboard. You will need to add a credential to use to access the WebApp later. 
 The credential subheaders may seem a little confusing. In essence, `Name` refers to the name of the application you need credentials for. In our case, it's the simple WebApp. The `Key` is how the application then queries its credentials with `Value` referring to the actual contents of the key (the secure bit). 
-For our example, add a credential of the following layout:
+For our example, add the following credential:
 
 ```
-Name: my_simple_web_app
-Key: web_app_credentials
-Value: username:password
+Name = my_simple_web_app
+Key = web_app_credentials
+Value = username:password
 
 ```
 
@@ -46,7 +39,8 @@ $ sudo service wott-agent restart
 ```
 There will now be a JSON file in your WoTT agent's credentials with your information which the app will parse and process. 
 
-**Note:** If you change the name of credentials, you will need to edit the name JSON file within the app as it currently assumes you have named it `my_simple_web_app` as per instructions.
+**Note:** If you change the Name of the new credentials, you will need to edit the name of the JSON file being read within the app as it currently assumes you have named it `my_simple_web_app` as per instructions.
+
 
 ## Setting up the WebApp
 
@@ -75,4 +69,57 @@ This will start your app on the server 127.0.0.1 at port 8080. You should receiv
 
 ```
 
-Launch http://127.0.0.1:8080/ on your browser's device. Here you'll be prompted to enter a username and password. 
+## Accessing the WebApp
+
+Launch http://127.0.0.1:8080/ on your browser's device. Here, provided you have encountered no errors, you'll be prompted to enter a username and password. If you have followed the steps so far the username should be `username` and the password `password`. 
+
+With the correct details, you will be greeted with the message: 
+```
+Login successful. Hello from WoTT!
+
+```
+
+And that's it, you've set up basic HTML auth on a WebApp!
+
+
+## Common Errors
+
+**No module named flask**
+```
+File "/Users/user/dir/app_dir/app.py", line 1, in <module>
+    from flask import Flask
+ImportError: No module named flask
+
+```
+
+This can occur if the requirements file does not install properly. A simple fix is installing flask using `pip3 install flask` globally.
+Also, make sure you use pip3 commands as the apps are written in python3 and sudo appropriately.
+
+**404: Not Found when running either app.py or installing requirements.txt**
+
+When using curl commands to download the files from Github, make sure you use the correct URL. If you're unsure, go to the GitHub page directly and click on the files and view them in raw format. Copy this link into the curl command if all else fails.
+
+
+## Accessing the WebApp from a new client
+
+While making sure the server device is still running:
+
+Obtain your server device IP using `ip addr show` in a separate terminal if you do not know what it is already. The port we are calling is 8080. 
+
+You can either enter the IP address followed by `:8080` and enter the username and password through the WebApp; or you can use a curl command in your client device's terminal in the following format:
+
+```
+curl http://username:password@SERVER_IP:8080
+
+```
+Once again, if succussful you will receive the following message:
+
+```
+Login successful. Hello from WoTT!
+
+```
+
+## Closing Notes
+
+We have now seen how we can use WoTT to generate secure credentials to access a WebApp via HTTP Basic auth. This can be done from any device to the server on the WoTT agent enabled device provided you have access to the credentials and the server's IP. Once again, make sure to bind your WebApp to your localhost for security.
+

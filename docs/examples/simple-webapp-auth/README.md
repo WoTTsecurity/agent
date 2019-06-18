@@ -96,8 +96,7 @@ ImportError: No module named flask
 
 ```
 
-This can occur if the requirements file does not install properly. A simple fix is installing flask using `pip3 install flask` globally.
-Also, make sure you use pip3 commands as the apps are written in python3 and sudo appropriately.
+This can occur if the requirements file does not install properly or you are in the wrong virtualenv. Make sure to source your venv and install requirements.txt properly
 
 **404: Not Found when running either app.py or installing requirements.txt**
 

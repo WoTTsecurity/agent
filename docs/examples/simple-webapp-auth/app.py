@@ -3,11 +3,20 @@
 
 from functools import wraps
 from flask import Flask, request, Response
+import json
+
+## Loading credentials from json file
+with open('/opt/wott/credentials/my_simple_web_app.json', 'r') as credentials:
+    credentials_info = json.load(credentials)
+
+credentials_values = credentials_info['web_app_credentials'].split(":")
+username = credentials_values[0]
+password = credentials_values[1]
 
 app = Flask(__name__)
 
-def check_auth(username, password):
-    return username == 'user' and password == 'pass'
+def check_auth(username,password):
+    return username and password 
 
 def authenticate():
     return Response(

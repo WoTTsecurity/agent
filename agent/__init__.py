@@ -209,10 +209,8 @@ def get_ca_cert(debug=False):
 def get_claim_info(debug=False, dev=False):
     setup_endpoints(dev, debug)
     response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                            headers={
-                                'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                                'SSL-CLIENT-VERIFY': 'SUCCESS'
-                            } if dev else {})
+                            headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+                                     'SSL-CLIENT-VERIFY': 'SUCCESS'} if dev else {})
     if debug:
         print("[RECEIVED] Get Device Claim Info: {}".format(response))
 

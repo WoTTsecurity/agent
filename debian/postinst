@@ -2,7 +2,8 @@
 
 CLAIM_URL=$(wott-agent claim-url)
 
-if [ $? -ne 0 ]; then
+if [ $? -eq 1 ]
+then
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
@@ -15,6 +16,11 @@ For more information, visit wott.io/getting-started or drop us a line at hey@wot
 Regards,
 The WoTT Team
 
+"
+elif [ $? -eq 2 ]
+then
+HELLO="
+Did not manage to get claim info from the server.
 "
 else
 HELLO="

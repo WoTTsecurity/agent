@@ -208,9 +208,13 @@ def get_ca_cert(debug=False):
 
 def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
-    response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                            headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                                     'SSL-CLIENT-VERIFY': 'SUCCESS'} if dev else {})
+    try:
+        response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+                                headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
+                                         'SSL-CLIENT-VERIFY': 'SUCCESS'} if dev else {})
+    except requests.exceptions.ConnectionError:
+        print('Did not manage to get claim info from the server.')
+        exit(2)
     if debug:
         print("[RECEIVED] Get Device Claim Info: {}".format(response))
 
@@ -222,7 +226,7 @@ def get_claim_token(debug=False, dev=False):
         return claim_info['claim_token']
     else:
         print('Did not manage to get claim info from the server.')
-        exit(1)
+        exit(2)
 
 
 def get_fallback_token():

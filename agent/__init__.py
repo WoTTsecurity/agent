@@ -550,7 +550,7 @@ def run(ping=True, debug=False, dev=False):
         if bootstrapping:
             device_id = generate_device_id(debug=debug)
             print('Got WoTT ID: {}'.format(device_id))
-            write_metadata({ 'device_id': device_id }, rewrite_file=True)
+            write_metadata({'device_id': device_id}, rewrite_file=True)
         else:
             device_id = get_device_id()
             write_metadata({'device_id': device_id}, rewrite_file=False)

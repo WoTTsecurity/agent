@@ -492,7 +492,7 @@ def test_fetch_credentials(tmpdir):
     pw = pwd.getpwnam("root")
     rt_uid = pw.pw_uid
     rt_gid = pw.pw_gid
-    user = getenv('USER', 'pi')
+    user = getenv('USER', 'nobody')
     pw = pwd.getpwnam(user)
     pi_uid = pw.pw_uid
     pi_gid = pw.pw_gid
@@ -525,6 +525,7 @@ def test_fetch_credentials(tmpdir):
         assert Path.exists(tmpdir / 'name2.json')
         assert Path.exists(json3_path) is False
 
+        pi_dir_path = str(tmpdir / user)
         pi_name1_path = str(tmpdir / user / 'name1.json')
         pi_name2_path = str(tmpdir / user / 'name2.json')
         rt_name2_path = str(tmpdir / 'name2.json')
@@ -542,10 +543,11 @@ def test_fetch_credentials(tmpdir):
         ], any_order=True)
 
         chw.assert_has_calls([
-            mock.call(pi_name1_path, pi_uid, pi_gid),
-            mock.call(pi_name2_path, pi_uid, pi_gid),
             mock.call(rt_name2_path, rt_uid, rt_gid),
-        ], any_order=False)
+            mock.call(pi_dir_path, pi_uid, pi_gid),
+            mock.call(pi_name2_path, pi_uid, pi_gid),
+            mock.call(pi_name1_path, pi_uid, pi_gid)
+        ], any_order=True)
 
 
 def test_fetch_credentials_no_dir(tmpdir):

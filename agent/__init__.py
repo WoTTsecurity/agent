@@ -22,7 +22,7 @@ from cryptography.x509.oid import NameOID
 from math import floor
 from pathlib import Path
 from sys import exit
-
+import pwd
 
 try:
     __version__ = pkg_resources.get_distribution('wott-agent')
@@ -47,7 +47,7 @@ else:
 
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
-    os.chmod(CONFIG_PATH, 0o700)
+    os.chmod(CONFIG_PATH, 0o711)
 Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
@@ -66,7 +66,7 @@ def is_bootstrapping():
     # Create path if it doesn't exist
     if not os.path.isdir(CERT_PATH):
         os.makedirs(CERT_PATH)
-        os.chmod(CERT_PATH, 0o700)
+        os.chmod(CERT_PATH, 0o711)
 
     client_cert = Path(CLIENT_CERT_PATH)
 
@@ -472,6 +472,19 @@ def setup_endpoints(dev, debug):
               DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
               ))
 
+def clear_credentials(dir, debug):
+    if debug:
+        print("enter: clear_credentials({})".format(dir))
+    for file in os.listdir(dir):
+        if file == '..' or file == '.':
+            continue
+        if os.path.isdir(file):
+            clear_credentials(file)
+        elif file.endswith(".json"):
+            os.remove(os.path.join(dir, file))
+            if debug:
+                print("remove...{}/{})".format(dir, file))
+
 
 def fetch_credentials(debug, dev):
     with Locker('credentials'):
@@ -500,38 +513,65 @@ def fetch_credentials(debug, dev):
             print('Credentials: {}'.format(credentials))
 
         if not os.path.exists(CREDENTIALS_PATH):
-            os.mkdir(CREDENTIALS_PATH, 0o700)
+            os.mkdir(CREDENTIALS_PATH, 0o711)
 
         if not os.path.isdir(CREDENTIALS_PATH):
             print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
             exit(1)
 
-        for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
-            if file.endswith(".json"):
-                os.remove(os.path.join(CREDENTIALS_PATH, file))
+        clear_credentials(CREDENTIALS_PATH, debug)
+        # for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
+        #     if file.endswith(".json"):
+        #         os.remove(os.path.join(CREDENTIALS_PATH, file))
 
         # group received credentials, by name
-        credentials_by_name = {}
+        credentials_grouped = {}
         for cred in credentials:
             name = cred['name']
-            if name not in credentials_by_name:
-                credentials_by_name[name] = {}
-            credentials_by_name[name][cred['key']] = cred['value']
+            owner = cred['owner'] if 'owner' in cred else ''
+            if owner not in credentials_grouped:
+                credentials_grouped[owner] = {}
+            if name not in credentials_grouped[owner]:
+                credentials_grouped[owner][name] = {}
+            credentials_grouped[owner][name][cred['key']] = cred['value']
 
-        for name in credentials_by_name:
-            credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
-            file_credentials = {}
+        for owner in credentials_grouped:
 
-            for cred in credentials_by_name[name]:
-                file_credentials[cred] = credentials_by_name[name][cred]
+            pw = pwd.getpwnam("root")
+            if owner:
+                try:
+                    pw = pwd.getpwnam(owner)
+                except KeyError:
+                    pw = pwd.getpwnam("root")
 
-            if debug:
-                print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+            uid = pw.pw_uid
+            gid = pw.pw_gid
 
-            with open(credential_file_path, 'w') as outfile:
-                json.dump(file_credentials, outfile)
+            owner_path = CREDENTIALS_PATH if not owner \
+                         else os.path.join(CREDENTIALS_PATH, owner)
 
-            os.chmod(credential_file_path, 0o600)
+            if owner and not os.path.isdir(owner_path):
+                if os.path.exists(owner_path):
+                    print("there is file named as owner in credentials dir({}), that's strange...".format(owner_path))
+                    exit(1)
+                os.mkdir(owner_path, 0o700)
+                os.chown(owner_path, uid, gid)
+
+            for name in credentials_grouped[owner]:
+                credential_file_path = os.path.join(owner_path, "{}.json".format(name))
+                file_credentials = {}
+
+                for cred in credentials_grouped[owner][name]:
+                    file_credentials[cred] = credentials_grouped[owner][name][cred]
+
+                if debug:
+                    print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+
+                with open(credential_file_path, 'w') as outfile:
+                    json.dump(file_credentials, outfile)
+
+                os.chmod(credential_file_path, 0o400)
+                os.chown(credential_file_path, uid, gid)
 
 
 def write_metadata(data, rewrite_file):

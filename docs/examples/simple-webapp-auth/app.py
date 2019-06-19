@@ -43,5 +43,6 @@ def requires_auth(f):
 def hello_world():
     return 'Login successful. Hello from WoTT!'
 
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080)

@@ -473,21 +473,21 @@ def setup_endpoints(dev, debug):
               ))
 
 
-def clear_credentials(dir, debug):
-    if debug:
-        print("enter: clear_credentials({})".format(dir))
-    for file in os.listdir(dir):
-        if file == '..' or file == '.':
-            continue
-        if os.path.isdir(file):
-            clear_credentials(file)
-        elif file.endswith(".json"):
-            os.remove(os.path.join(dir, file))
-            if debug:
-                print("remove...{}/{})".format(dir, file))
-
-
 def fetch_credentials(debug, dev):
+
+    def clear_credentials(path):
+        if debug:
+            print("enter: clear_credentials({})".format(path))
+        for file in os.listdir(path):
+            if file == '..' or file == '.':
+                continue
+            if os.path.isdir(file):
+                clear_credentials(file)
+            elif file.endswith(".json"):
+                os.remove(os.path.join(path, file))
+                if debug:
+                    print("remove...{}/{})".format(path, file))
+
     with Locker('credentials'):
         setup_endpoints(dev, debug)
         print('Fetching credentials...')
@@ -520,7 +520,7 @@ def fetch_credentials(debug, dev):
             print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
             exit(1)
 
-        clear_credentials(CREDENTIALS_PATH, debug)
+        clear_credentials(CREDENTIALS_PATH)
         # for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
         #     if file.endswith(".json"):
         #         os.remove(os.path.join(CREDENTIALS_PATH, file))

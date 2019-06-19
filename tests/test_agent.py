@@ -496,8 +496,6 @@ def test_fetch_credentials(tmpdir):
     pi_uid = pw.pw_uid
     pi_gid = pw.pw_gid
 
-
-
     mock_resp = mock.Mock()
     mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(
@@ -520,7 +518,6 @@ def test_fetch_credentials(tmpdir):
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
         agent.fetch_credentials(False, False)
-
 
         assert Path.exists(tmpdir / user / 'name1.json')
         assert Path.exists(tmpdir / user / 'name2.json')

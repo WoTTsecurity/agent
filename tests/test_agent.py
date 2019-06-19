@@ -551,25 +551,6 @@ def test_fetch_credentials_no_dir(tmpdir):
             assert json.load(f) == {"key1": "v21"}
 
 
-def test_get_remote_claim_status(tmpdir, cert, key):
-
-    mock_resp = mock.Mock()
-    mock_resp.raise_status = 200
-    mock_resp.json = mock.Mock(
-        return_value={'claimed': 'True'}
-    )
-    mock_resp.return_value.ok = True
-    with mock.patch('builtins.print'), \
-            mock.patch('agent.can_read_cert') as cr, \
-            mock.patch('requests.get') as req:
-
-        cr.return_value = True
-        req.return_value = mock_resp
-        mock_resp.return_value.ok = True
-        claimed = agent.get_remote_claim_status(debug=False)
-        assert claimed == 'True'
-
-
 def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
     """
     Execute two "sleepers" at once.

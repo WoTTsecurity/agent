@@ -1,8 +1,8 @@
 import argparse
 import asyncio
-from . import run, get_device_id, get_open_ports, say_hello, \
-    get_claim_token, get_claim_url, executor, fetch_credentials, \
-    get_claim_status
+
+from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
+from . import fetch_credentials
 
 
 def main():
@@ -12,9 +12,7 @@ def main():
         'test-cert': (say_hello, "Validate device certificate."),
         'claim-token': (get_claim_token, "Print claim token."),
         'claim-url': (get_claim_url, "Print claim URL."),
-        'daemon': (run_daemon, "Run as daemon"),
-        'is-claimed': (get_claim_status, "Check if device is already claimed."),
-
+        'daemon': (run_daemon, "Run as daemon")
     }
     help_string = "One of the following:\n\n" + "\n".join(
         ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])
@@ -49,7 +47,7 @@ or renews it if necessary.
         run_daemon(debug=args.debug, dev=args.dev)
     else:
         run(ping=False, debug=args.debug, dev=args.dev)
-        print(actions[args.action][0]())
+        print(actions[args.action][0](debug=args.debug, dev=args.dev))
 
 
 PING_INTERVAL = 60 * 60

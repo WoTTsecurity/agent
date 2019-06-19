@@ -501,7 +501,7 @@ def test_fetch_credentials(tmpdir):
     mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(
         return_value=[
-            {'name': 'name1', 'key': 'key1', 'value': 'v1',  'owner': user},
+            {'name': 'name1', 'key': 'key1', 'value': 'v1', 'owner': user},
             {'name': 'name2', 'key': 'key1', 'value': 'v21', 'owner': user},
             {'name': 'name2', 'key': 'key2', 'value': 'v22', 'owner': user},
             {'name': 'name2', 'key': 'key3', 'value': 'v23', 'owner': ''},

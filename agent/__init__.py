@@ -23,6 +23,7 @@ from math import floor
 from pathlib import Path
 from sys import exit
 import pwd
+import glob
 
 try:
     __version__ = pkg_resources.get_distribution('wott-agent')
@@ -476,17 +477,11 @@ def setup_endpoints(dev, debug):
 def fetch_credentials(debug, dev):
 
     def clear_credentials(path):
-        if debug:
-            print("enter: clear_credentials({})".format(path))
-        for file in os.listdir(path):
-            if file == '..' or file == '.':
-                continue
-            if os.path.isdir(file):
-                clear_credentials(file)
-            elif file.endswith(".json"):
-                os.remove(os.path.join(path, file))
-                if debug:
-                    print("remove...{}/{})".format(path, file))
+        files = glob.glob(os.path.join(path, '**/*.json'), recursive=True)
+        for file in files:
+            os.remove(os.path.join(path, file))
+            if debug:
+                print("remove...{}".format(file))
 
     with Locker('credentials'):
         setup_endpoints(dev, debug)
@@ -517,7 +512,7 @@ def fetch_credentials(debug, dev):
             os.mkdir(CREDENTIALS_PATH, 0o711)
 
         if not os.path.isdir(CREDENTIALS_PATH):
-            print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
+            print("There is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
             exit(1)
 
         clear_credentials(CREDENTIALS_PATH)
@@ -549,7 +544,7 @@ def fetch_credentials(debug, dev):
 
             if owner and not os.path.isdir(owner_path):
                 if os.path.exists(owner_path):
-                    print("there is file named as owner in credentials dir({}), that's strange...".format(owner_path))
+                    print("There is a file with name of system user in credentials directory ({}).".format(owner_path))
                     exit(1)
                 os.mkdir(owner_path, 0o700)
                 os.chown(owner_path, uid, gid)

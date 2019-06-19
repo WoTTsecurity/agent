@@ -15,7 +15,7 @@ WoTT provides an online client that you can interface with to register your WoTT
 
 For this example, you will need to have the WoTT Dash set up, so if you haven't done so already, register with the link above and enrol your devices (done during the initial installation of the WoTT agent). If you already have done this, just log into the dashboard with your username and password.
 
-![Wott Login](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-login.png)
+![Wott Login](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-login.png)
 
 
 ## Adding Credentials
@@ -28,12 +28,11 @@ For our example, add the following credential:
 Name = my_simple_web_app
 Key = web_app_credentials
 Value = username:password
-
 ```
 
 In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. If all is successful, the page should now look something like this:
 
-![Wott Credentials](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/wott-dash.png)
+![Wott Credentials](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-dash.png)
 
 
 
@@ -41,7 +40,6 @@ The credentials are now ready to be used on all your WoTT enabled devices. On yo
 
 ``` 
 $ sudo service wott-agent restart
-
 ```
 There will now be a JSON file in your WoTT agent's credentials with your information which the app will parse and process. 
 
@@ -60,7 +58,6 @@ $ curl -o app.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/doc
 $ curl -o requirements.txt https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/examples/simple-webapp-auth/requirements.txt
 $ pip3 install -r requirements.txt
 $ sudo python3 app.py
-
 ```
 
 This will start your app on the server 127.0.0.1 at port 8080. You should receive a response like so:
@@ -72,7 +69,6 @@ This will start your app on the server 127.0.0.1 at port 8080. You should receiv
   Use a production WSGI server instead.
 * Debug mode: Off
 * Running on http://127.0.0.1:8080/ (Press CTRL+C to quit)
-
 ```
 
 ## Accessing the WebApp
@@ -81,7 +77,7 @@ Launch http://127.0.0.1:8080/ on your browser's device. Here, provided you have 
 
 With the correct details, you will be greeted with the following screen message: 
 
-![login success](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth/hello.png)
+![login success](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/hello.png)
 
 And that's it, you've set up basic HTML auth on a WebApp!
 
@@ -93,7 +89,6 @@ And that's it, you've set up basic HTML auth on a WebApp!
 File "/Users/user/dir/app_dir/app.py", line 1, in <module>
     from flask import Flask
 ImportError: No module named flask
-
 ```
 
 This can occur if the requirements file does not install properly or you are in the wrong virtualenv. Make sure to source your venv and install requirements.txt properly
@@ -113,13 +108,11 @@ You can either enter the IP address followed by `:8080` and enter the username a
 
 ```
 curl http://username:password@SERVER_IP:8080
-
 ```
 Once again, if succussful you will receive the following message:
 
 ```
 Login successful. Hello from WoTT!
-
 ```
 
 ## Closing Notes

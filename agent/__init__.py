@@ -505,8 +505,6 @@ def fetch_credentials(debug, dev):
         credentials = credentials_req.json()
 
         print('Credentials retreived.')
-        if debug:
-            print('Credentials: {}'.format(credentials))
 
         if not os.path.exists(CREDENTIALS_PATH):
             os.mkdir(CREDENTIALS_PATH, 0o711)
@@ -547,7 +545,7 @@ def fetch_credentials(debug, dev):
                     print("There is a file with name of system user in credentials directory ({}).".format(owner_path))
                     exit(1)
                 os.mkdir(owner_path, 0o700)
-            os.chown(owner_path, uid, gid) # update ownership if user existence in system changed
+            os.chown(owner_path, uid, gid)  # update ownership if user existence in system changed
 
             for name in credentials_grouped[owner]:
                 credential_file_path = os.path.join(owner_path, "{}.json".format(name))
@@ -557,7 +555,7 @@ def fetch_credentials(debug, dev):
                     file_credentials[cred] = credentials_grouped[owner][name][cred]
 
                 if debug:
-                    print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+                    print('Store credentials to {} \n '.format(credential_file_path))
 
                 with open(credential_file_path, 'w') as outfile:
                     json.dump(file_credentials, outfile)

@@ -206,7 +206,7 @@ def get_ca_cert(debug=False):
     return ca.json()['ca_bundle']
 
 
-def get_claim_info(debug=False, dev=False):
+def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
                             headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
@@ -215,14 +215,14 @@ def get_claim_info(debug=False, dev=False):
         print("[RECEIVED] Get Device Claim Info: {}".format(response))
 
     if response.ok:
-        return response.json()
+        claim_info = response.json()
+        if claim_info['claimed']:
+            print('The device is already claimed.')
+            exit(1)
+        return claim_info['claim_token']
     else:
         print('Did not manage to get claim info from the server.')
         exit(1)
-
-
-def get_claim_token(debug=False, dev=False):
-    return get_claim_info(debug, dev)['claim_token']
 
 
 def get_fallback_token():
@@ -232,15 +232,11 @@ def get_fallback_token():
 
 
 def get_claim_url(debug=False, dev=False):
-    claim_info = get_claim_info(debug, dev)
-    if claim_info['claimed']:
-        return ''
-    else:
-        return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
-            WOTT_ENDPOINT=DASH_ENDPOINT,
-            device_id=get_device_id(),
-            claim_token=claim_info['claim_token']
-        )
+    return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+        WOTT_ENDPOINT=DASH_ENDPOINT,
+        device_id=get_device_id(),
+        claim_token=get_claim_token(debug, dev)
+    )
 
 
 def get_uptime():

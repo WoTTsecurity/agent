@@ -2,7 +2,7 @@
 
 CLAIM_URL=$(wott-agent claim-url)
 
-if [ ${CLAIM_URL} ]; then
+if [ $? -eq 0 ]; then
 HELLO="
 Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 

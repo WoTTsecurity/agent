@@ -104,6 +104,11 @@ venv.bak/
 .mypy_cache/
 dist/
 build/
+<<<<<<< HEAD
 .DS_Store
 docs/.DS_Store
 docs/examples/.DS_Store
+=======
+
+.DS_Store
+>>>>>>> e0782b9f3e8d1648c69abb8f3c258a116b37ee4a

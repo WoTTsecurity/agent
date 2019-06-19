@@ -13,7 +13,7 @@ First we need to get the CA certificate:
 $ curl -s https://api.wott.io/v0.2/ca | jq -r '.ca_certificate' > ca.crt
 ```
 
-Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic. Available regions for Cloud IoT are `us-central1`, `europe-west1`, and `asia-east1`. 
+Next, we need to create the registry. Substitute `REGISTRY_ID` and `PROJECT_ID` with your corresponding information. You may also want to change the name of the pub/sub topic. Available regions for Cloud IoT are `us-central1`, `europe-west1`, and `asia-east1`.
 
 ```
 $ gcloud iot registries create REGISTRY_ID \
@@ -25,37 +25,34 @@ $ gcloud iot registries create REGISTRY_ID \
     --state-pubsub-topic=wott-pubsub
 ```
 
-That's it. We have now created a WoTT enabled Google CoreIoT registry. Now we need to enroll our first device.
+That's it. We have now created a WoTT enabled Google Core IoT registry. Now we need to enroll our first device.
 
 
 ## Enrolling devices
 
 The first thing we need to do is to download the certificate of the device. To do that we nned to issue an API call to WoTT's API.
-To do this, you will need the Device ID of the WoTT agent-enabled device. The relevant information of your device can be found on the WoTT Dash. 
+To do this, you will need the Device ID of the WoTT agent-enabled device. The relevant information of your device can be found on the WoTT Dash.
 
 If you do not have the dash set up, you can manually retrieve this information via command line using: `$ sudo wott-agent whoami` and substitute that value into `mydevice` as follows:
 
 
 ```
 $ export DEVICE_ID=mydevice.d.wott.local
-$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
+$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID" > device.crt
 ```
 
-Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements). If your WoTT ID starts with a number, you will have do the following commands instead to circumvent this:
-
+Google's Device ID [must start with a letter ([a-zA-Z]))](https://cloud.google.com/iot/docs/requirements#permitted_characters_and_size_requirements). If your WoTT ID starts with a number, you will need to prefix it with a character. In the example below, we prefix the Device ID with `a-` to circumvent this (but you can prefix it with anything you want as long as it starts with a character):
 
 ```
-$ export DEVICE_ID=mydevice.d.wott.local
 $ export GOOGLE_DEVICE_ID=$(echo $DEVICE_ID | sed 's/^[0-9]/a-/g')
-$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID"  > device.crt
-
+$ curl -s "https://api.wott.io/v0.2/device-cert/$DEVICE_ID" > device.crt
 ```
 
 This achieves the same as before but gives you a valid Google Device ID that you can use to communicate with Google's services.
 
-**Note:** 
-The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can start with either a letter *or* a number. 
-Therefore, you need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID. 
+**Note:**
+The WoTT Device ID (the string of characters found in `mydevice`) is unique and registered to your specific device. This ID can start with either a letter *or* a number.
+Therefore, you need to prefix your devices if your particular WoTT Device ID starts with a number in order for it to be a valid Google Device ID.
 In order to communicate with either WoTT or Google services, you will need to use the corresponding Device ID for each service; however in many cases this will be the same.
 
 With the certificate downloaded, we can now enroll the device (ensure you use the correct Device ID):
@@ -67,8 +64,6 @@ $ gcloud iot devices create "$GOOGLE_DEVICE_ID" \
     --registry=REGISTRY_ID \
     --public-key path=device.crt,type=es256-x509-pem
 ```
-
-
 
 We now have our first device enrolled. Please do however note that the WoTT uses short-lived certificates (7 days), so you will need to upload these certificates every week.
 
@@ -95,7 +90,7 @@ $ wget https://pki.google.com/roots.pem
 ```
 
 We have now installed everything we need to start the agent, so let's give it a shot with an example.
-You will need to ensure you remain in the current directory. 
+You will need to ensure you remain in the current directory.
 
 Run the following (ensuring you substitute the correct details):
 
@@ -127,13 +122,12 @@ gcloud iot devices configs describe \
     --device=DEVICE_ID
 ```
 
-You should get a response similar to this: 
+You should get a response similar to this:
 
 ```
 cloudUpdateTime: '2019-01-30T08:51:10.896665Z'
 deviceAckTime: '2019-01-30T11:57:15.586890Z'
 version: '1'
-
 ```
 
 ## Send a message

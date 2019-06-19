@@ -472,6 +472,7 @@ def setup_endpoints(dev, debug):
               DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
               ))
 
+
 def clear_credentials(dir, debug):
     if debug:
         print("enter: clear_credentials({})".format(dir))
@@ -547,8 +548,7 @@ def fetch_credentials(debug, dev):
             uid = pw.pw_uid
             gid = pw.pw_gid
 
-            owner_path = CREDENTIALS_PATH if not owner \
-                         else os.path.join(CREDENTIALS_PATH, owner)
+            owner_path = CREDENTIALS_PATH if not owner else os.path.join(CREDENTIALS_PATH, owner)
 
             if owner and not os.path.isdir(owner_path):
                 if os.path.exists(owner_path):

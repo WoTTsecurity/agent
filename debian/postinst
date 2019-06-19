@@ -1,32 +1,27 @@
 #DEBHELPER#
 
-CLAIM_URL=$(wott-agent claim-url)
+CLAIM_URL=$(wott-agent claim-url --dev)
+EXIT_CODE=$?
 
-if [ $? -eq 1 ]
+if [ $EXIT_CODE -eq 1 ]
 then
-HELLO="
-Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
+HELLO="Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
 Your device has already been claimed in the WoTT dashboard (https://dash.wott.io).
 
-Your device's unique ID is: $(wott-agent whoami)
+Your device's unique ID is: $(wott-agent whoami --dev)
 
 For more information, visit wott.io/getting-started or drop us a line at hey@wott.io.
 
 Regards,
-The WoTT Team
-
-"
-elif [ $? -eq 2 ]
+The WoTT Team"
+elif [ $EXIT_CODE -eq 2 ]
 then
-HELLO="
-Did not manage to get claim info from the server.
-"
+HELLO="Did not manage to get claim info from the server."
 else
-HELLO="
-Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
+HELLO="Good job installing the wott-agent and welcome to the community of security conscious hardware devs!
 
-You're one step closer to building a secure device. Your device's unique ID is: $(wott-agent whoami)
+You're one step closer to building a secure device. Your device's unique ID is: $(wott-agent whoami --dev)
 
 To unleash the value of WoTT, and to gain insight into the security of your device(s), connect your device at https://dash.wott.io.
 
@@ -36,9 +31,7 @@ ${CLAIM_URL}
 For more information on how to get started, visit wott.io/getting-started or drop us a line at hey@wott.io.
 
 Regards,
-The WoTT Team
-
-"
+The WoTT Team"
 fi
 
-printf "$HELLO"
+printf "$HELLO\n"

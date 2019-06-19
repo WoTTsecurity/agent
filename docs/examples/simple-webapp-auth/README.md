@@ -73,7 +73,7 @@ This will start your app on the server 127.0.0.1 at port 8080. You should receiv
 
 ## Accessing the WebApp
 
-Launch http://127.0.0.1:8080/ on your browser's device. Here, provided you have encountered no errors, you'll be prompted to enter a username and password. If you have followed the steps so far the username should be `username` and the password `password`. 
+Launch http://127.0.0.1:8080/ on your device's browser. Here, provided you have encountered no errors, you'll be prompted to enter a username and password. If you have followed the steps so far the username should be `username` and the password `password`. 
 
 With the correct details, you will be greeted with the following screen message: 
 

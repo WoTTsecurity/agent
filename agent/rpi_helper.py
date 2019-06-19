@@ -1,5 +1,8 @@
 import os
 from enum import Enum
+import pkg_resources
+
+import agent
 
 
 def detect_raspberry_pi():
@@ -25,28 +28,39 @@ def detect_raspberry_pi():
     return metadata
 
 
-class DetectConfinement(Enum):
-    """
-    Returns the confinement environment.
-    This function is used to control features.
-    """
+class Confinement(Enum):
+    NONE = 0
+    DOCKER = 1
+    BALENA = 2
+    SNAP = 3
 
-    # Detect if running inside Docker
-    # Credits: https://stackoverflow.com/a/42674935/346054
-    with open('/proc/1/cgroup', 'rt') as ifh:
-        if 'docker' in ifh.read():
-            DOCKER = True
-        else:
-            DOCKER = False
 
-    # Detect if running inside Balena
-    if os.getenv('BALENA') or os.getenv('RESIN'):
-        BALENA = True
-    else:
-        BALENA = False
+class Installation(Enum):
+    NONE = 0
+    DEB = 1
+    PYTHON_PACKAGE = 2
 
-    # Detect if running inside an Ubuntu Snap
+
+def detect_confinement():
     if os.getenv('SNAP'):
-        SNAP = True
-    else:
-        SNAP = False
+        return Confinement.SNAP
+    is_docker = 'docker' in open('/proc/1/cgroup', 'rt').read()
+    if is_docker:
+        if os.getenv('BALENA') or os.getenv('RESIN'):
+            return Confinement.BALENA
+        else:
+            return Confinement.DOCKER
+
+    return Confinement.NONE
+
+
+def detect_installation():
+    try:
+        import apt
+        cache = apt.Cache()
+        if __file__ in cache['wott-agent'].installed_files:
+            return Installation.DEB
+    finally:
+        if isinstance(agent.__version__, pkg_resources.Distribution):
+            return Installation.PYTHON_PACKAGE
+        return Installation.NONE

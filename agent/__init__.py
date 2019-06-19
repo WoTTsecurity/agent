@@ -67,7 +67,7 @@ def is_bootstrapping():
     # Create path if it doesn't exist
     if not os.path.isdir(CERT_PATH):
         os.makedirs(CERT_PATH)
-        os.chmod(CERT_PATH, 0o711)
+    os.chmod(CERT_PATH, 0o711)
 
     client_cert = Path(CLIENT_CERT_PATH)
 
@@ -547,7 +547,7 @@ def fetch_credentials(debug, dev):
                     print("There is a file with name of system user in credentials directory ({}).".format(owner_path))
                     exit(1)
                 os.mkdir(owner_path, 0o700)
-                os.chown(owner_path, uid, gid)
+            os.chown(owner_path, uid, gid) # update ownership if user existence in system changed
 
             for name in credentials_grouped[owner]:
                 credential_file_path = os.path.join(owner_path, "{}.json".format(name))

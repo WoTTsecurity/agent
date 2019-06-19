@@ -521,11 +521,8 @@ def fetch_credentials(debug, dev):
             exit(1)
 
         clear_credentials(CREDENTIALS_PATH)
-        # for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
-        #     if file.endswith(".json"):
-        #         os.remove(os.path.join(CREDENTIALS_PATH, file))
 
-        # group received credentials, by name
+        # group received credentials, by owner, name
         credentials_grouped = {}
         for cred in credentials:
             name = cred['name']

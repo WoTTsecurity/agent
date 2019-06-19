@@ -534,6 +534,14 @@ def fetch_credentials(debug, dev):
             os.chmod(credential_file_path, 0o600)
 
 
+def write_metadata(data, rewrite_file):
+    metadata_path = Path(CONFIG_PATH) / 'metadata.json'
+    if rewrite_file or not metadata_path.is_file():
+        with metadata_path.open('w') as metadata_file:
+            json.dump(data, metadata_file)
+    metadata_path.chmod(0o644)
+
+
 def run(ping=True, debug=False, dev=False):
     with Locker('ping'):
         setup_endpoints(dev, debug)
@@ -542,7 +550,10 @@ def run(ping=True, debug=False, dev=False):
         if bootstrapping:
             device_id = generate_device_id(debug=debug)
             print('Got WoTT ID: {}'.format(device_id))
+            write_metadata({ 'device_id': device_id }, rewrite_file=True)
         else:
+            device_id = get_device_id()
+            write_metadata({'device_id': device_id}, rewrite_file=False)
             if not time_for_certificate_renewal() and not is_certificate_expired():
                 if ping:
                     send_ping(debug=debug, dev=dev)
@@ -555,7 +566,6 @@ def run(ping=True, debug=False, dev=False):
                     exit(0)
                 else:
                     return
-            device_id = get_device_id()
             print('My WoTT ID is: {}'.format(device_id))
 
         print('Generating certificate...')

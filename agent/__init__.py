@@ -208,6 +208,7 @@ def get_ca_cert(debug=False):
 
 def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
+    can_read_cert()
     try:
         response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
                                 headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),

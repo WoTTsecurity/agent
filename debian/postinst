@@ -1,8 +1,8 @@
 #DEBHELPER#
 
 CLAIM_RESULT=$(wott-agent claim-url)
-CLAIM_URL=$(printf "${CLAIM_RESULT}" | tail -n1)
 EXIT_CODE=$?
+CLAIM_URL=$(printf "${CLAIM_RESULT}" | tail -n1)
 
 case $EXIT_CODE in
   0) printf "Good job installing the wott-agent and welcome to the community of security conscious hardware devs!

@@ -1,0 +1,46 @@
+interactions:
+- request:
+    body: '{"device_architecture": "x86_64", "fqdn": "localhost", "csr": null, "device_operating_system_version":
+      "4.9.125-linuxkit", "device_operating_system": "Linux", "ipv4_address": "172.18.0.3",
+      "device_id": null, "fallback_token": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '231'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.12.4
+    method: POST
+    uri: https://api.wott.io/v0.2/sign-expired-csr
+  response:
+    body:
+      string: '{"device_id":["This field may not be null."]}'
+    headers:
+      Allow:
+      - POST, PUT, PATCH, OPTIONS
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '45'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 19 Jun 2019 08:02:00 GMT
+      Server:
+      - nginx/1.15.8
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Cookie
+      X-Frame-Options:
+      - SAMEORIGIN
+    status:
+      code: 400
+      message: Bad Request
+version: 1

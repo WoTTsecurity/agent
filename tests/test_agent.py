@@ -14,6 +14,8 @@ from agent.rpi_helper import detect_raspberry_pi
 from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT, block_ports
 from agent.security_helper import check_for_default_passwords
 from agent import executor
+import pwd
+from os import getenv
 
 
 def test_detect_raspberry_pi(raspberry_cpuinfo):
@@ -487,34 +489,65 @@ def test_fetch_credentials(tmpdir):
     json3_path = Path(json3_path_str)
     json3_path.write_text('nonzero')
 
+    pw = pwd.getpwnam("root")
+    rt_uid = pw.pw_uid
+    rt_gid = pw.pw_gid
+    user = getenv('USER', 'nobody')
+    pw = pwd.getpwnam(user)
+    pi_uid = pw.pw_uid
+    pi_gid = pw.pw_gid
+
     mock_resp = mock.Mock()
     mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(
         return_value=[
-            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
-            {'name': 'name2', 'key': 'key1', 'value': 'v21'},
-            {'name': 'name2', 'key': 'key2', 'value': 'v22'},
+            {'name': 'name1', 'key': 'key1', 'value': 'v1', 'owner': user},
+            {'name': 'name2', 'key': 'key1', 'value': 'v21', 'owner': user},
+            {'name': 'name2', 'key': 'key2', 'value': 'v22', 'owner': user},
+            {'name': 'name2', 'key': 'key3', 'value': 'v23', 'owner': ''},
         ]
     )
     mock_resp.return_value.ok = True
     with mock.patch('builtins.print'), \
             mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.get') as req, \
-            mock.patch('builtins.print'):
+            mock.patch('builtins.print'), \
+            mock.patch('os.chmod') as chm, \
+            mock.patch('os.chown') as chw:
 
         cr.return_value = True
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
         agent.fetch_credentials(False, False)
 
-        assert Path.exists(tmpdir / 'name1.json')
+        assert Path.exists(tmpdir / user / 'name1.json')
+        assert Path.exists(tmpdir / user / 'name2.json')
         assert Path.exists(tmpdir / 'name2.json')
         assert Path.exists(json3_path) is False
-        with open(str(tmpdir / 'name1.json')) as f:
-            assert json.load(f) == {"key1": "v1"}
 
-        with open(str(tmpdir / 'name2.json')) as f:
+        pi_dir_path = str(tmpdir / user)
+        pi_name1_path = str(tmpdir / user / 'name1.json')
+        pi_name2_path = str(tmpdir / user / 'name2.json')
+        rt_name2_path = str(tmpdir / 'name2.json')
+        with open(pi_name1_path) as f:
+            assert json.load(f) == {"key1": "v1"}
+        with open(pi_name2_path) as f:
             assert json.load(f) == {"key1": "v21", "key2": "v22"}
+        with open(rt_name2_path) as f:
+            assert json.load(f) == {"key3": "v23"}
+
+        chm.assert_has_calls([
+            mock.call(pi_name1_path, 0o400),
+            mock.call(pi_name2_path, 0o400),
+            mock.call(rt_name2_path, 0o400),
+        ], any_order=True)
+
+        chw.assert_has_calls([
+            mock.call(rt_name2_path, rt_uid, rt_gid),
+            mock.call(pi_dir_path, pi_uid, pi_gid),
+            mock.call(pi_name2_path, pi_uid, pi_gid),
+            mock.call(pi_name1_path, pi_uid, pi_gid)
+        ], any_order=True)
 
 
 def test_fetch_credentials_no_dir(tmpdir):

@@ -1,3 +1,10 @@
+import os
+from enum import Enum
+import pkg_resources
+
+import agent
+
+
 def detect_raspberry_pi():
     metadata = {
         'is_raspberry_pi': None,
@@ -19,3 +26,41 @@ def detect_raspberry_pi():
                 metadata['serial_number'] = line.split()[-1]
 
     return metadata
+
+
+class Confinement(Enum):
+    NONE = 0
+    DOCKER = 1
+    BALENA = 2
+    SNAP = 3
+
+
+class Installation(Enum):
+    NONE = 0
+    DEB = 1
+    PYTHON_PACKAGE = 2
+
+
+def detect_confinement():
+    if os.getenv('SNAP'):
+        return Confinement.SNAP
+    is_docker = 'docker' in open('/proc/1/cgroup', 'rt').read()
+    if is_docker:
+        if os.getenv('BALENA') or os.getenv('RESIN'):
+            return Confinement.BALENA
+        else:
+            return Confinement.DOCKER
+
+    return Confinement.NONE
+
+
+def detect_installation():
+    try:
+        import apt
+        cache = apt.Cache()
+        if __file__ in cache['wott-agent'].installed_files:
+            return Installation.DEB
+    finally:
+        if isinstance(agent.__version__, pkg_resources.Distribution):
+            return Installation.PYTHON_PACKAGE
+        return Installation.NONE

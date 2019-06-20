@@ -4,19 +4,29 @@
 
 **WARNING:** WoTT is currently in beta. Use in production at your own risk.
 
-## What is this?
+IoT is becoming a global phenomenom. Virtually any device can now be connected to the internet from smart TVs to fridges with many developers looking to develop their own IoT technology. However with more connectivity comes more security risks; with IoT devices providing more gateways for network attacks and fraudulent access. 
 
-**tl;dr** Simplified security for IoT developers
+## What is the WoTT Agent and what does it do?
 
-The goals for WoTT Agent is to:
+**TL;DR:** Providing simplified security for IoT developers
 
- * Simplify encryption of device communication
- * Provide cryptographic identity of sender (such that the receiver can trust that the sender is who it claims to be)
- * Enable you to remove hard coded credentials from your application and firmware
+WoTT aims to reduce that vulnerability by providing the security for you so that you can focus on your development. We want IoT developers to be able to develop their technology comfortable in the knowledge that their devices are secure from end-to-end. 
 
-The first build-block we need in order to facilitate encrypted communication between two peers is a cryptographic certificate [1]. This is provisioned automatically through the WoTT agent. At its core, this serves both as the means to enable encrypted communication, as well as each unique device’s identity.
+At its core, WoTT provides a few things:
 
-With the certificate installed on the device, we’re able to establish connections to devices and services and cryptographically prove we are whom we claim to be [2]. It’s worth pointing out that this is different than how say your browser works. In such scenario, you as the client (i.e. the browser) verifies that the remote server (e.g. https://www.google.com) is indeed the being served from Google’s server and not an impersonator. There is however no way for Google to cryptographically know that you are who are (which is why you need to login in order to access your email). With WoTT however, we’re able to add this piece, which essentially means that there is no longer a need for username and passwords, since we can cryptographically prove that the client/user is indeed who he/she/it claims to be.
+ * Simplified encryption of device communication
+ * Cryptographic identity for your devices (verifying the identity of an accessing device)
+ * Enabling the removal of hard coded credentials from your applications and firmware and allowing you greater control of credentials through WoTT
+ 
+
+In order to facilitate encrypted communication between two peers, we need a cryptographic certificate. WoTT provides this through the agent [1]. This serves both as a means for enabling encrypted communication, as well as giving each unique device a recognisable identity. It is this identity that we use to secure and verify inter-device connection.
+
+With the WoTT Agent certificate installed on a device, we can then establish connections to other devices and services by using the certificate to cryptographically prove the identity of said device [2]. 
+**Note**, this is *not* the same as how your browser works. In this scenario, the client (i.e. your browser) verifies that the remote server (e.g. https://www.google.com) is actually being served from Google’s server and not an impersonator. 
+There is however no way for Google to cryptographically verify who you are- hence why you are required by Google to login with your details to access your email. 
+
+WoTT's Agent allows you to bypass the need for username/passwords by providing a certificate unique to your device that can be used to verify your identity. It is through these certificates that WoTT secures your devices and allows them to communicate with each other.
+
 
 * [1] We do this by issuing an x509 certificate from our own Certificate Authority (CA).
 * [2] This is done using something called Mutual TLS, or mTLS for short.

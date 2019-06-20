@@ -412,7 +412,7 @@ def test_block_networks(ipt_networks, ipt_rules):
 
 def test_block_ports(ipt_ports, ipt_ports_rules):
     with mock.patch('agent.iptc_helper.batch_add_rules') as batch_add_rules:
-        block_ports(False, ipt_ports)
+        block_ports(True, ipt_ports)
         batch_add_rules.assert_has_calls([
             mock.call('filter', [r for r, ipv6 in ipt_ports_rules], chain=INPUT_CHAIN, ipv6=False)
         ])

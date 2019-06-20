@@ -108,10 +108,10 @@ def add_rules(table, chain, rules):
 
 def block_ports(allow: bool, ports_data: List[Tuple[str, str, int, bool]]):
     """
-    Block incoming TCP/UDP packets to the ports supplied in the list,
-    unblock previously blocked.
+    Block or allow incoming TCP/UDP packets to the ports supplied in the list.
 
-    :param ports_data: dict of protocols/ports to be blocked
+    :param allow: True if policy is "allow by default" (which means: block the supplied ports)
+    :param ports_data: dict of protocols/ports to be blocked or allowed
     :return: None
     """
 
@@ -132,8 +132,7 @@ def block_ports(allow: bool, ports_data: List[Tuple[str, str, int, bool]]):
 
 def block_networks(network_list: List[Tuple[str, bool]]):
     """
-    Block outgoing packets to the networks supplied in the list,
-    unblock previously blocked.
+    Block outgoing packets to the networks supplied in the list.
 
     :param network_list: list of IPs in dot-notation or subnets (<IP>/<mask>)
     :return: None

@@ -1,8 +1,10 @@
 from typing import List, Tuple
-from iptc import IPTCError
 from itertools import product
 from sys import stdout
 from traceback import print_exc
+
+from iptc import IPTCError
+
 from . import iptc_helper
 
 
@@ -10,7 +12,6 @@ TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
 OUTPUT_CHAIN = 'WOTT_OUTPUT'
 INPUT_CHAIN = 'WOTT_INPUT'
-WOTT_COMMENT = 'Added by WoTT'
 
 
 def dump():
@@ -23,8 +24,7 @@ def dump():
         chains = {}
         for chain_name, chain in table:
             policy = iptc_helper.get_policy(table_name, chain_name, ipv6=ipv6)
-            rules = {'rules': [rule for rule in chain if
-                     chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]}
+            rules = {'rules': [rule for rule in chain if chain_name != OUTPUT_CHAIN]}
             if policy:
                 rules['policy'] = policy
             chains[chain_name] = rules

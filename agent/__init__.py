@@ -310,7 +310,7 @@ def send_ping(debug=False, dev=False):
         })
 
     # Things we cannot do in Docker
-    if not CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
+    if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
         blocklist = ping.json()
         security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
         security_helper.block_networks(blocklist.get('block_networks', []))

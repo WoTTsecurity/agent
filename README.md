@@ -33,7 +33,9 @@ WoTT's Agent allows you to bypass the need for username/passwords by providing a
 
 ### WoTT credentials
 
-This isn't to say that WoTT does away with credentials completely- recall previously that we want to grant you more freedom by removing the need for hard coded credentials. WoTT provides a service wherein you can add your own credentials such as API keys or usernames and passwords. This is provided through the [WoTT dash](https://dash.wott.io) which we strongly reccomend that you use and familiarise yourself with. WoTT credentials are downloaded onto your device as JSON files containing the information you've added. 
+This isn't to say that WoTT does away with credentials completely. Although it is best practice to use certificates as it crpytographically identifies your device, it is not doable in every instance. Passwords and APIs are still often required and typically hard-coded. We want to remove need for hard doded credentials,so WoTT provides the capacity for adding credentials you can manage yourself to bridge this gap.
+
+You can add your own credentials such as API keys or usernames and passwords through the [WoTT dash](https://dash.wott.io) which we strongly reccomend that you use and familiarise yourself with. WoTT credentials are downloaded onto your device as JSON files containing the information you've added. 
 
 You can use this to introduce user authentication to your applications in scenarios where you want to enable access to non-WoTT devices in a secure way. This is especially relevant for WebApps where access is not device or OS restricted.
 
@@ -84,7 +86,7 @@ A simple example use case of securing a Python 3 WebApp using two WoTT Agent dev
 
 ### Credential managed examples
 
- * Write intro here
+Unfortunately, there are still many cases where we cannot verify a device's access rights through certificates such as browser access which is not restricted to device or using another service with your IoT device which requires authentication. WoTT secures this by providing a credential service that you can manage yourself through WoTT's dash. Here are some examples:
 
 #### [Simple WebApp with Basic HTTP Auth access](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth)
 

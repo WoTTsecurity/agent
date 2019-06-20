@@ -1,15 +1,10 @@
 import crypt
 import socket
-from itertools import product
 from pathlib import Path
 from socket import SocketKind
 import spwd
-from typing import List, Tuple
 
-import iptc
 import psutil
-
-from . import iptc_helper
 
 
 def check_for_default_passwords(config_path):
@@ -45,33 +40,6 @@ def check_for_default_passwords(config_path):
                 return True
 
     return False
-
-
-def is_firewall_enabled():
-    """Check if FILTER INPUT chain has DROP policy enabled"""
-    try:
-        policy = iptc_helper.get_policy('filter', 'INPUT')
-    except (iptc.IPTCError, AttributeError):
-        return False
-    else:
-        return policy == 'DROP'
-
-
-def get_firewall_rules():
-    """Get all FILTER table rules"""
-    tables = {'v6': {}, 'v4': {}}
-    for table_name, ipv6 in product(('filter', 'nat', 'mangle'), (False, True)):
-        table = iptc_helper.dump_table(table_name, ipv6=ipv6).items()
-        chains = {}
-        for chain_name, chain in table:
-            policy = iptc_helper.get_policy(table_name, chain_name, ipv6=ipv6)
-            rules = {'rules': [rule for rule in chain if
-                     chain_name != 'OUTPUT' or rule.get('comment') != {'comment': WOTT_COMMENT}]}
-            if policy:
-                rules['policy'] = policy
-            chains[chain_name] = rules
-        tables['v6' if ipv6 else 'v4'][table_name] = chains
-    return tables
 
 
 def netstat_scan():
@@ -150,98 +118,3 @@ def selinux_status():
             selinux_mode = row[1].strip()
 
     return {'enabled': selinux_enabled, 'mode': selinux_mode}
-
-
-TABLE = 'filter'
-DROP_CHAIN = 'WOTT_LOG_DROP'
-OUTPUT_CHAIN = 'OUTPUT'
-INPUT_CHAIN = 'INPUT'
-WOTT_COMMENT = 'Added by WoTT'
-
-
-def prepare_iptables(ipv6: bool):
-    """
-    Add a log-drop chain which will log a packet and drop it.
-
-    :return: None
-    """
-    if not iptc_helper.has_chain(TABLE, DROP_CHAIN, ipv6=ipv6):
-        iptc_helper.add_chain(TABLE, DROP_CHAIN, ipv6=ipv6)
-        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': {'LOG': {'log-prefix': 'DROP: ', 'log-level': '3'}}}, ipv6=ipv6)
-        iptc_helper.add_rule(TABLE, DROP_CHAIN, {'target': 'DROP'}, ipv6=ipv6)
-
-
-def update_iptables(table, chain, rules):
-    """
-    Delete all rules marked by WOTT_COMMENT.
-    Then insert new rules from the supplied list.
-
-    :param table: table name
-    :param chain: chain name
-    :param rules: a list of rules in iptc.easy format
-    :return: None
-    """
-    tbl4 = iptc.Table(table)
-    tbl6 = iptc.Table6(table)
-
-    for t in (tbl4, tbl6):
-        t.autocommit = False
-        ch = iptc.Chain(t, chain)
-        for r in ch.rules:
-            for m in r.matches:
-                if m.comment == WOTT_COMMENT:
-                    ch.delete_rule(r)
-                    break
-
-    for r, ipv6 in rules:
-        iptc_helper.add_rule(table, chain, r, ipv6=ipv6)
-
-    for t in (tbl4, tbl6):
-        t.commit()
-        t.refresh()
-        t.autocommit = True
-
-
-def block_ports(ports_data: List[Tuple[str, str, int, bool]]):
-    """
-    Block incoming TCP/UDP packets to the ports supplied in the list,
-    unblock previously blocked.
-
-    :param ports_data: dict of protocols/ports to be blocked
-    :return: None
-    """
-    prepare_iptables(False)
-    prepare_iptables(True)
-
-    def remove_unspecified(r):
-        if r['dst'] in ['0.0.0.0', '::']:
-            del(r['dst'])
-        return r
-
-    rules = [(remove_unspecified({
-        'protocol': proto,
-        proto: {'dport': str(port)},
-        'dst': host,
-        'target': DROP_CHAIN,
-        'comment': WOTT_COMMENT
-    }), ipv6)
-        for host, proto, port, ipv6 in ports_data]
-    update_iptables(TABLE, INPUT_CHAIN, rules)
-
-
-def block_networks(network_list: List[Tuple[str, bool]]):
-    """
-    Block outgoing packets to the networks supplied in the list,
-    unblock previously blocked.
-
-    :param network_list: list of IPs in dot-notation or subnets (<IP>/<mask>)
-    :return: None
-    """
-    prepare_iptables(False)
-    prepare_iptables(True)
-    rules = [({'dst': n,
-               'target': DROP_CHAIN,
-               'comment': WOTT_COMMENT
-               }, ipv6)
-             for n, ipv6 in network_list]
-    update_iptables(TABLE, OUTPUT_CHAIN, rules)

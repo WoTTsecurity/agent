@@ -147,6 +147,8 @@ def get_rule(table, chain, position=0, ipv6=False, raise_exc=True):
         elif position > 0:
             # Return specific rule by position
             iptc_chain = _iptc_getchain(table, chain, ipv6)
+            if len(iptc_chain.rules) < position:
+                return None
             iptc_rule = iptc_chain.rules[position - 1]
             return decode_iptc_rule(iptc_rule, ipv6)
         elif position < 0:
@@ -295,22 +297,28 @@ def batch_delete_chains(table, chains, ipv6=False):
     _batch_end_table(table, ipv6)
 
 
-def batch_add_rules(table, batch_rules, ipv6=False):
+def batch_add_rules(table, batch_rules, chain=None, ipv6=False):
     """ Add multiple rules to a table with format (chain, rule_d, position) """
     iptc_table = _batch_begin_table(table, ipv6)
-    for (chain, rule_d, position) in batch_rules:
+    if chain is None:
+        for (rule_chain, rule_d, position) in batch_rules:
+            iptc_chain = Chain(iptc_table, rule_chain)
+            iptc_rule = encode_iptc_rule(rule_d, ipv6)
+            if position == 0:
+                # Insert rule in last position -> append
+                iptc_chain.append_rule(iptc_rule)
+            elif position > 0:
+                # Insert rule in given position -> adjusted as iptables CLI
+                iptc_chain.insert_rule(iptc_rule, position - 1)
+            elif position < 0:
+                # Insert rule in given position starting from bottom -> not available in iptables CLI
+                nof_rules = len(iptc_chain.rules)
+                iptc_chain.insert_rule(iptc_rule, position + nof_rules)
+    else:
         iptc_chain = Chain(iptc_table, chain)
-        iptc_rule = encode_iptc_rule(rule_d, ipv6)
-        if position == 0:
-            # Insert rule in last position -> append
+        for rule_d in batch_rules:
+            iptc_rule = encode_iptc_rule(rule_d, ipv6)
             iptc_chain.append_rule(iptc_rule)
-        elif position > 0:
-            # Insert rule in given position -> adjusted as iptables CLI
-            iptc_chain.insert_rule(iptc_rule, position - 1)
-        elif position < 0:
-            # Insert rule in given position starting from bottom -> not available in iptables CLI
-            nof_rules = len(iptc_chain.rules)
-            iptc_chain.insert_rule(iptc_rule, position + nof_rules)
     _batch_end_table(table, ipv6)
 
 

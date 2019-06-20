@@ -303,17 +303,7 @@ def send_ping(debug=False, dev=False):
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
         blocklist = ping.json()
-        policy = blocklist.get('policy', 'allow')
-
-        iptables_helper.prepare()
-        security_helper.block_networks(blocklist.get('block_networks', []))
-        if policy == 'allow':
-            iptables_helper.block_ports(True, blocklist.get('block_ports', []))
-        elif policy == 'block':
-            iptables_helper.block_ports(False, blocklist.get('allow_ports', []))
-            iptables_helper.add_block_rules()
-        else:
-            print('Error: unknown policy "{}"'.format(policy))
+        iptables_helper.block(blocklist, debug)
 
         payload.update({
             'selinux_status': security_helper.selinux_status(),

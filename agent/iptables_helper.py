@@ -1,6 +1,8 @@
 from typing import List, Tuple
+from iptc import IPTCError
 from itertools import product
-
+from sys import stdout
+from traceback import print_exc
 from . import iptc_helper
 
 
@@ -122,7 +124,7 @@ def block_ports(allow: bool, ports_data: List[Tuple[str, str, int, bool]]):
         'protocol': proto,
         proto: {'dport': str(port)},
         'dst': host,
-        'target': 'ACCEPT' if allow else DROP_CHAIN
+        'target': DROP_CHAIN if allow else 'ACCEPT'
     }), ipv6)
         for host, proto, port, ipv6 in ports_data]
     add_rules(TABLE, INPUT_CHAIN, rules)
@@ -142,3 +144,23 @@ def block_networks(network_list: List[Tuple[str, bool]]):
                }, ipv6)
              for n, ipv6 in network_list]
     add_rules(TABLE, OUTPUT_CHAIN, rules)
+
+
+def block(blocklist, debug):
+    policy = blocklist.get('policy', 'allow')
+    try:
+        prepare()
+        block_networks(blocklist.get('block_networks', []))
+        if policy == 'allow':
+            block_ports(True, blocklist.get('block_ports', []))
+        elif policy == 'block':
+            block_ports(False, blocklist.get('allow_ports', []))
+            add_block_rules()
+        else:
+            print('Error: unknown policy "{}"'.format(policy))
+    except IPTCError as e:
+        print('Error while updating iptables: ' + str(e))
+        if debug:
+            print_exc(file=stdout)
+        if 'insmod' in str(e):
+            print('Error: failed to update iptables, try rebooting')

@@ -1,6 +1,6 @@
 import pytest
 import socket
-from agent.security_helper import DROP_CHAIN, WOTT_COMMENT
+from agent.iptables_helper import DROP_CHAIN
 from unittest.mock import Mock
 
 
@@ -171,8 +171,8 @@ def uptime():
 @pytest.fixture
 def ipt_rules():
     return (
-        {'dst': '10.10.10.10', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT},
-        {'dst': '10.20.10.20', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}
+        {'dst': '10.10.10.10', 'target': DROP_CHAIN},
+        {'dst': '10.20.10.20', 'target': DROP_CHAIN}
     )
 
 
@@ -194,10 +194,8 @@ def ipt_ports():
 @pytest.fixture
 def ipt_ports_rules():
     return [
-        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, False),
-        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, True),
-        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'dst': '192.168.1.1', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, False),
-        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'dst': 'fe80::adf3:7685:af9f:c151', 'target': DROP_CHAIN, 'comment': WOTT_COMMENT}, True),
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'target': DROP_CHAIN}, False),
+        ({'protocol': 'tcp', 'tcp': {'dport': '80'}, 'dst': '192.168.1.1', 'target': DROP_CHAIN}, False),
     ]
 
 

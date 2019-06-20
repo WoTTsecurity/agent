@@ -11,7 +11,7 @@ import freezegun
 import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
-from agent.security_helper import is_firewall_enabled, block_networks, update_iptables, WOTT_COMMENT, block_ports
+from agent.iptables_helper import block_networks, block_ports, OUTPUT_CHAIN, INPUT_CHAIN
 from agent.security_helper import check_for_default_passwords
 from agent import executor
 
@@ -264,12 +264,11 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, net_connections
     ), \
     mock.patch('socket.getfqdn') as getfqdn, \
     mock.patch('psutil.net_connections') as net_connections, \
-    mock.patch('agent.security_helper.is_firewall_enabled') as fw, \
-    mock.patch('agent.security_helper.get_firewall_rules') as fr, \
+    mock.patch('agent.iptables_helper.dump') as fr, \
     mock.patch('agent.security_helper.check_for_default_passwords') as chdf, \
     mock.patch('agent.security_helper.process_scan') as ps, \
-    mock.patch('agent.security_helper.block_ports') as bp, \
-    mock.patch('agent.security_helper.block_networks') as bn, \
+    mock.patch('agent.iptables_helper.block_ports') as bp, \
+    mock.patch('agent.iptables_helper.block_networks') as bn, \
     mock.patch('agent.journal_helper.logins_last_hour') as logins, \
     mock.patch('builtins.print') as prn, \
     mock.patch(
@@ -278,7 +277,6 @@ def test_send_ping(raspberry_cpuinfo, uptime, tmpdir, cert, key, net_connections
         create=True
     ):  # noqa E213
         net_connections.return_value = net_connections_fixture[0],
-        fw.return_value = False
         fr.return_value = {}
         chdf.return_value = False
         ps.return_value = []
@@ -351,18 +349,6 @@ def test_uptime(uptime):
         assert up == 60
 
 
-def test_firewall_enabled_pos():
-    with mock.patch('agent.iptc_helper.get_policy') as get_policy:
-        get_policy.return_value = 'DROP'
-        assert is_firewall_enabled() is True
-
-
-def test_firewall_enabled_neg():
-    with mock.patch('agent.iptc_helper.get_policy') as get_policy:
-        get_policy.return_value = 'ACCEPT'
-        assert is_firewall_enabled() is False
-
-
 def test_check_for_default_passwords_pos():
     with mock.patch('pathlib.Path.open', mock.mock_open(read_data='pi:raspberry')),\
             mock.patch('spwd.getspall') as getspnam:
@@ -396,88 +382,40 @@ def test_block_networks(ipt_networks, ipt_rules):
     # Initial state: no networks are blocked
     # Input: two networks (net1, net2)
     # Result: net1 and net2 are blocked
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain,\
-            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('iptc.Table'), \
-            mock.patch('iptc.Table6'), \
-            mock.patch('iptc.Chain'):
-        has_chain.return_value = True
-
+    with mock.patch('agent.iptc_helper.batch_add_rules') as batch_add_rules:
         block_networks([net1, net2])
-        add_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule1, ipv6=False),
-            mock.call('filter', 'OUTPUT', rule2, ipv6=False)
+        batch_add_rules.assert_has_calls([
+            mock.call('filter', [rule1, rule2], chain=OUTPUT_CHAIN, ipv6=False),
+            mock.call('filter', [], chain=OUTPUT_CHAIN, ipv6=True),
         ])
 
     # Initial state: net1 is blocked
     # Input: another network: net2
     # Result: net2 gets blocked, net1 gets unblocked
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
-            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('iptc.Table'), \
-            mock.patch('iptc.Table6'), \
-            mock.patch('iptc.Chain'):
-        has_chain.return_value = True
-
+    with mock.patch('agent.iptc_helper.batch_add_rules') as batch_add_rules:
         block_networks([net2])
-        add_rule.assert_has_calls([
-            mock.call('filter', 'OUTPUT', rule2, ipv6=False)
+        batch_add_rules.assert_has_calls([
+            mock.call('filter', [rule2], chain=OUTPUT_CHAIN, ipv6=False),
+            mock.call('filter', [], chain=OUTPUT_CHAIN, ipv6=True)
         ])
 
     # Initial state: empty
     # Input: empty
     # Result: nothing happens
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
-            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('iptc.Table'), \
-            mock.patch('iptc.Table6'), \
-            mock.patch('iptc.Chain'):
-        has_chain.return_value = True
-
+    with mock.patch('agent.iptc_helper.batch_add_rules') as batch_add_rules:
         block_networks([])
-        add_rule.assert_not_called()
-
-
-def test_block_ports(ipt_ports, ipt_ports_rules):
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
-            mock.patch('agent.iptc_helper.add_rule') as add_rule, \
-            mock.patch('iptc.Table'), \
-            mock.patch('iptc.Table6'), \
-            mock.patch('iptc.Chain'):
-        has_chain.return_value = True
-
-        block_ports(ipt_ports)
-        add_rule.assert_has_calls([
-            mock.call('filter', 'INPUT', r, ipv6=ipv6)
-            for r, ipv6 in ipt_ports_rules
+        batch_add_rules.assert_has_calls([
+            mock.call('filter', [], chain=OUTPUT_CHAIN, ipv6=False),
+            mock.call('filter', [], chain=OUTPUT_CHAIN, ipv6=True)
         ])
 
 
-def test_delete_rules():
-    with mock.patch('agent.iptc_helper.has_chain') as has_chain, \
-            mock.patch('agent.iptc_helper.batch_begin'), \
-            mock.patch('agent.iptc_helper.batch_end'), \
-            mock.patch('iptc.Table'), \
-            mock.patch('iptc.Table6'), \
-            mock.patch('iptc.Chain') as iptcChain:
-        has_chain.return_value = True
-
-        # Initial state: one rule (r) marked by WOTT_COMMENT, another rule (r0) unmarked
-        # Input: empty
-        # Result: the marked rule (r) gets deleted, unmarked one (r0) stays
-        r = mock.Mock()
-        r0 = mock.Mock()
-        m = mock.Mock()
-        ch = mock.Mock()
-        m.comment = WOTT_COMMENT
-        r.matches = [m]
-        r0.matches = [mock.Mock()]
-        ch.rules = [r, r0]
-        iptcChain.return_value = ch
-
-        update_iptables('filter', 'INPUT', [])
-
-        ch.delete_rule.assert_called_with(r)
+def test_block_ports(ipt_ports, ipt_ports_rules):
+    with mock.patch('agent.iptc_helper.batch_add_rules') as batch_add_rules:
+        block_ports(False, ipt_ports)
+        batch_add_rules.assert_has_calls([
+            mock.call('filter', [r for r, ipv6 in ipt_ports_rules], chain=INPUT_CHAIN, ipv6=False)
+        ])
 
 
 def test_fetch_credentials(tmpdir):

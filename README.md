@@ -18,7 +18,7 @@ To do this, WoTT provides a few things:
  * Cryptographic identity for your devices (verifying the identity of an accessing device)
  * Enabling the removal of hard coded credentials from your applications and firmware and allowing you greater control of credentials through WoTT
  
-# WoTT provided certificates
+### WoTT provided certificates
 
 In order to facilitate encrypted communication between two peers, we need a cryptographic certificate. WoTT provides this through the agent [1]. This serves both as a means for enabling encrypted communication, as well as giving each unique device a recognisable identity. It is this identity and its associated certificate that we use to secure and verify inter-device connection.
 
@@ -31,7 +31,7 @@ WoTT's Agent allows you to bypass the need for username/passwords by providing a
 * [1] We do this by issuing an x509 certificate from our own Certificate Authority (CA).
 * [2] This is done using something called Mutual TLS, or mTLS for short.
 
-# WoTT credentials
+### WoTT credentials
 
 This isn't to say that WoTT does away with credentials completely- recall above that we want to grant you more freedom by removing the need for hard coded credentials. WoTT provides a service wherein you can add your own credentials such as API keys or usernames and passwords. This is provided through the [WoTT dash](https://dash.wott.io) which we strongly reccomend that you use and familiarise yourself with. 
 

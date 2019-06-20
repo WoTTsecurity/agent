@@ -71,7 +71,7 @@ See the list below for examples of how to set up and use WoTT Agent enabled devi
 
 ### Certificate managed examples
 
-Many of the IoT cloud service examples use MQTT to publish/subscribe messages which is typically not encrypted and uses TCP transport protocols by default. This is bad practice from a security standpoint and WoTT uses mTLS to check the authenticity of server and client certificates to secure this. In essence, mTLS uses a handshake mechanism and only allows connectivity if the handshake is successful (certificates are accepted). Here are some examples of how you can use WoTT's certificates to secure your IoT devices.
+Many of the IoT cloud service examples use MQTT to publish/subscribe messages which is typically not encrypted and uses TCP transport protocols by default. WoTT uses mTLS which runs over the TCP layer and integrates better with TCP than UDP. In essence, mTLS establishes a handshake mechanism and only allows connectivity if the handshake is successful (certificates are accepted). Here are some examples of how you can use WoTT's certificates to secure your IoT devices.
 
 #### [Google Core IoT](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/google-core-iot)
 

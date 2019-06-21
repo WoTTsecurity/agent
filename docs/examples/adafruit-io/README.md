@@ -14,7 +14,18 @@ The first thing you will need to do, is to [sign up](https://accounts.adafruit.c
 
 Login to the Adafruit IO dashboard. Navigate to the 'Feeds' page on the left-hand side menu. Hover over actions and select 'Create a New Feed.' The feed acts as a channel or datastream through which your device connets to Adafruit. We are going to create a feed that connects the devices via MQTT. In other words, the feed becomes the topic from which messages are either published/subscribed to.
 
-The feed name refers to the type of data you are observing- for example temperature or humidity. To keep things simple, we are just going to observe data and name the feed 'data feed.' For the desc
+The feed name refers to the type of data you are observing- for example temperature or humidity. To keep things simple, we are just going to observe data and name the feed 'data feed.' The description is supposed to provide some more in-depth information about the feed. When using sensor data, this is going to be something like temperature or humidity, however for this exmaple we are just dealing with very basic pub/sub messages, so our data type is generic. 
 
+## Creating credentials
+
+In order to call the Adafruit API via HTTP access, it requires a key. You can find this key on your Adafruit dasboard under `AIO key`. We can add this to WoTT's dashboard as a new credential where the value is your username followed by the key value. Input something like this:
+
+```
+Name = adafruit_example
+Key = adafruit_access_credentials
+Value = username:key
+```
+
+and add an appropriate tag. Ensure that the device you will be downloading this certificate on has the correct tag.
 
 

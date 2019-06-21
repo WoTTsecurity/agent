@@ -1,21 +1,24 @@
-from os import getenv
-
-import git
 import textwrap
+from os import getenv
 
 
 def version():
     ver = open('VERSION').read().strip()
-    repo = git.Repo('.')
-    head = repo.head.object
-    msg = head.message
-    commit = str(head)
+    try:
+        import git
+        repo = git.Repo('.')
+        head = repo.head.object
+        msg = head.message
+        commit = str(head)
+    except ModuleNotFoundError:
+        commit = None
     build_number = getenv('CIRCLE_BUILD_NUM', '0')
     return ver, msg, commit, build_number
 
 
 def version_string(ver, msg, commit, n):
-    return '{}.{}~{}'.format(ver, n, commit[:7])
+    return '{}.{}~{}'.format(ver, n, commit[:7]) if commit \
+           else '{}.{}'.format(ver, n)
 
 
 def write_changelog():

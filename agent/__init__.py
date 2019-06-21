@@ -27,10 +27,15 @@ from sys import exit
 import pwd
 import glob
 
-try:
-    __version__ = pkg_resources.get_distribution('wott-agent')
-except pkg_resources.DistributionNotFound:
-    __version__ = (Path(__file__).parents[1] / 'VERSION').read_text().strip()
+
+CONFINEMENT = detect_confinement()
+if CONFINEMENT == Confinement.SNAP:
+    __version__ = os.environ['SNAP_VERSION']
+else:
+    try:
+        __version__ = pkg_resources.get_distribution('wott-agent')
+    except pkg_resources.DistributionNotFound:
+        __version__ = (Path(__file__).parents[1] / 'VERSION').read_text().strip()
 
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
@@ -43,11 +48,8 @@ CONFINEMENT = detect_confinement()
 
 # Conditional handling for if we're running
 # inside a Snap.
-if CONFINEMENT == Confinement.SNAP:
-    CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
-else:
-    CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
-    CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
+CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
 
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)

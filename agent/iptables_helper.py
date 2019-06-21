@@ -45,18 +45,6 @@ def prepare():
                 {'target': 'DROP'}
             ], chain=DROP_CHAIN, ipv6=ipv6)
 
-        # Check for the first rule in OUTPUT and in INPUT and add it if missing.
-        # The first rule jumps to WOTT_INPUT or WOTT_OUTPUT where we decide what to do with it.
-        # If we don't block the packet it returns back to INPUT or OUTPUT and gets handled by existing rules.
-        # This way we don't interfere with the filtering which was already configured on the device.
-        for target_chain, chain in ((INPUT_CHAIN, 'INPUT'), (OUTPUT_CHAIN, 'OUTPUT')):
-            # -I $chain -j $target_chain
-            first_rule = {'target': target_chain}
-            if iptc_helper.get_rule(TABLE, chain, 1, ipv6=ipv6) != first_rule:
-                # Another rule may have been added on top, which means our rule may be somewhere else.
-                iptc_helper.delete_rule(TABLE, chain, first_rule, ipv6=ipv6, raise_exc=False)
-                iptc_helper.add_rule(TABLE, chain, first_rule, 1, ipv6=ipv6)
-
         if not iptc_helper.has_chain(TABLE, INPUT_CHAIN, ipv6=ipv6):
             iptc_helper.add_chain(TABLE, INPUT_CHAIN, ipv6=ipv6)
         else:
@@ -66,6 +54,19 @@ def prepare():
             iptc_helper.add_chain(TABLE, OUTPUT_CHAIN, ipv6=ipv6)
         else:
             iptc_helper.flush_chain(TABLE, OUTPUT_CHAIN, ipv6=ipv6)
+
+        # Check for the first rule in OUTPUT and in INPUT and add it if missing.
+        # The first rule jumps to WOTT_INPUT or WOTT_OUTPUT where we decide what to do with it.
+        # If we don't block the packet it returns back to INPUT or OUTPUT and gets handled by existing rules.
+        # This way we don't interfere with the filtering which was already configured on the device.
+        for target_chain, chain in ((INPUT_CHAIN, 'INPUT'), (OUTPUT_CHAIN, 'OUTPUT')):
+            # -I $chain -j $target_chain
+            jump_to_target = {'target': target_chain}
+            first_rule = iptc_helper.get_rule(TABLE, chain, 1, ipv6=ipv6)
+            if jump_to_target != first_rule:
+                # Another rule may have been added on top, which means our rule may be somewhere else.
+                iptc_helper.delete_rule(TABLE, chain, jump_to_target, ipv6=ipv6, raise_exc=False)
+                iptc_helper.add_rule(TABLE, chain, jump_to_target, 1, ipv6=ipv6)
 
 
 def add_block_rules():

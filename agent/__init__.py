@@ -531,11 +531,11 @@ def fetch_credentials(debug, dev):
 
         clear_credentials(CREDENTIALS_PATH)
 
-        # group received credentials, by owner, name
+        # group received credentials, by linux_user, name
         credentials_grouped = {}
         for cred in credentials:
             name = cred['name']
-            owner = cred['owner'] if 'owner' in cred else ''
+            owner = cred['linux_user'] if 'linux_user' in cred else ''
             if owner not in credentials_grouped:
                 credentials_grouped[owner] = {}
             if name not in credentials_grouped[owner]:

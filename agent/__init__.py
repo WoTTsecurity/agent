@@ -9,6 +9,7 @@ import socket
 import netifaces
 import json
 
+from agent import iptables_helper
 from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
@@ -303,14 +304,12 @@ def send_ping(debug=False, dev=False):
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
         blocklist = ping.json()
-        security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
-        security_helper.block_networks(blocklist.get('block_networks', []))
+        iptables_helper.block(blocklist, debug)
 
         payload.update({
             'selinux_status': security_helper.selinux_status(),
             'app_armor_enabled': security_helper.is_app_armor_enabled(),
-            'firewall_enabled': security_helper.is_firewall_enabled(),
-            'firewall_rules': security_helper.get_firewall_rules(),
+            'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
             'netstat': connections
         })

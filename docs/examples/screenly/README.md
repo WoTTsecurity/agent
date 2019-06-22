@@ -19,7 +19,7 @@ When the Raspberry Pi reboots, it will take you to the Screenly network configur
 To do this on the Screenly device, you need to access the terminal through `CTRL` + `ALT` + `F1`. To return back to the GUI, it is `CTRL` + `ALT` + `F2`. 
 Once here, follow the WoTT agent installation as you would on any other device. 
 
-**Optional:** If you want to avoid using the terminal directly on your Screenly device in the future, enable SSH through the `sudo aspi-config` command. It is also reccommended that you change your User and Password from the default `pi` and `raspberry` (this will also improve your WoTT security score!) if you are going to do this.
+**Optional:** If you want to avoid using the terminal directly on your Screenly device in the future, enable SSH through the `sudo raspi-config` command. It is also reccommended that you change your User and Password from the default `pi` and `raspberry` (this will also improve your WoTT security score!) if you are going to do this.
 
 You will now need to register the pi on the WoTT dashboard. 
 
@@ -51,7 +51,6 @@ Key = login
 Value = username:password
 Owner = user
 Tags = screenly-pi
-
 ```
 Where the Owner is the name of the device running Screenly (so by default, `pi`). 
 You can change the Name value of `screenly` if you wish, but note that this is how WoTT will call the credential information, so if you do change this name, be aware to use the correct credential name. Make sure as well that the Tags match whatever Tag you assigned the Pi earlier.

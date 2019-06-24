@@ -11,7 +11,7 @@ def version():
         msg = head.message
         commit = str(head)
     except ImportError:
-        commit = None
+        commit = msg = None
     build_number = getenv('CIRCLE_BUILD_NUM', '0')
     return ver, msg, commit, build_number
 

@@ -11,8 +11,8 @@ Screenly offers a free OSE version that you can use. For this example you will n
 ## Installing WoTT agent on Screenly OSE
 
 First you will need a Screenly OSE (the free version) device if you do not already.
-Follow the instructions to install Screenly OSE on your Raspberry Pi [here](https://www.screenly.io/ose/). We reccommend you follow the first option and use something like Etcher to flash the SD card with the Screenly OSE disk image . 
-**Note** Screenly OSE will overwrite your OS.
+Follow the instructions to install Screenly OSE on your Raspberry Pi [here](https://www.screenly.io/ose/). We reccommend you follow the first option and use something like Etcher to flash the SD card with the Screenly OSE disk image. 
+**Note:** Screenly OSE will overwrite your OS.
 
 When the Raspberry Pi reboots, it will take you to the Screenly OSE network configuration. You will need to access the SSID as you would a wifi network and enter the password shown. 
 
@@ -40,8 +40,8 @@ You will now need to register the Pi on the WoTT dashboard.
 Login to the WoTT Dash and navigate to 'Claim Device.' If you have installed the WoTT agent recently, the relevant information should be displayed on your terminal screen. If not, use the following commands:
 
 ``` 
-$ sudo wott-agent whoami
-$ sudo wott-aget claim-token
+$ wott-agent whoami
+$ wott-aget claim-token
 ```
 
 This will give you your Device ID and the token value to claim your device. 

@@ -117,6 +117,4 @@ You can change the WoTT credentials as you wish, but note that data is fetched b
 $ sudo service wott-agent restart
 $ sudo service screenly-web restart
 ```
-Additionally, you can use `pkill -f server.py` to kill the Screenly OSE server, but this will take a few seconds to restart.
-
 And that's it, you have successfully used WoTT credentials to set up authentication for Screenly OSE.

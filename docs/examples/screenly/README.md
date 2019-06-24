@@ -58,8 +58,9 @@ Value = username:password
 Owner = user
 Tags = screenly-pi
 ```
-Where the Owner is the name of the device running Screenly (so by default, `pi`) and Key must be `login` (or the credentials won't be read). 
-You can change the Name value of `screenly` if you wish, but note that this is how WoTT will call the credential information, so if you do change this name, be aware to use the correct credential name. Make sure as well that the Tags match whatever Tag you assigned the Pi earlier.
+Where the Owner is a valid Linux username, specifically the Linux user running Screenly (so by default on a Raspberry Pi, `pi`) and Key must be `login` (or the credentials won't be read). Value is the actual username and password of the login denoted by the single field `username:password`. You can change this value to match your own criteria, but it's fine for this example to leave it as is. 
+
+You can change the Name value of `screenly` if you wish, but note that this is how WoTT will call the credential information, so if you do change this name, be aware to use the correct credential name later on. Make sure as well that the Tags match whatever Tag you assigned the Pi earlier.
 
 You now need to set up the screenly configuration file to call the WoTT credentials. This file is in a hidden folder, so to access it do the following:
 

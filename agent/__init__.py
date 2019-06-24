@@ -550,7 +550,7 @@ def fetch_credentials(debug, dev):
             if owner:
                 try:
                     pw = pwd.getpwnam(owner)
-                except KeyError:  # if invalid owner, use 'root'
+                except KeyError:
                     print("Warning. There are credentials with wrong owner ({}). Skipped.".format(owner))
                     continue
 

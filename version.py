@@ -10,7 +10,7 @@ def version():
         head = repo.head.object
         msg = head.message
         commit = str(head)
-    except ModuleNotFoundError:
+    except ImportError:
         commit = None
     build_number = getenv('CIRCLE_BUILD_NUM', '0')
     return ver, msg, commit, build_number

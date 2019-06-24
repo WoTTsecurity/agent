@@ -10,19 +10,19 @@ Screenly offers a free OSE version that you can use. For this example you will n
 
 ## Installing WoTT agent on Screenly OSE
 
-First you will need a Screenly device if you do not already.
+First you will need a Screenly OSE device if you do not already.
 Follow the instructions to install Screenly OSE (the free version) on your Raspberry Pi [here](https://www.screenly.io/ose/). We reccommend you follow the first option and use something like Etcher to flash the SD card with the Screenly boot. 
 **Note** Screenly will overwrite your OS.
 
-When the Raspberry Pi reboots, it will take you to the Screenly network configuration. You will need to access the SSID as you would a wifi network and enter the password shown. 
+When the Raspberry Pi reboots, it will take you to the Screenly OSE network configuration. You will need to access the SSID as you would a wifi network and enter the password shown. 
 
 ![screenly](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/screenly/screenly-setup.jpg)
 
 Then navigate to the [Address](https://www.screenly.io/wifi) shown and login with your network details. This will grant you access to the Screenly management page. 
 
-Now we need to secure access to your Screenly device. If you haven't installed the WoTT Agent already, install [it](https://github.com/WoTTsecurity/agent).
+Now we need to secure access to your Screenly OSE device. If you haven't installed the WoTT Agent already, install [it](https://github.com/WoTTsecurity/agent).
 
-To do this on the Screenly device, you need to access the terminal through `CTRL` + `ALT` + `F1`. To return back to the GUI, it is `CTRL` + `ALT` + `F2`. 
+To do this on the Screenly OSE device, you need to access the terminal through `CTRL` + `ALT` + `F1`. To return back to the GUI, it is `CTRL` + `ALT` + `F2`. 
 Once here, follow the WoTT agent installation as you would on any other device. 
 
 **Optional:** If you want to avoid using the terminal directly on your Screenly device in the future, enable SSH through the `sudo raspi-config` command. It is also reccommended that you change your User and Password from the default `pi` and `raspberry` (this will also improve your WoTT security score!) if you are going to do this.
@@ -77,7 +77,7 @@ wott_secret_name = screenly
 
 and `ESC` + `:wq` to save.
 
-Your credentials are now all set up. To download them onto the device, you will need to restart the WoTT Agent and the Screenly server:
+Your credentials are now all set up. To download them onto the device, you will need to restart the WoTT Agent and the Screenly OSE server:
 
 ```
 $ service wott-agent restart
@@ -101,7 +101,7 @@ If the certificate is downloaded, you should receive a response like so:
 
 ## Securing Screenly OSE management page access with WoTT credentials
 
-You will now need to navigate to the Screenly management page. This is the IP address displayed on the front of the Screenly device (or is the `inet` address when running the command `ifconfig` in the Screenly OSE terminal). 
+You will now need to navigate to the Screenly OSE management page. This is the IP address displayed on the front of the Screenly OSE device (or is the `inet` address when running the command `ifconfig` in the device's terminal). 
 
 Navigate to Settings:
 
@@ -125,6 +125,6 @@ You can change the WoTT credentials as you wish, but note that data is fetched b
 $ service wott-agent restart
 $ service screenly-web restart
 ```
-Additionally, you can use `pkill -f server.py` to kill the Screenly server, but this will take a few seconds to restart.
+Additionally, you can use `pkill -f server.py` to kill the Screenly OSE server, but this will take a few seconds to restart.
 
 And that's it, you have successfully used WoTT credentials to set up authentication for Screenly OSE.

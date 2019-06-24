@@ -30,7 +30,7 @@ and select the WoTT agent from the installation options.
 To do this on the Screenly OSE device, you need to access the terminal through `CTRL` + `ALT` + `F1`. To return back to the GUI, it is `CTRL` + `ALT` + `F2`. 
 Once here, follow the WoTT agent installation as you would on any other device. 
 
-**Optional:** If you want to avoid using the terminal directly on your Screenly OSE device in the future, enable SSH through the `sudo raspi-config` command. It is also reccommended that you change your User and Password from the default `pi` and `raspberry` (this will also improve your WoTT security score!) if you are going to do this.
+**Optional:** If you want to avoid using the terminal directly on your Screenly OSE device in the future, enable SSH through the `sudo raspi-config` command. It is also reccommended that you change your Password from the default `raspberry` (this will also improve your WoTT security score!) if you are going to do this.
 
 You will now need to register the Pi on the WoTT dashboard. 
 
@@ -60,27 +60,12 @@ Now navigate to credentials and add a new credential with the following details:
 Name = screenly
 Key = login
 Value = username:password
-Owner = user
+Owner = pi
 Tags = screenly-pi
 ```
-Where the Owner is a valid Linux username, specifically the Linux user running Screenly (so by default on a Raspberry Pi, `pi`) and Key must be `login` (or the credentials won't be read). Value is the actual username and password of the login denoted by the single field `username:password`. You can change this value to match your own criteria, but it's fine for this example to leave it as is. 
+Where the Owner must be the Linux user running Screenly (so by default on a Raspberry Pi, `pi`) and Key must be `login` (or the credentials won't be read). Value is the actual username and password of the login denoted by the single field `username:password`. You can change this value to match your own criteria, but it's fine for this example to leave it as is. Make sure as well that the Tags match whatever Tags you assigned the Pi earlier. The Name should be left as `screenly` as this is how the config calls the credentials.
 
-You can change the Name value of `screenly` if you wish, but note that this is how WoTT will call the credential information, so if you do change this name, be aware to use the correct credential name later on. Make sure as well that the Tags match whatever Tag you assigned the Pi earlier.
-
-You now need to set up the screenly configuration file to call the WoTT credentials. This file is in a hidden folder, so to access it do the following:
-
-```
-$ vi ~/.screenly/screenly.conf
-```
-
-This will open the config file in Vi. Add the following lines to the config:
-
-```
-[auth_wott]
-wott_secret_name = screenly
-```
-
-and `ESC` + `:wq` to save.
+**Note:** the config is automatically edited with the WoTT authentication details. You can change the Name value of `screenly` if you wish, but note that this is how Screenly OSE will call WoTT's credential information. So if you do change this name, then you will have to manually change the config file `~/.screenly/screenly.conf`. 
 
 Your credentials are now all set up. To download them onto the device, you will need to restart the WoTT Agent and the Screenly OSE server:
 

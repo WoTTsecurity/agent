@@ -127,4 +127,4 @@ $ service screenly-web restart
 ```
 Additionally, you can use `pkill -f server.py` to kill the Screenly server, but this will take a few seconds to restart.
 
-And that's it, you have successfully used WoTT credentials to set up authentication on Screenly OSE.
+And that's it, you have successfully used WoTT credentials to set up authentication for Screenly OSE.

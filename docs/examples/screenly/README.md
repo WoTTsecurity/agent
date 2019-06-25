@@ -16,7 +16,7 @@ Follow the instructions to install Screenly OSE on your Raspberry Pi [here](http
 
 When the Raspberry Pi reboots, it will take you to the Screenly OSE network configuration. You will need to access the SSID as you would a wifi network and enter the password shown. 
 
-![screenly](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/screenly/screenly-setup.jpg)
+![screenly](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/screenly/screenly-setup.JPG)
 
 Then navigate to the Address shown and login with your network details. This will grant you access to the Screenly management page. 
 

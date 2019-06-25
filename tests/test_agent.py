@@ -522,6 +522,56 @@ def test_fetch_credentials_no_dir(tmpdir):
             assert json.load(f) == {"key1": "v21"}
 
 
+def test_fetch_device_metadata(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    json3_path_str = str(tmpdir / 'name3.json')
+    json3_path = Path(json3_path_str)
+    json3_path.write_text('nonzero')
+    agent.SECRET_DEV_METADATA_PATH = str(json3_path_str)
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(
+        return_value={
+            'manufacturer': 'Raspberry Pi',
+            'device_id': '7fe5ef257a7a4ee38841a5f8bf672791.d.wott-dev.local',
+            'string': 'test string value',
+            'array': [1, 2, 3, 4, 5, 'penelopa'],
+            'test': 'value',
+            'model': 'a020d3',
+            'model-decoded': 'Pi 3 Model B+'
+        }
+    )
+    mock_resp.return_value.ok = True
+    with mock.patch('builtins.print'), \
+            mock.patch('agent.can_read_cert') as cr, \
+            mock.patch('requests.get') as req, \
+            mock.patch('builtins.print'), \
+            mock.patch('os.chmod') as chm:
+
+        cr.return_value = True
+        req.return_value = mock_resp
+        mock_resp.return_value.ok = True
+        agent.fetch_device_metadata(False, False)
+
+        assert Path.exists(json3_path)
+
+        with open(json3_path_str) as f:
+            assert json.load(f) == {
+                'manufacturer': 'Raspberry Pi',
+                'device_id': '7fe5ef257a7a4ee38841a5f8bf672791.d.wott-dev.local',
+                'string': 'test string value',
+                'array': [1, 2, 3, 4, 5, 'penelopa'],
+                'test': 'value',
+                'model': 'a020d3',
+                'model-decoded': 'Pi 3 Model B+'
+            }
+
+        chm.assert_has_calls([
+            mock.call(json3_path_str, 0o600),
+        ])
+
+
 def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
     """
     Execute two "sleepers" at once.

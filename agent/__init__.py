@@ -542,14 +542,17 @@ def fetch_credentials(debug, dev):
                 credentials_grouped[owner][name] = {}
             credentials_grouped[owner][name][cred['key']] = cred['value']
 
+        root_pw = pwd.getpwnam("root")
+
         for owner in credentials_grouped:
 
-            pw = pwd.getpwnam("root")
+            pw = root_pw  # if no owner, use 'root'
             if owner:
                 try:
                     pw = pwd.getpwnam(owner)
                 except KeyError:
-                    pw = pwd.getpwnam("root")
+                    print("Warning. There are credentials with wrong owner ({}). Skipped.".format(owner))
+                    continue
 
             uid = pw.pw_uid
             gid = pw.pw_gid

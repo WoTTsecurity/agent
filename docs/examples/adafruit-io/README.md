@@ -22,10 +22,11 @@ In order to call the Adafruit API via HTTP access, it requires a key. You can fi
 
 ```
 Name = adafruit_example
-Key = adafruit_access_credentials
+Key = aio_key
 Value = username:key
+Tags = adafruit
 ```
 
-and add an appropriate tag. Ensure that the device you will be downloading this certificate on has the correct tag.
+and add an appropriate tag, we have chosen `adafruit`. Ensure that the device you will be downloading this certificate on has the correct tag.
 
 

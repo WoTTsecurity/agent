@@ -1,6 +1,8 @@
 # Using Adafruit IO with WoTT Credentials
 
-(https://learn.adafruit.com/welcome-to-adafruit-io)
+example from adafruit 
+https://adafruit-io-python-client.readthedocs.io/en/latest/feed-sharing.html#usage-example
+
 
 ## Introduction
 

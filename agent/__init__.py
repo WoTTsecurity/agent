@@ -54,7 +54,6 @@ CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
     os.chmod(CONFIG_PATH, 0o711)
-Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.

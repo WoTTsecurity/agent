@@ -216,46 +216,95 @@ def get_mtls_header(debug=False, dev=False):
         } if dev else {}
 
 
-def mtls_post_request(req, json=None, debug=False, dev=False):
+def mtls_req_error_log(request_url, type, requester_name, response):
+    """
+    logs error of mtls_request functions
+    :param request_url: request url string
+    :param type: 'GET', 'POST', ...
+    :param requester_name: requester id for message, if None then request_url string used
+    :param response - request response
+    :return: None
+    """
+    if not requester_name:
+        requester_name = "({})".format(request_url)
+    print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
+        requester_name, type, response.status_code))
+    print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
+        requester_name, type, response.content))
 
-    return requests.post(
+
+def mtls_post_request(req, json=None, debug=False, dev=False, requester_name=None, debug_on_ok=False):
+    """
+    MTLS POST Request wrapper function.
+    :param req: request url string (without endpoint)
+    :param json: json data, None by default
+    :param debug: if true then log error messages
+    :param dev: if true use dev endpoint and dev headers
+    :param requester_name: displayes requester id for error messages
+    :param debug_on_ok: if true with debug then logs not only error messages
+    :return: response or None (if there was exception raised)
+    """
+    try:
+        r = requests.post(
                 '{}{}'.format(MTLS_ENDPOINT, req),
                 cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
                 json=json,
                 headers=get_mtls_header(debug=debug, dev=dev)
-            )
+        )
+
+        if (debug_on_ok or not r.ok) and debug:
+            mtls_req_error_log(req, 'POST', requester_name, r)
+        return r
+
+    except Exception as e:
+        print('wott-agent :: mtls_post_request {} :: rises exception: {}'.format(e))
+        return None
 
 
-def mtls_get_request(req, debug=False, dev=False):
-
-    return requests.get(
+def mtls_get_request(req, debug=False, dev=False, requester_name=None, debug_on_ok=False):
+    """
+    MTLS GET Request wrapper function.
+    :param req: request url string (without endpoint)
+    :param debug: if true then log error messages
+    :param dev: if true use dev endpoint and dev headers
+    :param requester_name: displayes requester id for error messages
+    :param debug_on_ok: if true with debug then logs not only error messages
+    :return: response or None (if there was exception raised)
+    """
+    try:
+        r = requests.get(
                 '{}{}'.format(MTLS_ENDPOINT, req),
                 cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
                 headers=get_mtls_header(debug=debug, dev=dev)
-            )
+        )
+
+        if (debug_on_ok or not r.ok) and debug:
+            mtls_req_error_log(req, 'GET', requester_name, r)
+        return r
+
+    except Exception as e:
+        print('wott-agent :: mtls_get_request :: rises exception: {}'.format(e))
+        return None
 
 
 def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     can_read_cert()
-    try:
-        response = mtls_get_request('/v0.2/claimed', debug=debug, dev=dev)
 
-    except requests.exceptions.ConnectionError:
+    response = mtls_get_request('/v0.2/claimed', debug=debug, dev=dev,
+                                requester_name="Get Device Claim Info")
+    if not response or not response.ok:
         print('Did not manage to get claim info from the server.')
         exit(2)
+
     if debug:
         print("[RECEIVED] Get Device Claim Info: {}".format(response))
 
-    if response.ok:
-        claim_info = response.json()
-        if claim_info['claimed']:
-            print('The device is already claimed.')
-            exit(1)
-        return claim_info['claim_token']
-    else:
-        print('Did not manage to get claim info from the server.')
-        exit(2)
+    claim_info = response.json()
+    if claim_info['claimed']:
+        print('The device is already claimed.')
+        exit(1)
+    return claim_info['claim_token']
 
 
 def get_fallback_token():
@@ -291,11 +340,9 @@ def get_open_ports(debug=False, dev=False):
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    ping = mtls_get_request('/v0.2/ping', debug=debug, dev=dev)
-    if debug:
-        print("[RECEIVED] GET Ping: {}".format(ping.status_code))
-        print("[RECEIVED] GET Ping: {}".format(ping.content))
-    if not ping.ok:
+    ping = mtls_get_request('/v0.2/ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+
+    if not ping or not ping.ok:
         print('Ping failed.')
         return
 
@@ -341,20 +388,16 @@ def send_ping(debug=False, dev=False):
     if debug:
         print("[GATHER] POST Ping: {}".format(payload))
 
-    ping = mtls_post_request('/v0.2/ping', json=payload, debug=debug, dev=dev)
+    ping = mtls_post_request('/v0.2/ping', json=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
-    if debug:
-        print("[RECEIVED] POST Ping: {}".format(ping.status_code))
-        print("[RECEIVED] POST Ping: {}".format(ping.content))
-
-    if not ping.ok:
+    if not ping or not ping.ok:
         print('Ping failed.')
         return
 
 
 def say_hello(debug=False, dev=False):
-    hello = mtls_get_request('/v0.2/hello', debug=debug, dev=dev)
-    if not hello.ok:
+    hello = mtls_get_request('/v0.2/hello', debug=debug, dev=dev, requester_name='Hello')
+    if not hello or not hello.ok:
         print('Hello failed.')
     return hello.json()
 
@@ -506,12 +549,9 @@ def fetch_credentials(debug, dev):
         print('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = mtls_get_request('/v0.2/creds', debug=debug, dev=dev)
-        if not credentials_req.ok:
+        credentials_req = mtls_get_request('/v0.2/creds', debug=debug, dev=dev, requester_name="Fetch credentials")
+        if not credentials_req or not credentials_req.ok:
             print('Fetching failed.')
-            if debug:
-                print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
-                print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
             return
         credentials = credentials_req.json()
 

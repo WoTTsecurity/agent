@@ -257,7 +257,7 @@ def mtls_post_request(req, json=None, debug=False, dev=False, requester_name=Non
         return r
 
     except Exception as e:
-        print('wott-agent :: mtls_post_request {} :: rises exception: {}'.format(e))
+        print('wott-agent :: mtls_post_request :: rises exception: {}'.format(e))
         return None
 
 

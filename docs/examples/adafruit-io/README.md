@@ -19,10 +19,9 @@ The first thing you will need to do, is to [sign up](https://accounts.adafruit.c
 To install: 
 
 ```
-pip3 install adafruit-io
+$ apt update && apt install -y python3 python3-pip curl
+$ pip3 install adafruit-io
 ```
-If this doesn't work, refer to [this](https://adafruit-io-python-client.readthedocs.io/en/latest/index.html) page and do the manual installation instead.
-
 Now we're all set up, we can create a feed to later call via MQTT.
 
 
@@ -59,11 +58,7 @@ and pasting the output into the 'Claim Device' segment of the WoTT dash. This de
 
 ![adafruit tags](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/adafruit-tags.png)
 
-Now that we are all set up, we need to create the credentials with the Adafruit information. Navigate to the 'Credentials' page of the WoTT dash and a new credential. It will bring up a window like this:
-
-![credentials](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/credentials.png)
-
-Input the following into the fields:
+Now that we are all set up, we need to create the credentials with the Adafruit information. Navigate to the 'Credentials' page of the WoTT dash and a new credential. Input the following into the fields:
 
 ```
 Name = adafruit_aio
@@ -74,5 +69,23 @@ Tags = adafruit
 
 using your relevant information from the Adafruit AIO key.
 Note the `adafruit` tag here. Ensure that the device you will be downloading the credentials on has a matching tag.
+
+To download the credential, restart the WoTT Agent by running:
+
+```
+$ sudo service wott-agent restart
+```
+There will now be a JSON file on your system containing your credentials. 
+
+## Setting up Adafruit feed sharing with an MQTT Client
+
+We have included a modified example of the Adafruit feed sharing tutorial in this guide which utilises WoTT's credentials rather than hard coding your details into the application. To run the example:
+
+```
+$ mkdir ~/wott-adafruit-mqtt-example
+$ cd ~/wott-adafruit-mqtt-example
+$ curl -o mqtt_shared_feeds.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/adafruit-io/mqtt_shared_feeds.py
+$ sudo python3 mqtt_shared_feeds.py
+```
 
 

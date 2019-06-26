@@ -209,13 +209,23 @@ def get_ca_cert(debug=False):
     return ca.json()['ca_bundle']
 
 
+def ssl_reguest(req, debug=False, dev=False):
+    return requests.get(
+            '{}{}'.format(MTLS_ENDPOINT, req),
+            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+            headers={
+                    'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(debug=debug, dev=dev),
+                    'SSL-CLIENT-VERIFY': 'SUCCESS'
+                } if dev else {}
+            )
+
+
 def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     can_read_cert()
     try:
-        response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                                headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                                         'SSL-CLIENT-VERIFY': 'SUCCESS'} if dev else {})
+        response = ssl_reguest('/v0.2/claimed', debug=debug, dev=dev)
+
     except requests.exceptions.ConnectionError:
         print('Did not manage to get claim info from the server.')
         exit(2)
@@ -266,14 +276,7 @@ def get_open_ports(debug=False, dev=False):
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    ping = requests.get(
-        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
+    ping = ssl_reguest('/v0.2/ping', debug=debug, dev=dev)
     if debug:
         print("[RECEIVED] GET Ping: {}".format(ping.status_code))
         print("[RECEIVED] GET Ping: {}".format(ping.content))
@@ -343,14 +346,7 @@ def send_ping(debug=False, dev=False):
 
 
 def say_hello(debug=False, dev=False):
-    hello = requests.get(
-        '{}/v0.2/hello'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
+    hello = ssl_reguest('/v0.2/hello', debug=debug, dev=dev)
     if not hello.ok:
         print('Hello failed.')
     return hello.json()
@@ -503,14 +499,7 @@ def fetch_credentials(debug, dev):
         print('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = requests.get(
-            '{}/v0.2/creds'.format(MTLS_ENDPOINT),
-            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            headers={
-                'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                'SSL-CLIENT-VERIFY': 'SUCCESS'
-            } if dev else {}
-        )
+        credentials_req = ssl_reguest('/v0.2/creds', debug=debug, dev=dev)
         if not credentials_req.ok:
             print('Fetching failed.')
             if debug:

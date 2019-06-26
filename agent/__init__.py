@@ -240,8 +240,8 @@ def mtls_post_request(req, json=None, debug=False, dev=False, requester_name=Non
     :param json: json data, None by default
     :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
-    :param requester_name: displayes requester id for error messages
-    :param debug_on_ok: if true with bebug then log successful response status/content too
+    :param requester_name: displayed requester id for error messages
+    :param debug_on_ok: if true with debug then log successful response status/content too
     :return: response or None (if there was exception raised)
     """
     try:
@@ -267,8 +267,8 @@ def mtls_get_request(req, debug=False, dev=False, requester_name=None, debug_on_
     :param req: request url string (without endpoint)
     :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
-    :param requester_name: displayes requester id for error messages
-    :param debug_on_ok: if true with bebug then log successful response status/content too
+    :param requester_name: displayed requester id for error messages
+    :param debug_on_ok: if true with debug then log successful response status/content too
     :return: response or None (if there was exception raised)
     """
     try:

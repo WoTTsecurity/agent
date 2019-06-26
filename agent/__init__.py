@@ -211,9 +211,9 @@ def get_ca_cert(debug=False):
 
 def get_mtls_header(debug=False, dev=False):
     return {
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(debug=debug, dev=dev),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
+        'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(debug=debug, dev=dev),
+        'SSL-CLIENT-VERIFY': 'SUCCESS'
+    } if dev else {}
 
 
 def mtls_req_error_log(request_url, type, requester_name, response):
@@ -246,10 +246,10 @@ def mtls_post_request(req, json=None, debug=False, dev=False, requester_name=Non
     """
     try:
         r = requests.post(
-                '{}{}'.format(MTLS_ENDPOINT, req),
-                cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                json=json,
-                headers=get_mtls_header(debug=debug, dev=dev)
+            '{}{}'.format(MTLS_ENDPOINT, req),
+            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+            json=json,
+            headers=get_mtls_header(debug=debug, dev=dev)
         )
 
         if (debug_on_ok or not r.ok) and debug:
@@ -273,9 +273,9 @@ def mtls_get_request(req, debug=False, dev=False, requester_name=None, debug_on_
     """
     try:
         r = requests.get(
-                '{}{}'.format(MTLS_ENDPOINT, req),
-                cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                headers=get_mtls_header(debug=debug, dev=dev)
+            '{}{}'.format(MTLS_ENDPOINT, req),
+            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+            headers=get_mtls_header(debug=debug, dev=dev)
         )
 
         if (debug_on_ok or not r.ok) and debug:

@@ -545,7 +545,7 @@ def fetch_device_metadata(debug, dev):
         print('metadata retrieved.')
 
         if os.path.exists(SECRET_DEV_METADATA_PATH) and not os.path.isfile(SECRET_DEV_METADATA_PATH):
-            print("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".printf(
+            print("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
                 SECRET_DEV_METADATA_PATH
             ))
             exit(1)

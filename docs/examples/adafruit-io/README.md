@@ -10,9 +10,21 @@ https://adafruit-io-python-client.readthedocs.io/en/latest/feed-sharing.html#usa
 
 We're interested in Adafruit IO as it provides a means for us to communicate with our IoT devices via messages through either an MQTT or HTTP service. WWe can therefore interact with Adafruit's services and use our WoTT provided credentials to secure it.
 
-The first thing you will need to do, is to [sign up](https://accounts.adafruit.com/users/sign_up) for Adafruit IO so you can access their [dashboard](https://io.adafruit.com/). Familiarise yourself with their [basic guides](https://learn.adafruit.com/series/adafruit-io-basics). To start, we will need to create a 'Feed.'
+For this example you will need a device with the WoTT agent installed and a browser. You will also need an Adafruit IO account as well as a WoTT dash account. We will show you to set these up later in the guide if you haven't done so already. You should also have `curl` installed.
 
-For this example, you will need a device with the WoTT Agent installed. 
+## Installing and setting up to use Adafruit IO
+
+The first thing you will need to do, is to [sign up](https://accounts.adafruit.com/users/sign_up) for Adafruit IO so you can access their [dashboard](https://io.adafruit.com/). Familiarise yourself with their [basic guides](https://learn.adafruit.com/series/adafruit-io-basics). For this example, we will be creating a 'Feed.' First however, you will need to have the Adafruit IO client downloaded on your system. We will be using their Python client. 
+
+To install: 
+
+```
+pip3 install adafruit-io
+```
+If this doesn't work, refer to [this](https://adafruit-io-python-client.readthedocs.io/en/latest/index.html) page and do the manual installation instead.
+
+Now we're all set up, we can create a feed to later call via MQTT.
+
 
 ## Creating a Feed for MQTT messaging
 
@@ -26,9 +38,32 @@ The feed name refers to the type of data you are observing- for example temperat
 
 **Note:** it is possible to create the feeds using a simple python application. If you prefer a more codified style of set up, you can follow [this](https://adafruit-io-python-client.readthedocs.io/en/latest/feeds.html) guide.
 
-## Creating credentials
+## Creating credentials in WoTT dash
 
-In order to call the Adafruit API via HTTP access, it requires a key. You can find this key on your Adafruit dasboard under `AIO key`. We can add this to WoTT's dashboard as a new credential where the value is your username followed by the key value. Input something like this:
+In order to call the Adafruit API via HTTP access, it requires a key. You can find this key on the left-hand side of your Adafruit dasboard as you did with 'Feeds' under `AIO key`. You will be brought to a page akin to this:
+
+![aio key](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/aio-key-modal.png)
+
+These are your unique Adafruit details. We can add these to WoTT's dashboard as a new credential where the value is your personal username followed by the `Active Key` value. To do so, you will need to login or create an account for the [WoTT dash](https://dash.wott.io).
+
+![wott dash](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/wott-login.png)
+
+If you already have the WoTT dash and have registered your devices, you can skip ahead to inputting the credentials of the device. Otherwise, register your WoTT agent device to the dash by obtaining the Device ID and Claim Token by doing the following commands:
+
+``` 
+$ wott-agent whoami
+$ wott-aget claim-token
+```
+
+and pasting the output into the 'Claim Device' segment of the WoTT dash. This device is now claimed and registered to the WoTT dash. You can view the list of your claimed devices on the main dashboard. Navigate to your newly registered device and add a new tag, `adafruit` to it. These tags are how WoTT identifies which devices specific credentials are intended for.
+
+![adafruit tags](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/adafruit-tags.png)
+
+Now that we are all set up, we need to create the credentials with the Adafruit information. Navigate to the 'Credentials' page of the WoTT dash and a new credential. It will bring up a window like this:
+
+![credentials](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/credentials.png)
+
+Input the following into the fields:
 
 ```
 Name = adafruit_aio
@@ -37,6 +72,7 @@ Value = username:key
 Tags = adafruit
 ```
 
-and add an appropriate tag, we have chosen `adafruit`. Ensure that the device you will be downloading this certificate on has the correct tag.
+Using your relevant information from the Adafruit AIO key.
+Note the `adafruit` tag here. Ensure that the device you will be downloading the credentials on has a matching tag.
 
 

@@ -17,26 +17,41 @@ For this example, you will need to have the WoTT Dash set up, so if you haven't 
 
 ![Wott Login](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-login.png)
 
+If you have already got the WoTT Agent installed but haven't got the dash and the claim information, don't worry. Follow these commands to get the information you need to set it up:
+
+```
+$ wott-agent claim-url
+$ wott-agent whoami
+$ wott-agent claim-token
+```
+
+This will give you all the information you need to manually claim your device.
 
 ## Adding Credentials
 
 Once you have your devices enrolled, you need to navigate to the Credentials page in the Dashboard. You will need to add a credential to use to access the WebApp later. 
-The credential subheaders may seem a little confusing. In essence, `Name` refers to the name of the application you need credentials for. In our case, it's the simple WebApp. The `Key` is how the application then queries its credentials with `Value` referring to the actual contents of the key (the secure bit). 
+The credential subheaders may seem a little confusing. In essence, `Name` refers to the name of the application you need credentials for. In our case, it's the simple WebApp. The `Key` is how the application then queries its credentials with `Value` referring to the actual contents of the key (the secure bit). `Tags` is to match the tags of your chosen device to the credential so you can manage which credentials are downloaded to each device.
+
 For our example, add the following credential:
 
 ```
 Name = my_simple_web_app
 Key = web_app_credentials
 Value = username:password
+Tags = home-lab
 ```
 
-In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. If all is successful, the page should now look something like this:
+In place of `username:password` you can enter your own username and password but it is sufficient for this demonstration to leave it as is. This is also assuming the tag of the device you will be downloading the credential on is `home-lab`. If all is successful, the page should now look something like this:
 
 ![Wott Credentials](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/wott-dash.png)
 
+You will then need to add the correct tags to your device. Navigate to your dashboard. It will have a list of your registered WoTT devices and look something like this:
 
+![device list](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/simple-webapp-auth/device-list.png)
 
-The credentials are now ready to be used on all your WoTT enabled devices. On your server device, you will now need to relaunch the WoTT Agent to download the new credentials:
+Select the device that will be acting as your server, or `home-lab`. In the overview tab, you will be able to add tags to your device. Add `home-lab` and ensure that it is spelt correctly to match the credentials tag or it **will not** download.
+
+The credentials are now ready to be used on your specified WoTT enabled device provided they are tagged correctly. On this device, you will now need to relaunch the WoTT Agent to download the new credentials:
 
 ``` 
 $ sudo service wott-agent restart

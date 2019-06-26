@@ -9,6 +9,7 @@ import socket
 import netifaces
 import json
 
+from agent import iptables_helper
 from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
@@ -23,7 +24,8 @@ from cryptography.x509.oid import NameOID
 from math import floor
 from pathlib import Path
 from sys import exit
-
+import pwd
+import glob
 
 try:
     __version__ = pkg_resources.get_distribution('wott-agent')
@@ -49,7 +51,7 @@ else:
 
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
-    os.chmod(CONFIG_PATH, 0o700)
+    os.chmod(CONFIG_PATH, 0o711)
 Locker.LOCKDIR = CONFIG_PATH
 
 # This needs to be adjusted once we have
@@ -68,7 +70,7 @@ def is_bootstrapping():
     # Create path if it doesn't exist
     if not os.path.isdir(CERT_PATH):
         os.makedirs(CERT_PATH)
-        os.chmod(CERT_PATH, 0o700)
+    os.chmod(CERT_PATH, 0o711)
 
     client_cert = Path(CLIENT_CERT_PATH)
 
@@ -302,14 +304,12 @@ def send_ping(debug=False, dev=False):
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
         blocklist = ping.json()
-        security_helper.block_ports(blocklist.get('block_ports', {'tcp': [], 'udp': []}))
-        security_helper.block_networks(blocklist.get('block_networks', []))
+        iptables_helper.block(blocklist, debug)
 
         payload.update({
             'selinux_status': security_helper.selinux_status(),
             'app_armor_enabled': security_helper.is_app_armor_enabled(),
-            'firewall_enabled': security_helper.is_firewall_enabled(),
-            'firewall_rules': security_helper.get_firewall_rules(),
+            'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
             'netstat': connections
         })
@@ -491,6 +491,14 @@ def setup_endpoints(dev, debug):
 
 
 def fetch_credentials(debug, dev):
+
+    def clear_credentials(path):
+        files = glob.glob(os.path.join(path, '**/*.json'), recursive=True)
+        for file in files:
+            os.remove(os.path.join(path, file))
+            if debug:
+                print("remove...{}".format(file))
+
     with Locker('credentials'):
         setup_endpoints(dev, debug)
         print('Fetching credentials...')
@@ -513,42 +521,66 @@ def fetch_credentials(debug, dev):
         credentials = credentials_req.json()
 
         print('Credentials retreived.')
-        if debug:
-            print('Credentials: {}'.format(credentials))
 
         if not os.path.exists(CREDENTIALS_PATH):
-            os.mkdir(CREDENTIALS_PATH, 0o700)
+            os.mkdir(CREDENTIALS_PATH, 0o711)
 
         if not os.path.isdir(CREDENTIALS_PATH):
-            print("there is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
+            print("There is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
             exit(1)
 
-        for file in os.listdir(os.path.join(CREDENTIALS_PATH)):
-            if file.endswith(".json"):
-                os.remove(os.path.join(CREDENTIALS_PATH, file))
+        clear_credentials(CREDENTIALS_PATH)
 
-        # group received credentials, by name
-        credentials_by_name = {}
+        # group received credentials, by linux_user, name
+        credentials_grouped = {}
         for cred in credentials:
             name = cred['name']
-            if name not in credentials_by_name:
-                credentials_by_name[name] = {}
-            credentials_by_name[name][cred['key']] = cred['value']
+            owner = cred['linux_user'] if 'linux_user' in cred else ''
+            if owner not in credentials_grouped:
+                credentials_grouped[owner] = {}
+            if name not in credentials_grouped[owner]:
+                credentials_grouped[owner][name] = {}
+            credentials_grouped[owner][name][cred['key']] = cred['value']
 
-        for name in credentials_by_name:
-            credential_file_path = os.path.join(CREDENTIALS_PATH, "{}.json".format(name))
-            file_credentials = {}
+        root_pw = pwd.getpwnam("root")
 
-            for cred in credentials_by_name[name]:
-                file_credentials[cred] = credentials_by_name[name][cred]
+        for owner in credentials_grouped:
 
-            if debug:
-                print('Store credentials: to {} \n {}'.format(credential_file_path, file_credentials))
+            pw = root_pw  # if no owner, use 'root'
+            if owner:
+                try:
+                    pw = pwd.getpwnam(owner)
+                except KeyError:
+                    print("Warning. There are credentials with wrong owner ({}). Skipped.".format(owner))
+                    continue
 
-            with open(credential_file_path, 'w') as outfile:
-                json.dump(file_credentials, outfile)
+            uid = pw.pw_uid
+            gid = pw.pw_gid
 
-            os.chmod(credential_file_path, 0o600)
+            owner_path = CREDENTIALS_PATH if not owner else os.path.join(CREDENTIALS_PATH, owner)
+
+            if owner and not os.path.isdir(owner_path):
+                if os.path.exists(owner_path):
+                    print("There is a file with name of system user in credentials directory ({}).".format(owner_path))
+                    exit(1)
+                os.mkdir(owner_path, 0o700)
+            os.chown(owner_path, uid, gid)  # update ownership if user existence in system changed
+
+            for name in credentials_grouped[owner]:
+                credential_file_path = os.path.join(owner_path, "{}.json".format(name))
+                file_credentials = {}
+
+                for cred in credentials_grouped[owner][name]:
+                    file_credentials[cred] = credentials_grouped[owner][name][cred]
+
+                if debug:
+                    print('Store credentials to {} \n '.format(credential_file_path))
+
+                with open(credential_file_path, 'w') as outfile:
+                    json.dump(file_credentials, outfile)
+
+                os.chmod(credential_file_path, 0o400)
+                os.chown(credential_file_path, uid, gid)
 
 
 def write_metadata(data, rewrite_file):

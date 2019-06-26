@@ -48,14 +48,14 @@ These are your unique Adafruit details. We can add these to WoTT's dashboard as 
 
 ![wott dash](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/wott-login.png)
 
-If you already have the WoTT dash and have registered your devices, you can skip ahead to inputting the credentials of the device. Otherwise, register your WoTT agent device to the dash by obtaining the Device ID and Claim Token by doing the following commands:
+If you already have the WoTT dash and have registered your devices, you can skip ahead to inputting the credentials of the device. Otherwise, register your WoTT agent device to the dash by obtaining the Device ID and Claim Token by doing the following commands on said device:
 
 ``` 
 $ wott-agent whoami
 $ wott-aget claim-token
 ```
 
-and pasting the output into the 'Claim Device' segment of the WoTT dash. This device is now claimed and registered to the WoTT dash. You can view the list of your claimed devices on the main dashboard. Navigate to your newly registered device and add a new tag, `adafruit` to it. These tags are how WoTT identifies which devices specific credentials are intended for.
+and pasting the output into the 'Claim Device' segment of the WoTT dash. This device is now claimed and registered to the WoTT dash. You can view the list of your claimed devices on the main dashboard. Navigate to your newly registered device and add a new tag, `adafruit` to it. Through these tags, WoTT identifies which devices specific credentials are intended for.
 
 ![adafruit tags](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/adafruit-tags.png)
 
@@ -72,7 +72,7 @@ Value = username:key
 Tags = adafruit
 ```
 
-Using your relevant information from the Adafruit AIO key.
+using your relevant information from the Adafruit AIO key.
 Note the `adafruit` tag here. Ensure that the device you will be downloading the credentials on has a matching tag.
 
 

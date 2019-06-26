@@ -216,11 +216,11 @@ def get_mtls_header(debug=False, dev=False):
     } if dev else {}
 
 
-def mtls_req_error_log(request_url, type, requester_name, response):
+def mtls_req_error_log(request_url, req_type, requester_name, response):
     """
     logs error of mtls_request functions
     :param request_url: request url string
-    :param type: 'GET', 'POST', ...
+    :param req_type: 'GET', 'POST', ...
     :param requester_name: requester id for message, if None then request_url string used
     :param response - request response
     :return: None
@@ -228,9 +228,9 @@ def mtls_req_error_log(request_url, type, requester_name, response):
     if not requester_name:
         requester_name = "({})".format(request_url)
     print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
-        requester_name, type, response.status_code))
+        requester_name, req_type, response.status_code))
     print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
-        requester_name, type, response.content))
+        requester_name, req_type, response.content))
 
 
 def mtls_post_request(req, json=None, debug=False, dev=False, requester_name=None, debug_on_ok=False):

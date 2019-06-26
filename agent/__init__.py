@@ -46,10 +46,15 @@ WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
 CONFINEMENT = detect_confinement()
 
-# Conditional handling for if we're running
-# inside a Snap.
-CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
 CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
+CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
+
+CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
+CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
+CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
+COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
+INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
 
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
@@ -58,13 +63,6 @@ if not os.path.isdir(CONFIG_PATH):
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
 RENEWAL_THRESHOLD = 3
-
-CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
-CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
-CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
-COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
-INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
-CREDENTIALS_PATH = os.path.join(CONFIG_PATH, 'credentials')
 
 
 def is_bootstrapping():

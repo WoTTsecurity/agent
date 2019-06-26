@@ -10,7 +10,7 @@ import json
 from Adafruit_IO import MQTTClient
 
 # Importing and splitting WoTT's credentials into username and key
-with open('/opt/wott/credentials/adafruit/adafruit-aio.json', 'r') as creds:
+with open('/opt/wott/credentials/adafruit/adafruit_aio.json', 'r') as creds:
     creds_info = json.load(creds)
 
 creds_values = creds_info['credentials'].split(":")

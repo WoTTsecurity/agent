@@ -27,10 +27,15 @@ from sys import exit
 import pwd
 import glob
 
-try:
-    __version__ = pkg_resources.get_distribution('wott-agent')
-except pkg_resources.DistributionNotFound:
-    __version__ = (Path(__file__).parents[1] / 'VERSION').read_text().strip()
+
+CONFINEMENT = detect_confinement()
+if CONFINEMENT == Confinement.SNAP:
+    __version__ = os.environ['SNAP_VERSION']
+else:
+    try:
+        __version__ = pkg_resources.get_distribution('wott-agent')
+    except pkg_resources.DistributionNotFound:
+        __version__ = (Path(__file__).parents[1] / 'VERSION').read_text().strip()
 
 
 WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
@@ -41,29 +46,23 @@ WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
 CONFINEMENT = detect_confinement()
 
-# Conditional handling for if we're running
-# inside a Snap.
-if CONFINEMENT == Confinement.SNAP:
-    CONFIG_PATH = CERT_PATH = os.getenv('SNAP_DATA')
-else:
-    CERT_PATH = os.getenv('CERT_PATH', '/opt/wott/certs')
-    CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
-
-if not os.path.isdir(CONFIG_PATH):
-    os.makedirs(CONFIG_PATH)
-    os.chmod(CONFIG_PATH, 0o711)
-Locker.LOCKDIR = CONFIG_PATH
-
-# This needs to be adjusted once we have
-# changed the certificate life span from 7 days.
-RENEWAL_THRESHOLD = 3
+CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
+CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
 
 CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
-CREDENTIALS_PATH = os.path.join(CONFIG_PATH, 'credentials')
+
+if not os.path.isdir(CONFIG_PATH):
+    os.makedirs(CONFIG_PATH)
+    os.chmod(CONFIG_PATH, 0o711)
+
+# This needs to be adjusted once we have
+# changed the certificate life span from 7 days.
+RENEWAL_THRESHOLD = 3
 
 
 def is_bootstrapping():

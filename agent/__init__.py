@@ -524,6 +524,7 @@ def fetch_credentials(debug, dev):
 
         if not os.path.exists(CREDENTIALS_PATH):
             os.mkdir(CREDENTIALS_PATH, 0o711)
+        os.chmod(CREDENTIALS_PATH, 0o711)
 
         if not os.path.isdir(CREDENTIALS_PATH):
             print("There is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))

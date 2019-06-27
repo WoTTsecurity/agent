@@ -25,7 +25,7 @@ ADAFRUIT_IO_KEY = creds_values[1]
 IO_FEED = 'data feed'
 
 # IO Feed Owner's username
-# IO_FEED_USERNAME = creds_values[0]
+IO_FEED_USERNAME = creds_values[0]
 
 
 # Define callback functions which will be called when certain events happen.

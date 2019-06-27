@@ -87,5 +87,44 @@ $ cd ~/wott-adafruit-mqtt-example
 $ curl -o mqtt_shared_feeds.py https://raw.githubusercontent.com/WoTTsecurity/agent/master/docs/adafruit-io/mqtt_shared_feeds.py
 $ sudo python3 mqtt_shared_feeds.py
 ```
+If you are successful, you should receive a message like so:
+
+```
+Publishing a new message every 10 seconds (press Ctrl-C to quit)...
+Publishing 96 to data feed
+Connected to Adafruit IO!
+Publishing 12 to data feed
+Feed data feed received new value: 12
+Publishing 52 to data feed
+Feed data feed received new value: 52
+[...]
+```
+On your Adafruit IO dash, you should see the data being received on your feed:
+
+![feed data](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/adafruit-feed.png)
+
+**Note:** your values will be different to this example as they are randomly generated, use the above as a reference point only.
+
+## Common errors
+
+Adafruit IO Python uses Python3. If you have both a version of Python2 and Python3 on your machine, you will need to use the appropriate commands (for example pip vs pip3). 
+
+**No module named Adafruit_IO**
+
+```
+File "/Users/user/dir/app_dir/mqtt_shared_feeds.py", line 10, in <module>
+    from Adafruit_IO import  MQTTClient
+ImportError: No module named Adafruit_IO
+```
+This happens when Adafruit IO is not installed correctly. The reccommended fix is to [manually install](https://github.com/adafruit/Adafruit_IO_Python) Adafruit IO into the directory that you are working in (`wott-adafruit-mqtt-example`).
+
+## Closing notes
+
+We have successfully used WoTT credentials to secure access to your Adafruit IO feed through an MQTT client!
+
+The Python application contained in this example is a modified version of Adafruit IO's own MQTT feed sharing example. Feel free to edit, play with, and modify the app as you choose. Note that if you make changes to feed names, feed owners, etc; you will have to change this within the app (or within WoTT credentials to be more secure). 
+
+Ensure that if you do add additional credentials to WoTT dashboard that you restart the WoTT agent to download the credentials immediately- otherwise WoTT will fetch the information every 15 minutes.
+
 
 

@@ -4,27 +4,29 @@
 
 **WARNING:** WoTT is currently in beta. Use in production at your own risk.
 
-IoT is becoming a global phenomenom. Virtually any device can now be connected to the internet from smart TVs to fridges with many developers looking to create their own IoT technology. However with more connectivity comes more security risks; with IoT devices providing more gateways for network attacks and fraudulent access (see [these](https://www.bbc.co.uk/news/technology-38364077) [news](https://www.bbc.co.uk/news/technology-48664251) articles). 
+IoT is becoming a global phenomenom. Virtually any device can now be connected to the internet from smart TVs to fridges with many developers looking to create their own IoT technology. However with more connectivity comes more security risks; with IoT devices providing more gateways for network attacks and fraudulent access (see [these](https://www.bbc.co.uk/news/technology-38364077) [news](https://www.bbc.co.uk/news/technology-48664251) articles).
+
+For questions, please post them on our [forum thread](https://www.raspberrypi.org/forums/viewtopic.php?f=41&t=243538&sid=d378b110564b4773048c73fcb6679201) on the Raspberry Pi Forum.
 
 ## What is the WoTT Agent and what does it do?
 
 **TL;DR:** Providing simplified security for IoT developers
 
-WoTT aims to reduce that vulnerability by providing the security for you so that you can focus on your development. We want IoT developers to be able to develop their technology comfortable in the knowledge that their devices are secure from end-to-end. 
+WoTT aims to reduce that vulnerability by providing the security for you so that you can focus on your development. We want IoT developers to be able to develop their technology comfortable in the knowledge that their devices are secure from end-to-end.
 
 To do this, WoTT provides a few things:
 
  * Simplified encryption of device communication
  * Cryptographic identity for your devices (verifying the identity of an accessing device)
  * Enabling the removal of hard coded credentials from your applications and firmware and allowing you greater control of credentials through WoTT
- 
+
 ### WoTT provided certificates
 
 In order to facilitate encrypted communication between two peers, we need a cryptographic certificate. WoTT provides this through the agent [1]. This serves both as a means for enabling encrypted communication, as well as giving each unique device a recognisable identity. It is this identity and its associated certificate that we use to secure and verify inter-device connection.
 
-With the WoTT Agent certificate installed on a device, we can then establish connections to other devices and services by using the certificate to cryptographically prove the identity of said device [2]. 
-**Note**, this is *not* the same as how your browser works. In this scenario, the client (i.e. your browser) verifies that the remote server (e.g. https://www.google.com) is actually being served from Google’s server and not an impersonator. 
-There is however no way for Google to cryptographically verify who you are- hence why you are required by Google to login with your details to access your email. 
+With the WoTT Agent certificate installed on a device, we can then establish connections to other devices and services by using the certificate to cryptographically prove the identity of said device [2].
+**Note**, this is *not* the same as how your browser works. In this scenario, the client (i.e. your browser) verifies that the remote server (e.g. https://www.google.com) is actually being served from Google’s server and not an impersonator.
+There is however no way for Google to cryptographically verify who you are- hence why you are required by Google to login with your details to access your email.
 
 WoTT's Agent allows you to bypass the need for username/passwords by providing a certificate unique to your device that can be used to verify your identity. It is through these certificates that WoTT secures your devices and allows them to communicate with each other.
 
@@ -35,7 +37,7 @@ WoTT's Agent allows you to bypass the need for username/passwords by providing a
 
 This isn't to say that WoTT does away with credentials completely. Although it is best practice to use certificates as it crpytographically identifies your device, it is not doable in every instance. Passwords and APIs are still often required and typically hard-coded. We want to remove need for hard doded credentials,so WoTT provides the capacity for adding credentials you can manage yourself to bridge this gap.
 
-You can add your own credentials such as API keys or usernames and passwords through the [WoTT dash](https://dash.wott.io) which we strongly reccomend that you use and familiarise yourself with. WoTT credentials are downloaded onto your device as JSON files containing the information you've added. 
+You can add your own credentials such as API keys or usernames and passwords through the [WoTT dash](https://dash.wott.io) which we strongly reccomend that you use and familiarise yourself with. WoTT credentials are downloaded onto your device as JSON files containing the information you've added.
 
 You can use this to introduce user authentication to your applications in scenarios where you want to enable access to non-WoTT devices in a secure way. This is especially relevant for WebApps where access is not device or OS restricted.
 
@@ -61,13 +63,13 @@ $ sudo apt install wott-agent
  * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advance://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
 
 
-The certificates and credentials provided by the WoTT agent can now be used by you. 
+The certificates and credentials provided by the WoTT agent can now be used by you.
 
 Consider some of these following examples to help you get started:
 
 ## Use Cases
 
-The examples utilise either credentials or certificates. It is useful to separate the examples into those that require user authentication (such as logins) and those where we just want to secure access through device authentication (using the WoTT certificate). 
+The examples utilise either credentials or certificates. It is useful to separate the examples into those that require user authentication (such as logins) and those where we just want to secure access through device authentication (using the WoTT certificate).
 
 See the list below for examples of how to set up and use WoTT Agent enabled devices in the following scenarios
 
@@ -96,14 +98,8 @@ Similar to the above use case, here we are setting up a Python 3 WebApp. A WoTT 
 
 Screenly OSE is a free digital signage platform. Access to Screenly OSE's management page can be secured with HTTP authentication via a login with a username and password. This example shows how to use WoTT dash to create and store these access credentials. These credentials can then be used within Screenly OSE.
 
-
-
-### TLS/mTLS Access Control
-
-* To be written
-
 ### Outdated
 
- 
+
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
  * [Nginx (mTLS)](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/nginx)

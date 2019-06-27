@@ -104,7 +104,7 @@ On your Adafruit IO dash, you should see the data being received on your feed:
 
 ## Common errors
 
-Adafruit IO Python uses Python3. If you have both a version of Python2 and Python3 on your machine, you will need to use the appropriate commands (for example pip vs pip3). 
+Adafruit IO Python uses Python 3. If you have both a version of Python 2 and Python 3 on your machine, you will need to use the appropriate commands (for example pip vs pip3). 
 
 **No module named Adafruit_IO**
 

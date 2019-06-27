@@ -90,7 +90,11 @@ Unfortunately, there are still many cases where we cannot verify a device's acce
 
 #### [Simple WebApp with Basic HTTP Auth access](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/simple-webapp-auth)
 
-Similar to the above use case, here we are setting up a Python 3 WebApp. A WoTT Agent device acts as a server and here we show you how to use WoTT's dashboard to add credentials. These credentials can then be used to set up basic username:password authorisation for access from any other device.
+Similar to the Simple App use case, here we are setting up another simple Python 3 WebApp. A WoTT Agent device acts as a server and here we show you how to use WoTT's dashboard to add credentials. These credentials can then be used to set up basic username:password authentication within the app to secure access from other devices/browsers using login authentication.
+
+#### [Using WoTT credentials to manage Adafruit IO access through an MQTT Client](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/adafruit-io)
+
+Adafruit IO is a service provided by Adafruit that concerns itself with simplifying the presentation and usage of data for IoT devices. To access Adafruit IO feeds within your own applications, you need your Adafruit IO username and access AIO key. This example shows how to store those credentials securely in WoTT and call the credentials to secure access to the feed within a Python 3 application.
 
 #### [Managing access to Screenly OSE via HTTP authentication with WoTT authentication](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/screenly)
 

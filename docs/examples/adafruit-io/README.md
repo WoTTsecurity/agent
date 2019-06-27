@@ -1,8 +1,5 @@
 # Using Adafruit IO with WoTT Credentials
 
-example from adafruit 
-https://adafruit-io-python-client.readthedocs.io/en/latest/feed-sharing.html#usage-example
-
 
 ## Introduction
 
@@ -27,7 +24,7 @@ Now we're all set up, we can create a feed to later call via MQTT.
 
 ## Creating a Feed for MQTT messaging
 
-Login to the Adafruit IO dashboard. Navigate to the 'Feeds' page on the left-hand side menu. Hover over actions and select 'Create a New Feed.' The feed acts as a channel or datastream through which your device connets to Adafruit. We are going to create a feed that connects the devices via MQTT. In other words, the feed becomes the topic from which messages are either published/subscribed to.
+Login to the Adafruit IO dashboard. Navigate to the 'Feeds' page on the left-hand side menu. Hover over actions and select 'Create a New Feed.' The feed acts as a channel or datastream through which your device connects to Adafruit IO. We are going to create a feed that is called via MQTT. In other words, the feed becomes the topic from which messages are published/subscribed to.
 
 ![create feed](https://github.com/WoTTsecurity/agent/blob/master/docs/examples/adafruit-io/adafruit-add.png)
 

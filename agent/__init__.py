@@ -246,7 +246,7 @@ def mtls_post_request(req, data=None, debug=False, dev=False, requester_name=Non
     """
     try:
         r = requests.post(
-            '{}{}'.format(MTLS_ENDPOINT, req),
+            '{}/v0.2/{}'.format(MTLS_ENDPOINT, req),
             cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
             json=data,
             headers=get_mtls_header(debug=debug, dev=dev)
@@ -273,7 +273,7 @@ def mtls_get_request(req, debug=False, dev=False, requester_name=None, debug_on_
     """
     try:
         r = requests.get(
-            '{}{}'.format(MTLS_ENDPOINT, req),
+            '{}/v0.2/{}'.format(MTLS_ENDPOINT, req),
             cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
             headers=get_mtls_header(debug=debug, dev=dev)
         )
@@ -291,7 +291,7 @@ def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     can_read_cert()
 
-    response = mtls_get_request('/v0.2/claimed', debug=debug, dev=dev,
+    response = mtls_get_request('claimed', debug=debug, dev=dev,
                                 requester_name="Get Device Claim Info")
     if response is None or not response.ok:
         print('Did not manage to get claim info from the server.')
@@ -340,7 +340,7 @@ def get_open_ports(debug=False, dev=False):
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    ping = mtls_get_request('/v0.2/ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_get_request('ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
     if ping is None or not ping.ok:
         print('Ping failed.')
@@ -388,7 +388,7 @@ def send_ping(debug=False, dev=False):
     if debug:
         print("[GATHER] POST Ping: {}".format(payload))
 
-    ping = mtls_post_request('/v0.2/ping', data=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_post_request('ping', data=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
     if ping is None or not ping.ok:
         print('Ping failed.')
@@ -396,7 +396,7 @@ def send_ping(debug=False, dev=False):
 
 
 def say_hello(debug=False, dev=False):
-    hello = mtls_get_request('/v0.2/hello', debug=debug, dev=dev, requester_name='Hello')
+    hello = mtls_get_request('hello', debug=debug, dev=dev, requester_name='Hello')
     if hello is None or not hello.ok:
         print('Hello failed.')
     return hello.json()
@@ -549,7 +549,7 @@ def fetch_credentials(debug, dev):
         print('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = mtls_get_request('/v0.2/creds', debug=debug, dev=dev, requester_name="Fetch credentials")
+        credentials_req = mtls_get_request('creds', debug=debug, dev=dev, requester_name="Fetch credentials")
         if credentials_req is None or not credentials_req.ok:
             print('Fetching failed.')
             return

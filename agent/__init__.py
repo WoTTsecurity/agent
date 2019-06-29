@@ -227,16 +227,17 @@ def mtls_req_error_log(request_url, req_type, requester_name, response):
     """
     if not requester_name:
         requester_name = "({})".format(request_url)
-    print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
+    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
         requester_name, req_type, response.status_code))
-    print("wott-agent :: mtls_post_request :: [RECEIVED] {} {}: {}".format(
+    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
         requester_name, req_type, response.content))
 
 
-def mtls_post_request(req, data=None, debug=False, dev=False, requester_name=None, debug_on_ok=False):
+def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug_on_ok=False, **kwargs):
     """
-    MTLS POST Request wrapper function.
-    :param req: request url string (without endpoint)
+    MTLS  Request.request wrapper function.
+    :param method = 'get,'put,'post','delete','patch','head','options'
+    :param url: request url string (without endpoint)
     :param data: json data, None by default
     :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
@@ -245,45 +246,20 @@ def mtls_post_request(req, data=None, debug=False, dev=False, requester_name=Non
     :return: response or None (if there was exception raised)
     """
     try:
-        r = requests.post(
-            '{}/v0.2/{}'.format(MTLS_ENDPOINT, req),
+        r = requests.request(
+            method,
+            '{}/v0.2/{}'.format(MTLS_ENDPOINT, url),
             cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            json=data,
-            headers=get_mtls_header(debug=debug, dev=dev)
+            headers=get_mtls_header(debug=debug, dev=dev),
+            **kwargs
         )
 
         if (debug_on_ok or not r.ok) and debug:
-            mtls_req_error_log(req, 'POST', requester_name, r)
+            mtls_req_error_log(url, method.upper(), requester_name, r)
         return r
 
     except Exception as e:
-        print('wott-agent :: mtls_post_request :: rises exception: {}'.format(e))
-        return None
-
-
-def mtls_get_request(req, debug=False, dev=False, requester_name=None, debug_on_ok=False):
-    """
-    MTLS GET Request wrapper function.
-    :param req: request url string (without endpoint)
-    :param debug: if true then log error messages
-    :param dev: if true use dev endpoint and dev headers
-    :param requester_name: displayed requester id for error messages
-    :param debug_on_ok: if true with debug then log successful response status/content too
-    :return: response or None (if there was exception raised)
-    """
-    try:
-        r = requests.get(
-            '{}/v0.2/{}'.format(MTLS_ENDPOINT, req),
-            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            headers=get_mtls_header(debug=debug, dev=dev)
-        )
-
-        if (debug_on_ok or not r.ok) and debug:
-            mtls_req_error_log(req, 'GET', requester_name, r)
-        return r
-
-    except Exception as e:
-        print('wott-agent :: mtls_get_request :: rises exception: {}'.format(e))
+        print('wott-agent :: mtls_request :: rises exception: {}'.format(e))
         return None
 
 
@@ -291,8 +267,7 @@ def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     can_read_cert()
 
-    response = mtls_get_request('claimed', debug=debug, dev=dev,
-                                requester_name="Get Device Claim Info")
+    response = mtls_request('get', 'claimed', debug=debug, dev=dev, requester_name="Get Device Claim Info")
     if response is None or not response.ok:
         print('Did not manage to get claim info from the server.')
         exit(2)
@@ -340,7 +315,7 @@ def get_open_ports(debug=False, dev=False):
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    ping = mtls_get_request('ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_request('get', 'ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
     if ping is None or not ping.ok:
         print('Ping failed.')
@@ -388,7 +363,7 @@ def send_ping(debug=False, dev=False):
     if debug:
         print("[GATHER] POST Ping: {}".format(payload))
 
-    ping = mtls_post_request('ping', data=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_request('post', 'ping', json=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
     if ping is None or not ping.ok:
         print('Ping failed.')
@@ -396,7 +371,7 @@ def send_ping(debug=False, dev=False):
 
 
 def say_hello(debug=False, dev=False):
-    hello = mtls_get_request('hello', debug=debug, dev=dev, requester_name='Hello')
+    hello = mtls_request('get', 'hello', debug=debug, dev=dev, requester_name='Hello')
     if hello is None or not hello.ok:
         print('Hello failed.')
     return hello.json()
@@ -549,7 +524,7 @@ def fetch_credentials(debug, dev):
         print('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = mtls_get_request('creds', debug=debug, dev=dev, requester_name="Fetch credentials")
+        credentials_req = mtls_request('get', 'creds', debug=debug, dev=dev, requester_name="Fetch credentials")
         if credentials_req is None or not credentials_req.ok:
             print('Fetching failed.')
             return

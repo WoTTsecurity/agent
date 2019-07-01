@@ -448,7 +448,7 @@ def test_fetch_credentials(tmpdir):
     mock_resp.return_value.ok = True
     with mock.patch('builtins.print'), \
             mock.patch('agent.can_read_cert') as cr, \
-            mock.patch('requests.get') as req, \
+            mock.patch('requests.request') as req, \
             mock.patch('builtins.print'), \
             mock.patch('os.chmod') as chm, \
             mock.patch('os.chown') as chw:
@@ -505,7 +505,7 @@ def test_fetch_credentials_no_dir(tmpdir):
     mock_resp.return_value.ok = True
     with mock.patch('builtins.print'), \
             mock.patch('agent.can_read_cert') as cr, \
-            mock.patch('requests.get') as req, \
+            mock.patch('requests.request') as req, \
             mock.patch('builtins.print'):
 
         cr.return_value = True

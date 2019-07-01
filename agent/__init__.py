@@ -209,28 +209,85 @@ def get_ca_cert(debug=False):
     return ca.json()['ca_bundle']
 
 
+def get_mtls_header(debug=False, dev=False):
+    return {
+        'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(debug=debug, dev=dev),
+        'SSL-CLIENT-VERIFY': 'SUCCESS'
+    } if dev else {}
+
+
+def mtls_req_error_log(request_url, req_type, requester_name, response):
+    """
+    logs error of mtls_request functions
+    :param request_url: request url string
+    :param req_type: 'GET', 'POST', ...
+    :param requester_name: requester id for message, if None then request_url string used
+    :param response - request response
+    :return: None
+    """
+    if not requester_name:
+        requester_name = "({})".format(request_url)
+    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
+        requester_name, req_type, response.status_code))
+    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
+        requester_name, req_type, response.content))
+
+
+def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug_on_ok=False,
+                 return_exception=False, **kwargs):
+    """
+    MTLS  Request.request wrapper function.
+    :param method = 'get,'put,'post','delete','patch','head','options'
+    :param url: request url string (without endpoint)
+    :param data: json data, None by default
+    :param debug: if true then log error messages
+    :param dev: if true use dev endpoint and dev headers
+    :param requester_name: displayed requester id for error messages
+    :param debug_on_ok: if true with debug then log successful response status/content too
+    :param return_exception if true, then returns tuple ( response, None ) or (None, RequestException)
+    :return: response or None (if there was exception raised), or tuple (see above, return_exception)
+    """
+    try:
+        r = requests.request(
+            method,
+            '{}/v0.2/{}'.format(MTLS_ENDPOINT, url),
+            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
+            headers=get_mtls_header(debug=debug, dev=dev),
+            **kwargs
+        )
+
+        if (debug_on_ok or not r.ok) and debug:
+            mtls_req_error_log(url, method.upper(), requester_name, r)
+        if return_exception:
+            return r, None
+        else:
+            return r
+
+    except requests.exceptions.RequestException as e:
+        print('wott-agent :: mtls_request :: rises exception: {}'.format(e))
+        if return_exception:
+            return None, e
+        else:
+            return None
+
+
 def get_claim_token(debug=False, dev=False):
     setup_endpoints(dev, debug)
     can_read_cert()
-    try:
-        response = requests.get('{}/v0.2/claimed'.format(MTLS_ENDPOINT), cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-                                headers={'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                                         'SSL-CLIENT-VERIFY': 'SUCCESS'} if dev else {})
-    except requests.exceptions.ConnectionError:
+
+    response = mtls_request('get', 'claimed', debug=debug, dev=dev, requester_name="Get Device Claim Info")
+    if response is None or not response.ok:
         print('Did not manage to get claim info from the server.')
         exit(2)
+
     if debug:
         print("[RECEIVED] Get Device Claim Info: {}".format(response))
 
-    if response.ok:
-        claim_info = response.json()
-        if claim_info['claimed']:
-            print('The device is already claimed.')
-            exit(1)
-        return claim_info['claim_token']
-    else:
-        print('Did not manage to get claim info from the server.')
-        exit(2)
+    claim_info = response.json()
+    if claim_info['claimed']:
+        print('The device is already claimed.')
+        exit(1)
+    return claim_info['claim_token']
 
 
 def get_fallback_token():
@@ -266,18 +323,9 @@ def get_open_ports(debug=False, dev=False):
 def send_ping(debug=False, dev=False):
     can_read_cert()
 
-    ping = requests.get(
-        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
-    if debug:
-        print("[RECEIVED] GET Ping: {}".format(ping.status_code))
-        print("[RECEIVED] GET Ping: {}".format(ping.content))
-    if not ping.ok:
+    ping = mtls_request('get', 'ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+
+    if ping is None or not ping.ok:
         print('Ping failed.')
         return
 
@@ -323,35 +371,16 @@ def send_ping(debug=False, dev=False):
     if debug:
         print("[GATHER] POST Ping: {}".format(payload))
 
-    ping = requests.post(
-        '{}/v0.2/ping'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        json=payload,
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
+    ping = mtls_request('post', 'ping', json=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
 
-    if debug:
-        print("[RECEIVED] POST Ping: {}".format(ping.status_code))
-        print("[RECEIVED] POST Ping: {}".format(ping.content))
-
-    if not ping.ok:
+    if ping is None or not ping.ok:
         print('Ping failed.')
         return
 
 
 def say_hello(debug=False, dev=False):
-    hello = requests.get(
-        '{}/v0.2/hello'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        headers={
-            'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-            'SSL-CLIENT-VERIFY': 'SUCCESS'
-        } if dev else {}
-    )
-    if not hello.ok:
+    hello = mtls_request('get', 'hello', debug=debug, dev=dev, requester_name='Hello')
+    if hello is None or not hello.ok:
         print('Hello failed.')
     return hello.json()
 
@@ -503,23 +532,13 @@ def fetch_credentials(debug, dev):
         print('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = requests.get(
-            '{}/v0.2/creds'.format(MTLS_ENDPOINT),
-            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            headers={
-                'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                'SSL-CLIENT-VERIFY': 'SUCCESS'
-            } if dev else {}
-        )
-        if not credentials_req.ok:
+        credentials_req = mtls_request('get', 'creds', debug=debug, dev=dev, requester_name="Fetch credentials")
+        if credentials_req is None or not credentials_req.ok:
             print('Fetching failed.')
-            if debug:
-                print("[RECEIVED] Fetch credentials: code {}".format(credentials_req.status_code))
-                print("[RECEIVED] Fetch credentials: {}".format(credentials_req.content))
             return
         credentials = credentials_req.json()
 
-        print('Credentials retreived.')
+        print('Credentials retrieved.')
 
         if not os.path.exists(CREDENTIALS_PATH):
             os.mkdir(CREDENTIALS_PATH, 0o711)

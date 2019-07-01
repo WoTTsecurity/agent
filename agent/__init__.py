@@ -233,7 +233,8 @@ def mtls_req_error_log(request_url, req_type, requester_name, response):
         requester_name, req_type, response.content))
 
 
-def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug_on_ok=False, **kwargs):
+def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug_on_ok=False,
+                 return_exception=False, **kwargs):
     """
     MTLS  Request.request wrapper function.
     :param method = 'get,'put,'post','delete','patch','head','options'
@@ -243,6 +244,7 @@ def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug
     :param dev: if true use dev endpoint and dev headers
     :param requester_name: displayed requester id for error messages
     :param debug_on_ok: if true with debug then log successful response status/content too
+    :param return_exception if true, then returns tuple ( response, None ) or (None, RequestException)
     :return: response or None (if there was exception raised), or tuple (see above, return_exception)
     """
     try:
@@ -256,11 +258,17 @@ def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug
 
         if (debug_on_ok or not r.ok) and debug:
             mtls_req_error_log(url, method.upper(), requester_name, r)
-        return r
+        if return_exception:
+            return r, None
+        else:
+            return r
 
     except requests.exceptions.RequestException as e:
         print('wott-agent :: mtls_request :: rises exception: {}'.format(e))
-        return None
+        if return_exception:
+            return None, e
+        else:
+            return None
 
 
 def get_claim_token(debug=False, dev=False):

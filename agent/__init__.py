@@ -240,7 +240,6 @@ def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug
     MTLS  Request.request wrapper function.
     :param method = 'get,'put,'post','delete','patch','head','options'
     :param url: request url string (without endpoint)
-    :param data: json data, None by default
     :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
     :param requester_name: displayed requester id for error messages
@@ -526,20 +525,11 @@ def fetch_device_metadata(debug, dev):
         print('Fetching device metadata...')
         can_read_cert()
 
-        dev_md_req = requests.get(
-            '{}/v0.2/dev-md'.format(MTLS_ENDPOINT),
-            cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            headers={
-                'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
-                'SSL-CLIENT-VERIFY': 'SUCCESS'
-            } if dev else {}
-        )
-        if not dev_md_req.ok:
+        dev_md_req = mtls_request('get', 'dev-md', debug=debug, dev=dev, requester_name="Fetching device metadata")
+        if dev_md_req is None or not dev_md_req.ok:
             print('Fetching failed.')
-            if debug:
-                print("[RECEIVED] Fetch device metadata: code {}".format(dev_md_req.status_code))
-                print("[RECEIVED] Fetch device metadata: {}".format(dev_md_req.content))
             return
+
         metadata = dev_md_req.json()
 
         print('metadata retrieved.')

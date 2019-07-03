@@ -55,6 +55,7 @@ CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
 CA_CERT_PATH = os.path.join(CERT_PATH, 'ca.crt')
 COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
+SECRET_DEV_METADATA_PATH = os.path.join(CONFIG_PATH, 'device_metadata.json')
 
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
@@ -239,7 +240,6 @@ def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug
     MTLS  Request.request wrapper function.
     :param method = 'get,'put,'post','delete','patch','head','options'
     :param url: request url string (without endpoint)
-    :param data: json data, None by default
     :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
     :param requester_name: displayed requester id for error messages
@@ -516,6 +516,34 @@ def setup_endpoints(dev, debug):
         print("DASH_ENDPOINT: {}\nWOTT_ENDPOINT: {}\nMTLS_ENDPOINT: {}".format(
               DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
               ))
+
+
+def fetch_device_metadata(debug, dev):
+
+    with Locker('dev.metadata'):
+        setup_endpoints(dev, debug)
+        print('Fetching device metadata...')
+        can_read_cert()
+
+        dev_md_req = mtls_request('get', 'dev-md', debug=debug, dev=dev, requester_name="Fetching device metadata")
+        if dev_md_req is None or not dev_md_req.ok:
+            print('Fetching failed.')
+            return
+
+        metadata = dev_md_req.json()
+
+        print('metadata retrieved.')
+
+        if os.path.exists(SECRET_DEV_METADATA_PATH) and not os.path.isfile(SECRET_DEV_METADATA_PATH):
+            print("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
+                SECRET_DEV_METADATA_PATH
+            ))
+            exit(1)
+
+        with open(SECRET_DEV_METADATA_PATH, "w") as outfile:
+            json.dump(metadata, outfile, indent=4)
+        os.chmod(SECRET_DEV_METADATA_PATH, 0o600)
+        print('metadata stored.')
 
 
 def fetch_credentials(debug, dev):

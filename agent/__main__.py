@@ -2,7 +2,7 @@ import argparse
 import asyncio
 
 from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
-from . import fetch_credentials
+from . import fetch_credentials, fetch_device_metadata
 
 
 def main():
@@ -12,7 +12,8 @@ def main():
         'test-cert': (say_hello, "Validate device certificate."),
         'claim-token': (get_claim_token, "Print claim token."),
         'claim-url': (get_claim_url, "Print claim URL."),
-        'daemon': (run_daemon, "Run as daemon")
+        'daemon': (run_daemon, "Run as daemon"),
+        'dev-metadata': (fetch_device_metadata, "Fetch device specific, secret metadata.")
     }
     help_string = "One of the following:\n\n" + "\n".join(
         ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])
@@ -54,12 +55,16 @@ PING_INTERVAL = 60 * 60
 PING_TIMEOUT = 10 * 60
 CREDS_INTERVAL = 15 * 60
 CREDS_TIMEOUT = 1 * 60
+# secret device-specific metadata fetching time constants
+DEV_MD_INTERVAL = 15 * 60
+DEV_MD_TIMEOUT = 1 * 60
 
 
 def run_daemon(debug, dev):
     exes = [
         executor.Executor(PING_INTERVAL, run, (True, debug, dev), timeout=PING_TIMEOUT, debug=debug),
-        executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev), timeout=CREDS_TIMEOUT, debug=debug)
+        executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev), timeout=CREDS_TIMEOUT, debug=debug),
+        executor.Executor(DEV_MD_INTERVAL, fetch_device_metadata, (debug, dev), timeout=DEV_MD_TIMEOUT, debug=debug)
     ]
     futures = [executor.schedule(exe) for exe in exes]
 

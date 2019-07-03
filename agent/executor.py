@@ -7,6 +7,7 @@ from multiprocessing import Queue
 from typing import Callable
 from typing import Dict
 from typing import Any
+import logging
 
 
 class Executor():
@@ -19,8 +20,7 @@ class Executor():
                  func, fargs,
                  timeout=None,
                  callback_timeout=None,
-                 daemon=False,
-                 debug=False):
+                 daemon=False):
         """
         Periodic process executor. Calls func and sleeps for interval,
         repeatedly. Kills the process after a timeout.
@@ -39,7 +39,6 @@ class Executor():
         self.process = None
         self.oneshot = interval is None
         self.should_stop = False
-        self.debug = debug
 
     async def start(self):
         """ start calling the process periodically """
@@ -84,8 +83,7 @@ class Executor():
         """
         p_args = fn_args if isinstance(fn_args, tuple) else (fn_args,)
         queue = Queue()
-        if self.debug:
-            print("Executor: starting {} {}".format(func.__name__, p_args))
+        logging.debug("Executor: starting {} {}".format(func.__name__, p_args))
         p = Process(target=self._process_run,
                     args=(queue, func, *p_args,), kwargs=p_kwargs)
 
@@ -100,8 +98,7 @@ class Executor():
         if callback_timeout:
             callback_timeout(*p_args, **p_kwargs)
         if p.is_alive():
-            if self.debug:
-                print('Executor: terminating by timeout')
+            logging.debug('Executor: terminating by timeout')
             p.terminate()
             p.join()
 

@@ -77,9 +77,9 @@ def test_failed_logins():
 def test_is_bootstrapping_stat_file(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(tmpdir / 'client.crt')
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         assert agent.is_bootstrapping()
-        assert mock.call('No certificate found on disk.') in prn.mock_calls
+        assert mock.call('No certificate found on disk.') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_create_dir(tmpdir):
@@ -88,21 +88,21 @@ def test_is_bootstrapping_create_dir(tmpdir):
     agent.CLIENT_CERT_PATH = str(notexistent_dir / 'client.crt')
     with mock.patch('os.makedirs') as md, \
             mock.patch('os.chmod') as chm, \
-            mock.patch('builtins.print') as prn:
+            mock.patch('agent.logger') as prn:
         assert agent.is_bootstrapping()
         assert md.called_with(notexistent_dir)
         assert chm.called_with(notexistent_dir, 0o700)
-        assert mock.call('No certificate found on disk.') in prn.mock_calls
+        assert mock.call('No certificate found on disk.') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_check_filesize(tmpdir):
     crt = tmpdir / 'client.crt'
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         Path(agent.CLIENT_CERT_PATH).touch()
         assert agent.is_bootstrapping()
-        assert mock.call('Certificate found but it is broken') in prn.mock_calls
+        assert mock.call('Certificate found but it is broken') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_false_on_valid_cert(tmpdir):
@@ -542,16 +542,15 @@ def test_fetch_device_metadata(tmpdir):
         }
     )
     mock_resp.return_value.ok = True
-    with mock.patch('builtins.print'), \
-            mock.patch('agent.can_read_cert') as cr, \
+    with mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.request') as req, \
-            mock.patch('builtins.print'), \
+            mock.patch('agent.logger'), \
             mock.patch('os.chmod') as chm:
 
         cr.return_value = True
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
-        agent.fetch_device_metadata(False, False)
+        agent.fetch_device_metadata(False, agent.logger)
 
         assert Path.exists(json3_path)
 

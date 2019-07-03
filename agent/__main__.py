@@ -32,11 +32,6 @@ or renews it if necessary.
                         metavar='action',
                         help=help_string)
     parser.add_argument(
-        '--debug',
-        required=False,
-        action="store_true",
-        help="Enable debug output.")
-    parser.add_argument(
         '--dev',
         required=False,
         action="store_true",
@@ -44,9 +39,10 @@ or renews it if necessary.
     args = parser.parse_args()
 
     if args.action == 'daemon':
-        setup_logging(level=logging.INFO if not args.debug else logging.DEBUG, path=DAEMON_LOG_CONFIG_PATH)
+        setup_logging(level=logging.INFO, path=DAEMON_LOG_CONFIG_PATH,
+                      log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
     else:
-        setup_logging(level=logging.INFO if not args.debug else logging.DEBUG)
+        setup_logging(level=logging.INFO)
 
     if not args.action:
         logger.info("start in ping mode...")
@@ -71,7 +67,7 @@ DEV_MD_TIMEOUT = 1 * 60
 
 def run_daemon(dev):
     exes = [
-        executor.Executor(PING_INTERVAL, run, (True, dev, logger), timeout=PING_TIMEOUT),
+        executor.Executor(PING_INTERVAL, run, (True, dev, logger, True), timeout=PING_TIMEOUT),
         executor.Executor(CREDS_INTERVAL, fetch_credentials, (dev, logger), timeout=CREDS_TIMEOUT),
         executor.Executor(DEV_MD_INTERVAL, fetch_device_metadata, (dev, logger), timeout=DEV_MD_TIMEOUT)
     ]

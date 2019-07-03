@@ -11,6 +11,7 @@ import json
 import pwd
 import glob
 import logging
+import logging.config
 
 from agent import iptables_helper
 from agent import journal_helper
@@ -27,7 +28,6 @@ from cryptography.x509.oid import NameOID
 from math import floor
 from pathlib import Path
 from sys import exit
-
 
 
 CONFINEMENT = detect_confinement()
@@ -81,12 +81,12 @@ def is_bootstrapping():
     client_cert = Path(CLIENT_CERT_PATH)
 
     if not client_cert.is_file():
-        print('No certificate found on disk.')
+        logger.warning('No certificate found on disk.')
         return True
 
     # Make sure there is no empty cert on disk
     if os.path.getsize(CLIENT_CERT_PATH) == 0:
-        print('Certificate found but it is broken')
+        logger.warning('Certificate found but it is broken')
         return True
 
     return False
@@ -224,10 +224,11 @@ def get_mtls_header(dev=False):
 def req_error_log(req_type, requester, response, log_on_ok=False, caller=''):
     """
     logs error of mtls_request functions
-    :param request_url: request url string
     :param req_type: 'GET', 'POST', ...
-    :param requester_name: requester id for message, if None then request_url string used
-    :param response - request response
+    :param requester: requester id for message, if None then request_url string used
+    :param response:  request response
+    :param log_on_ok: if True then debug log message even if response.ok
+    :param caller: caller string id
     :return: None
     """
 
@@ -273,8 +274,8 @@ def mtls_request(method, url, dev=False, requester_name=None, log_on_ok=False, r
             return None
 
 
-def get_claim_token(debug=False, dev=False):
-    setup_endpoints(dev, debug)
+def get_claim_token(dev=False):
+    setup_endpoints(dev)
     can_read_cert()
 
     response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
@@ -296,17 +297,18 @@ def get_fallback_token():
     config.read(INI_PATH)
     return config['DEFAULT'].get('fallback_token', None)
 
+
 def get_ini_log_level():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
     return config['DEFAULT'].get('log_level', None)
 
 
-def get_claim_url(debug=False, dev=False):
+def get_claim_url(dev=False):
     return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
         WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=get_device_id(),
-        claim_token=get_claim_token(debug, dev)
+        claim_token=get_claim_token(dev)
     )
 
 
@@ -321,7 +323,7 @@ def get_uptime():
     return uptime_seconds
 
 
-def get_open_ports(dev=False):
+def get_open_ports():
     connections, ports = security_helper.netstat_scan()
     return ports
 
@@ -383,7 +385,7 @@ def send_ping(dev=False):
         return
 
 
-def say_hello(debug=False, dev=False):
+def say_hello(dev=False):
     hello = mtls_request('get', 'hello', dev=dev, requester_name='Hello')
     if hello is None or not hello.ok:
         logger.error('Hello failed.')
@@ -512,24 +514,24 @@ def setup_endpoints(dev):
     )
 
 
-def fetch_device_metadata(debug, dev):
+def fetch_device_metadata(dev, logger=logger):
 
     with Locker('dev.metadata'):
-        setup_endpoints(dev, debug)
-        print('Fetching device metadata...')
+        setup_endpoints(dev)
+        logger.info('Fetching device metadata...')
         can_read_cert()
 
-        dev_md_req = mtls_request('get', 'dev-md', debug=debug, dev=dev, requester_name="Fetching device metadata")
+        dev_md_req = mtls_request('get', 'dev-md', dev=dev, requester_name="Fetching device metadata")
         if dev_md_req is None or not dev_md_req.ok:
-            print('Fetching failed.')
+            logger.error('Fetching failed.')
             return
 
         metadata = dev_md_req.json()
 
-        print('metadata retrieved.')
+        logger.info('metadata retrieved.')
 
         if os.path.exists(SECRET_DEV_METADATA_PATH) and not os.path.isfile(SECRET_DEV_METADATA_PATH):
-            print("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
+            logger.error("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
                 SECRET_DEV_METADATA_PATH
             ))
             exit(1)
@@ -537,10 +539,9 @@ def fetch_device_metadata(debug, dev):
         with open(SECRET_DEV_METADATA_PATH, "w") as outfile:
             json.dump(metadata, outfile, indent=4)
         os.chmod(SECRET_DEV_METADATA_PATH, 0o600)
-        print('metadata stored.')
+        logger.info('metadata stored.')
 
 
-def fetch_credentials(debug, dev):
 def fetch_credentials(dev, logger=logger):
 
     def clear_credentials(path):
@@ -634,14 +635,21 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def run(ping=True, dev=False, logger=logger):
+def run(ping=True, dev=False, logger=logger, daemon=False):
+
+    def log_or_print(msg):
+        if daemon:
+            logger.info(msg)
+        else:
+            print(msg)
+
     with Locker('ping'):
         setup_endpoints(dev)
         bootstrapping = is_bootstrapping()
 
         if bootstrapping:
             device_id = generate_device_id()
-            logger.info('Got WoTT ID: {}'.format(device_id))
+            log_or_print('Got WoTT ID: {}'.format(device_id))
             write_metadata({'device_id': device_id}, rewrite_file=True)
         else:
             device_id = get_device_id()
@@ -650,7 +658,7 @@ def run(ping=True, dev=False, logger=logger):
                 if ping:
                     send_ping(dev=dev)
                     time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
-                    logger.info(
+                    log_or_print(
                         "Certificate expires in {} days and {} hours. No need for renewal."
                         "Renewal threshold is set to {} days.".format(
                             time_to_cert_expires.days,
@@ -661,9 +669,9 @@ def run(ping=True, dev=False, logger=logger):
                     exit(0)
                 else:
                     return
-            logger.info('My WoTT ID is: {}'.format(device_id))
+            log_or_print('My WoTT ID is: {}'.format(device_id))
 
-        logger.info('Generating certificate...')
+        log_or_print('Generating certificate...')
         gen_key = generate_cert(device_id)
 
         ca = get_ca_cert()
@@ -671,7 +679,7 @@ def run(ping=True, dev=False, logger=logger):
             logger.error('Unable to retrieve CA cert. Exiting.')
             exit(1)
 
-        logger.info('Submitting CSR...')
+        log_or_print('Submitting CSR...')
 
         if bootstrapping:
             crt = sign_cert(gen_key['csr'], device_id)
@@ -684,15 +692,15 @@ def run(ping=True, dev=False, logger=logger):
             logger.error('Unable to sign CSR. Exiting.')
             exit(1)
 
-        logger.info('Got Claim Token: {}'.format(crt['claim_token']))
-        logger.info(
+        log_or_print('Got Claim Token: {}'.format(crt['claim_token']))
+        log_or_print(
             'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
                 WOTT_ENDPOINT=DASH_ENDPOINT,
                 device_id=device_id,
                 claim_token=crt['claim_token']
             )
         )
-        logger.info('Writing certificate and key to disk...')
+        log_or_print('Writing certificate and key to disk...')
         with open(CLIENT_CERT_PATH, 'w') as f:
             f.write(crt['crt'])
         os.chmod(CLIENT_CERT_PATH, 0o644)
@@ -710,7 +718,7 @@ def run(ping=True, dev=False, logger=logger):
             f.write(crt['crt'])
         os.chmod(COMBINED_PEM_PATH, 0o600)
 
-        logger.info("Writing config...")
+        log_or_print("Writing config...")
         config = configparser.ConfigParser()
         config['DEFAULT'] = {'fallback_token': crt['fallback_token']}
         with open(INI_PATH, 'w') as configfile:
@@ -727,9 +735,12 @@ def setup_logging(
 ):
     """
     Setup logging configuration
+    - if found path, use it as log config ini file
+    - else use basicconfig() with level and log_format as parameter
+    - if there is `log_level` item in wott-agent `config.ini`, it tries to be used as actual log level
     """
     if os.path.exists(path):
-        logging.config.dictConfig(path)
+        logging.config.fileConfig(path)
     else:
         logging.basicConfig(level=level, format=log_format)
 
@@ -742,5 +753,5 @@ def setup_logging(
                 "Invalid log_level (%s) in %s file. Using level (%s)",
                 log_level,
                 INI_PATH,
-                logging.getLevelName(logging.getLogger().getEffectiveLevel())
+                logging.getLevelName(logging.getLogger(__name__).getEffectiveLevel())
             )

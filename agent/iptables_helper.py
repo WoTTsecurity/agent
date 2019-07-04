@@ -5,7 +5,7 @@ from traceback import print_exc
 
 from iptc import IPTCError
 
-from agent import iptc_helper
+from . import iptc_helper
 
 
 TABLE = 'filter'

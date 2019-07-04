@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from itertools import product
-from sys import stdout
-from traceback import print_exc
+import logging
 
 from iptc import IPTCError
 
@@ -147,6 +146,7 @@ def block_networks(network_list: List[Tuple[str, bool]]):
 
 
 def block(blocklist):
+    logger = logging.getLogger(__name__)
     policy = blocklist.get('policy', 'allow')
     try:
         prepare()

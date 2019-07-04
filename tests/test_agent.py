@@ -310,8 +310,8 @@ def test_renew_cert(raspberry_cpuinfo, tmpdir, cert, key):
         getfqdn.return_value = 'localhost'
         res = agent.renew_expired_cert(None, None)
         assert res is None
-        assert (prn.info.call_count == 1 and prn.error.call_count == 1
-                and mock.call('Failed to submit CSR...') in prn.error.mock_calls)
+        assert (prn.info.call_count == 1 and prn.error.call_count == 1 and 
+                mock.call('Failed to submit CSR...') in prn.error.mock_calls)
 
 
 @pytest.mark.vcr

@@ -148,7 +148,7 @@ def generate_device_id():
     return device_id_request['device_id']
 
 
-def get_device_id():
+def get_device_id(dev=False):
     """
     Returns the WoTT Device ID (i.e. fqdn) by reading the first subject from
     the certificate on disk.
@@ -323,7 +323,7 @@ def get_uptime():
     return uptime_seconds
 
 
-def get_open_ports():
+def get_open_ports(dev=False):
     connections, ports = security_helper.netstat_scan()
     return ports
 

@@ -53,7 +53,7 @@ or renews it if necessary.
     else:
         logger.info("start for %s action...", args.action)
         run(ping=False, dev=args.dev)
-        print(actions[args.action][0]())
+        print(actions[args.action][0](dev=args.dev))
 
 
 PING_INTERVAL = 60 * 60

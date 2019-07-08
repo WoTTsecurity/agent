@@ -1,4 +1,9 @@
-google-api-python-client
+cryptography==2.5
+gcp-devrel-py-tools==0.0.15
+google-api-python-client==1.7.8
+google-auth-httplib2==0.0.3
+google-auth==1.6.2
+google-cloud-pubsub==0.39.1
+oauth2client==4.1.3
+requests
 pytz==2018.9
-requests==2.20.1
-cryptography==2.4.2

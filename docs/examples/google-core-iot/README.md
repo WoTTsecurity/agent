@@ -141,3 +141,36 @@ Received message 'b'Hello world'' on topic '/devices/x.d.wott.local/commands' wi
 ## Reference implementation
 
 You may also want to take a look at our Balena [reference implementation](https://github.com/WoTTsecurity/wott-agent-balena/tree/master/google-core-iot) of the above.
+
+## Automatic enrolling/updating script 
+
+If you have a fleet of devices, it is difficult to perform the above steps from time to time to renew the certificates or upload new ones to just created devices.
+It would be right to have a script that allows you to perform all these tasks, as well as register new devices in the Google IoT registry, according to the list of devices in WoTT Dash.
+The following example script allows you to do this. This works in the following scenario.
+
+- Retrieve all devices from WoTT Dash
+- Retrieve all devices from Google IoT Registry.
+- Check all" Google devices " for updated certificates in the WoTT list. And update if so.
+- Enroll devices that are present in the WoTT Dash and not in the Google Registry  
+- All devices with expired certificates in WoTT Dash will be skipped.
+  
+For script working you need:
+
+- To get WoTT API token. You can get it from the WoTT Dash profile page. (On the upper right corner, click by your username, and select the `Profile` menu. In profile settings select `API token` and press `Create`)
+- To get the Google service account secret JSON. You need to open your project on Google Cloud Platform, and in `IAM & Admon`/`Service accounts` menu select `+CREATE SERVICE ACCOUNT`. For created service account you need to select two roles `Cloud IoT Device Controller` and `Cloud IoT Provisioner`.  
+  After the account was created press on the `Create Key` button and save the JSON file.
+- Install requirements.
+
+```shell
+python3 -m venv ~/.gc-rt-venv
+source ~/.gc-rt-venv/bin/activate
+pip install -r requirements.txt
+```
+
+Update `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID`, `SERVICE_ACCOUNT_JSON` and `token` values according to your project and security settings. 
+  
+Now you can run it as follows  
+```
+python gc-cert-rotate.py
+```  
+     

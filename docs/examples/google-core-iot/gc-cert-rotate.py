@@ -212,7 +212,7 @@ def main():
         dev_list = get_devices(client, registry_name)
         if dev_list is None:
             exit(1)
-        print("retrived {} devices.".format(len(dev_list)))
+        print("{} devices retrieved.".format(len(dev_list)))
         print_giot_devices(dev_list)
         return dev_list
 
@@ -233,7 +233,7 @@ def main():
         exit(1)
 
     wott_dev_list = dev_list_resp.json()
-    print("retrived {} devices.".format(len(wott_dev_list)))
+    print("{} devices retrieved.".format(len(wott_dev_list)))
     devices = parse_wott_devices(wott_dev_list)
 
     gc_dev_list = retrieve_giot_devices()

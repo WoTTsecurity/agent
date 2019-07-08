@@ -21,6 +21,7 @@ REMOVE_EXPIRED_CERTS = True
 # wott api token
 token = '0123456789abcdef0123456789abcdef01234567'
 
+
 def _error_print(e, msg):
     error = json.loads(e.content)
     print("\n{}, Code: {}, Status: {}".format(msg, error["error"]["code"], error["error"]["status"]))
@@ -35,19 +36,18 @@ def get_client(service_account_json):
     discovery_api = 'https://cloudiot.googleapis.com/$discovery/rest'
     service_name = 'cloudiotcore'
 
-    credentials = service_account.Credentials.from_service_account_file(
-            service_account_json)
+    credentials = service_account.Credentials.from_service_account_file(service_account_json)
     scoped_credentials = credentials.with_scopes(api_scopes)
 
-    discovery_url = '{}?version={}'.format(
-            discovery_api, api_version)
+    discovery_url = '{}?version={}'.format(discovery_api, api_version)
 
     try:
         return discovery.build(
-                service_name,
-                api_version,
-                discoveryServiceUrl=discovery_url,
-                credentials=scoped_credentials)
+            service_name,
+            api_version,
+            discoveryServiceUrl=discovery_url,
+            credentials=scoped_credentials
+        )
 
     except HttpError as e:
         _error_print(e, "Error while creating Google IoT Core client")
@@ -150,9 +150,7 @@ def get_certificate_expiration_date(cert_string):
     Returns the expiration date of the certificate.
     """
 
-    cert = x509.load_pem_x509_certificate(
-            cert_string.encode(), default_backend()
-        )
+    cert = x509.load_pem_x509_certificate(cert_string.encode(), default_backend())
 
     return cert.not_valid_after.replace(tzinfo=pytz.utc)
 
@@ -177,7 +175,7 @@ def parse_wott_devices(wott_dev_list):
             cert = cert_resp.text
             expired = is_certificate_expired(cert)
 
-        gcloud_dev_id = 'a-'+device_id if device_id[:1].isdigit() else device_id
+        gcloud_dev_id = 'a-' + device_id if device_id[:1].isdigit() else device_id
         devices[device_id] = {
             'wott': device,
             'cert': cert,
@@ -296,4 +294,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

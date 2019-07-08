@@ -740,4 +740,3 @@ def setup_logging(level=logging.INFO, log_format="%(message)s"):
     logging.getLogger('agent').setLevel(log_level)
     logging.getLogger('agent.iptables_helper').setLevel(log_level)
     logging.getLogger('agent.executor').setLevel(log_level)
-

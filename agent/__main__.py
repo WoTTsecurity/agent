@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
-from . import fetch_credentials, fetch_device_metadata, setup_logging, logger, DAEMON_LOG_CONFIG_PATH
+from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
 
 
 def main():
@@ -39,7 +39,7 @@ or renews it if necessary.
     args = parser.parse_args()
 
     if args.action == 'daemon':
-        setup_logging(level=logging.INFO, path=DAEMON_LOG_CONFIG_PATH,
+        setup_logging(level=logging.INFO,
                       log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
     else:
         setup_logging(level=logging.INFO)
@@ -66,7 +66,7 @@ DEV_MD_TIMEOUT = 1 * 60
 
 def run_daemon(dev):
     exes = [
-        executor.Executor(PING_INTERVAL, run, (True, dev, logger, True), timeout=PING_TIMEOUT),
+        executor.Executor(PING_INTERVAL, run, (True, dev, logger), timeout=PING_TIMEOUT),
         executor.Executor(CREDS_INTERVAL, fetch_credentials, (dev, logger), timeout=CREDS_TIMEOUT),
         executor.Executor(DEV_MD_INTERVAL, fetch_device_metadata, (dev, logger), timeout=DEV_MD_TIMEOUT)
     ]

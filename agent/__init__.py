@@ -52,8 +52,6 @@ CONFINEMENT = detect_confinement()
 CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
 CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
-LOG_CONFIG_PATH = os.getenv('LOG_CFG_PATH', os.path.join(CONFIG_PATH, 'logging.ini'))
-DAEMON_LOG_CONFIG_PATH = os.getenv('DAEMON_LOG_CFG_PATH', os.path.join(CONFIG_PATH, 'logging.ini'))
 
 CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
@@ -275,26 +273,21 @@ def mtls_request(method, url, dev=False, requester_name=None, log_on_ok=False, r
             return None
 
 
-def get_claim_token(dev=False, daemon=False):
-    def log_or_print(msg):
-        if daemon:
-            logger.error(msg)
-        else:
-            print(msg)
+def get_claim_token(dev=False):
 
     setup_endpoints(dev)
     can_read_cert()
 
     response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
     if response is None or not response.ok:
-        log_or_print('Did not manage to get claim info from the server.')
+        logger.error('Did not manage to get claim info from the server.')
         exit(2)
 
     logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
 
     claim_info = response.json()
     if claim_info['claimed']:
-        log_or_print('The device is already claimed.')
+        logger.error('The device is already claimed.')
         exit(1)
     return claim_info['claim_token']
 
@@ -642,13 +635,7 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def run(ping=True, dev=False, logger=logger, daemon=True):
-
-    def log_or_print(msg):
-        if daemon:
-            logger.info(msg)
-        else:
-            print(msg)
+def run(ping=True, dev=False, logger=logger):
 
     with Locker('ping'):
         setup_endpoints(dev)
@@ -656,7 +643,7 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
 
         if bootstrapping:
             device_id = generate_device_id()
-            log_or_print('Got WoTT ID: {}'.format(device_id))
+            logger.info('Got WoTT ID: {}'.format(device_id))
             write_metadata({'device_id': device_id}, rewrite_file=True)
         else:
             device_id = get_device_id()
@@ -665,7 +652,7 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
                 if ping:
                     send_ping(dev=dev)
                     time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
-                    log_or_print(
+                    logger.info(
                         "Certificate expires in {} days and {} hours. No need for renewal."
                         "Renewal threshold is set to {} days.".format(
                             time_to_cert_expires.days,
@@ -676,9 +663,9 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
                     exit(0)
                 else:
                     return
-            log_or_print('My WoTT ID is: {}'.format(device_id))
+            logger.info('My WoTT ID is: {}'.format(device_id))
 
-        log_or_print('Generating certificate...')
+        logger.info('Generating certificate...')
         gen_key = generate_cert(device_id)
 
         ca = get_ca_cert()
@@ -686,7 +673,7 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
             logger.error('Unable to retrieve CA cert. Exiting.')
             exit(1)
 
-        log_or_print('Submitting CSR...')
+        logger.info('Submitting CSR...')
 
         if bootstrapping:
             crt = sign_cert(gen_key['csr'], device_id)
@@ -699,15 +686,15 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
             logger.error('Unable to sign CSR. Exiting.')
             exit(1)
 
-        log_or_print('Got Claim Token: {}'.format(crt['claim_token']))
-        log_or_print(
+        logger.info('Got Claim Token: {}'.format(crt['claim_token']))
+        logger.info(
             'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
                 WOTT_ENDPOINT=DASH_ENDPOINT,
                 device_id=device_id,
                 claim_token=crt['claim_token']
             )
         )
-        log_or_print('Writing certificate and key to disk...')
+        logger.info('Writing certificate and key to disk...')
         with open(CLIENT_CERT_PATH, 'w') as f:
             f.write(crt['crt'])
         os.chmod(CLIENT_CERT_PATH, 0o644)
@@ -725,7 +712,7 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
             f.write(crt['crt'])
         os.chmod(COMBINED_PEM_PATH, 0o600)
 
-        log_or_print("Writing config...")
+        logger.info("Writing config...")
         config = configparser.ConfigParser()
         config['DEFAULT'] = {'fallback_token': crt['fallback_token']}
         with open(INI_PATH, 'w') as configfile:
@@ -735,34 +722,22 @@ def run(ping=True, dev=False, logger=logger, daemon=True):
         send_ping(dev=dev)
 
 
-def setup_logging(
-    path=LOG_CONFIG_PATH,
-    level=logging.INFO,
-    log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-):
+def setup_logging(level=logging.INFO, log_format="%(message)s"):
     """
     Setup logging configuration
-    - if found path, use it as log config ini file
-    - else use basicconfig() with level and log_format as parameter
-    - if there is `log_level` item in wott-agent `config.ini`, it tries to be used as actual log level
+    if there is `log_level` item in wott-agent `config.ini` it would be used as actual log level
+    otherwise used value of level parameter
     """
-    if os.path.exists(path):
-        logging.config.fileConfig(path)
-    else:
-        logging.basicConfig(level=level, format=log_format)
+    log_level = level
+    ini_level = get_ini_log_level()
+    if ini_level is not None and isinstance(ini_level, str):
+        ini_level = ini_level.upper()
+        if ini_level in ['CRITICAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
+            log_level = ini_level
 
-    log_level = get_ini_log_level()
-    if log_level is not None:
-        try:
-            logging.getLogger().setLevel(log_level)
-            logging.getLogger('agent').setLevel(log_level)
-            logging.getLogger('agent.iptables_helper').setLevel(log_level)
-            logging.getLogger('agent.executor').setLevel(log_level)
+    logging.basicConfig(level=log_level, format=log_format)
 
-        except (ValueError, TypeError):
-            logging.warning(
-                "Invalid log_level (%s) in %s file. Using level (%s)",
-                log_level,
-                INI_PATH,
-                logging.getLevelName(logging.getLogger(__name__).getEffectiveLevel())
-            )
+    logging.getLogger('agent').setLevel(log_level)
+    logging.getLogger('agent.iptables_helper').setLevel(log_level)
+    logging.getLogger('agent.executor').setLevel(log_level)
+

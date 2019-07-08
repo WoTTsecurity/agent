@@ -1,9 +1,6 @@
 import configparser
 import os
-import requests
 import datetime
-import pytz
-import pkg_resources
 import platform
 import socket
 import netifaces
@@ -12,6 +9,19 @@ import pwd
 import glob
 import logging
 import logging.config
+from math import floor
+from sys import exit
+from pathlib import Path
+
+import requests
+import pkg_resources
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
+import pytz
 
 from agent import iptables_helper
 from agent import journal_helper
@@ -19,15 +29,6 @@ from agent import rpi_helper
 from agent import security_helper
 from agent.executor import Locker
 from agent.rpi_helper import Confinement, detect_confinement, detect_installation
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import NameOID
-from math import floor
-from pathlib import Path
-from sys import exit
 
 
 CONFINEMENT = detect_confinement()
@@ -69,7 +70,7 @@ if not os.path.isdir(CONFIG_PATH):
 # changed the certificate life span from 7 days.
 RENEWAL_THRESHOLD = 3
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('agent')
 
 
 def is_bootstrapping():
@@ -143,7 +144,7 @@ def generate_device_id():
         '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
     ).json()
 
-    logging.debug("[RECEIVED] Generate Device ID: {}".format(device_id_request))
+    logger.debug("[RECEIVED] Generate Device ID: {}".format(device_id_request))
 
     return device_id_request['device_id']
 
@@ -274,20 +275,26 @@ def mtls_request(method, url, dev=False, requester_name=None, log_on_ok=False, r
             return None
 
 
-def get_claim_token(dev=False):
+def get_claim_token(dev=False, daemon=False):
+    def log_or_print(msg):
+        if daemon:
+            logger.error(msg)
+        else:
+            print(msg)
+
     setup_endpoints(dev)
     can_read_cert()
 
     response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
     if response is None or not response.ok:
-        logger.error('Did not manage to get claim info from the server.')
+        log_or_print('Did not manage to get claim info from the server.')
         exit(2)
 
     logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
 
     claim_info = response.json()
     if claim_info['claimed']:
-        logger.info('The device is already claimed.')
+        log_or_print('The device is already claimed.')
         exit(1)
     return claim_info['claim_token']
 
@@ -503,7 +510,7 @@ def renew_expired_cert(csr, device_id):
 def setup_endpoints(dev):
     if dev:
         global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
-        endpoint = os.getenv('WOTT_ENDPOINT', 'http://192.168.1.6')
+        endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
         DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
         WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
@@ -635,7 +642,7 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def run(ping=True, dev=False, logger=logger, daemon=False):
+def run(ping=True, dev=False, logger=logger, daemon=True):
 
     def log_or_print(msg):
         if daemon:
@@ -748,6 +755,10 @@ def setup_logging(
     if log_level is not None:
         try:
             logging.getLogger().setLevel(log_level)
+            logging.getLogger('agent').setLevel(log_level)
+            logging.getLogger('agent.iptables_helper').setLevel(log_level)
+            logging.getLogger('agent.executor').setLevel(log_level)
+
         except (ValueError, TypeError):
             logging.warning(
                 "Invalid log_level (%s) in %s file. Using level (%s)",

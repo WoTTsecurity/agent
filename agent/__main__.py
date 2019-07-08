@@ -51,7 +51,6 @@ or renews it if necessary.
         logger.info("start in daemon mode...")
         run_daemon(dev=args.dev)
     else:
-        logger.info("start for %s action...", args.action)
         run(ping=False, dev=args.dev)
         print(actions[args.action][0](dev=args.dev))
 

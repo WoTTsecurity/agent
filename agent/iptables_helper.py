@@ -6,6 +6,7 @@ from iptc import IPTCError
 
 from . import iptc_helper
 
+logger = logging.getLogger('agent.iptables_helper')
 
 TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
@@ -146,7 +147,6 @@ def block_networks(network_list: List[Tuple[str, bool]]):
 
 
 def block(blocklist):
-    logger = logging.getLogger(__name__)
     policy = blocklist.get('policy', 'allow')
     try:
         prepare()

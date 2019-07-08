@@ -8,7 +8,7 @@ from typing import Callable
 from typing import Dict
 from typing import Any
 import logging
-
+logger = logging.getLogger('agent.executor')
 
 class Executor():
     MAX_WORKERS = 10
@@ -83,7 +83,7 @@ class Executor():
         """
         p_args = fn_args if isinstance(fn_args, tuple) else (fn_args,)
         queue = Queue()
-        logging.debug("Executor: starting {} {}".format(func.__name__, p_args))
+        logger.debug("Executor: starting {} {}".format(func.__name__, p_args))
         p = Process(target=self._process_run,
                     args=(queue, func, *p_args,), kwargs=p_kwargs)
 
@@ -98,7 +98,7 @@ class Executor():
         if callback_timeout:
             callback_timeout(*p_args, **p_kwargs)
         if p.is_alive():
-            logging.debug('Executor: terminating by timeout')
+            logger.debug('Executor: terminating by timeout')
             p.terminate()
             p.join()
 

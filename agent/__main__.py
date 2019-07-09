@@ -42,7 +42,8 @@ or renews it if necessary.
         setup_logging(level=logging.INFO,
                       log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
     else:
-        setup_logging(level=logging.INFO)
+        setup_logging(level=logging.INFO, daemon=False,
+                      log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     if not args.action:
         logger.info("start in ping mode...")

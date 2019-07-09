@@ -729,7 +729,7 @@ def run(ping=True, dev=False, logger=logger):
         send_ping(dev=dev)
 
 
-def setup_logging(level=logging.INFO, log_format="%(message)s"):
+def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):
     """
     Setup logging configuration
     if there is `log_level` item in wott-agent `config.ini` it would be used as actual log level
@@ -748,9 +748,13 @@ def setup_logging(level=logging.INFO, log_format="%(message)s"):
     if filename is not None and filename != 'stdout':
         file_handler = logging.FileHandler(filename=filename)
         handlers.append(file_handler)
-    else:
+
+    if filename is None or filename == 'stdout' or not daemon:
         stdout_handler = logging.StreamHandler(stdout)
         handlers.append(stdout_handler)
+
+    if not daemon:
+        stdout_handler.setFormatter(logging.Formatter("%(message)s"))
 
     logging.basicConfig(level=log_level, format=log_format, handlers=handlers)
 

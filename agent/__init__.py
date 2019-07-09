@@ -305,7 +305,6 @@ def get_ini_log_level():
 
 
 def get_ini_log_file():
-    return '/home/pi/agent/lllll.txt'
     config = configparser.ConfigParser()
     config.read(INI_PATH)
     return config['DEFAULT'].get('log_file', None)

@@ -1,12 +1,12 @@
 from typing import List, Tuple
 from itertools import product
-from sys import stdout
-from traceback import print_exc
+import logging
 
 from iptc import IPTCError
 
 from . import iptc_helper
 
+logger = logging.getLogger('agent.iptables_helper')
 
 TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
@@ -146,7 +146,7 @@ def block_networks(network_list: List[Tuple[str, bool]]):
     add_rules(TABLE, OUTPUT_CHAIN, rules)
 
 
-def block(blocklist, debug):
+def block(blocklist):
     policy = blocklist.get('policy', 'allow')
     try:
         prepare()
@@ -157,10 +157,9 @@ def block(blocklist, debug):
             block_ports(False, blocklist.get('allow_ports', []))
             add_block_rules()
         else:
-            print('Error: unknown policy "{}"'.format(policy))
+            logger.error('Error: unknown policy "{}"'.format(policy))
     except IPTCError as e:
-        print('Error while updating iptables: ' + str(e))
-        if debug:
-            print_exc(file=stdout)
+        logger.error('Error while updating iptables: %s', str(e))
+        logger.debug(exc_info=True)
         if 'insmod' in str(e):
-            print('Error: failed to update iptables, try rebooting')
+            logger.error('Error: failed to update iptables, try rebooting')

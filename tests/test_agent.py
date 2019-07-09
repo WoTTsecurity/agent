@@ -77,9 +77,9 @@ def test_failed_logins():
 def test_is_bootstrapping_stat_file(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(tmpdir / 'client.crt')
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         assert agent.is_bootstrapping()
-        assert mock.call('No certificate found on disk.') in prn.mock_calls
+        assert mock.call('No certificate found on disk.') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_create_dir(tmpdir):
@@ -88,21 +88,21 @@ def test_is_bootstrapping_create_dir(tmpdir):
     agent.CLIENT_CERT_PATH = str(notexistent_dir / 'client.crt')
     with mock.patch('os.makedirs') as md, \
             mock.patch('os.chmod') as chm, \
-            mock.patch('builtins.print') as prn:
+            mock.patch('agent.logger') as prn:
         assert agent.is_bootstrapping()
         assert md.called_with(notexistent_dir)
         assert chm.called_with(notexistent_dir, 0o700)
-        assert mock.call('No certificate found on disk.') in prn.mock_calls
+        assert mock.call('No certificate found on disk.') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_check_filesize(tmpdir):
     crt = tmpdir / 'client.crt'
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         Path(agent.CLIENT_CERT_PATH).touch()
         assert agent.is_bootstrapping()
-        assert mock.call('Certificate found but it is broken') in prn.mock_calls
+        assert mock.call('Certificate found but it is broken') in prn.warning.mock_calls
 
 
 def test_is_bootstrapping_false_on_valid_cert(tmpdir):
@@ -121,11 +121,11 @@ def test_can_read_cert_stat_cert(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         # Path(crt).touch(mode=0o100)
         with pytest.raises(SystemExit):
             agent.can_read_cert()
-        assert mock.call('Permission denied when trying to read the certificate file.') in prn.mock_calls
+        assert mock.call('Permission denied when trying to read the certificate file.') in prn.error.mock_calls
 
 
 def test_can_read_cert_stat_key(tmpdir):
@@ -134,12 +134,12 @@ def test_can_read_cert_stat_key(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         Path(agent.CLIENT_CERT_PATH).touch(mode=0o600)
         # Path(agent.CLIENT_KEY_PATH).touch(mode=0o100)
         with pytest.raises(SystemExit):
             agent.can_read_cert()
-        assert mock.call('Permission denied when trying to read the key file.') in prn.mock_calls
+        assert mock.call('Permission denied when trying to read the key file.') in prn.error.mock_calls
 
 
 def test_can_read_cert_none_on_success(tmpdir):
@@ -148,7 +148,7 @@ def test_can_read_cert_none_on_success(tmpdir):
     agent.CERT_PATH = str(tmpdir)
     agent.CLIENT_CERT_PATH = str(crt)
     agent.CLIENT_KEY_PATH = str(key)
-    with mock.patch('builtins.print'):
+    with mock.patch('agent.logger'):
         Path(agent.CLIENT_CERT_PATH).touch(mode=0o600)
         Path(agent.CLIENT_KEY_PATH).touch(mode=0o600)
         can_read = agent.can_read_cert()
@@ -235,12 +235,12 @@ def test_get_ca_cert():
 
 def test_get_ca_cert_none_on_fail():
     with mock.patch('requests.get') as req, \
-            mock.patch('builtins.print') as prn:
+            mock.patch('agent.logger') as prn:
         req.return_value.ok = False
         ca_bundle = agent.get_ca_cert()
     assert ca_bundle is None
-    assert mock.call('Failed to get CA...') in prn.mock_calls
-    assert prn.call_count == 3
+    assert mock.call('Failed to get CA...') in prn.error.mock_calls
+    assert prn.error.call_count == 3
 
 
 def test_get_open_ports(net_connections_fixture, netstat_result):
@@ -306,11 +306,11 @@ def test_renew_cert(raspberry_cpuinfo, tmpdir, cert, key):
             create=True
     ), \
     mock.patch('socket.getfqdn') as getfqdn, \
-    mock.patch('builtins.print') as prn:  # noqa E213
+    mock.patch('agent.logger') as prn:  # noqa E213
         getfqdn.return_value = 'localhost'
         res = agent.renew_expired_cert(None, None)
         assert res is None
-        assert (prn.call_count == 2 and mock.call('Failed to submit CSR...') in prn.mock_calls)
+        assert (prn.info.call_count == 1 and prn.error.call_count == 1 and mock.call('Failed to submit CSR...') in prn.error.mock_calls)
 
 
 @pytest.mark.vcr
@@ -322,10 +322,10 @@ def test_say_hello_failed(tmpdir, invalid_cert, invalid_key):
     agent.CLIENT_KEY_PATH = str(key_path)
     Path(agent.CLIENT_CERT_PATH).write_text(invalid_cert)
     Path(agent.CLIENT_KEY_PATH).write_text(invalid_key)
-    with mock.patch('builtins.print') as prn:
+    with mock.patch('agent.logger') as prn:
         with pytest.raises(json.decoder.JSONDecodeError):
             _ = agent.say_hello()
-        assert mock.call('Hello failed.') in prn.mock_calls
+        assert mock.call('Hello failed.') in prn.error.mock_calls
 
 
 @pytest.mark.vcr
@@ -446,17 +446,16 @@ def test_fetch_credentials(tmpdir):
         ]
     )
     mock_resp.return_value.ok = True
-    with mock.patch('builtins.print'), \
+    with mock.patch('agent.logger'), \
             mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.request') as req, \
-            mock.patch('builtins.print'), \
             mock.patch('os.chmod') as chm, \
             mock.patch('os.chown') as chw:
 
         cr.return_value = True
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
-        agent.fetch_credentials(False, False)
+        agent.fetch_credentials(False)
 
         assert Path.exists(tmpdir / user / 'name1.json')
         assert Path.exists(tmpdir / user / 'name2.json')
@@ -503,15 +502,14 @@ def test_fetch_credentials_no_dir(tmpdir):
         ]
     )
     mock_resp.return_value.ok = True
-    with mock.patch('builtins.print'), \
+    with mock.patch('agent.logger'), \
             mock.patch('agent.can_read_cert') as cr, \
-            mock.patch('requests.request') as req, \
-            mock.patch('builtins.print'):
+            mock.patch('requests.request') as req:
 
         cr.return_value = True
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
-        agent.fetch_credentials(False, False)
+        agent.fetch_credentials(False)
 
         assert Path.exists(file_path1)
         assert Path.exists(file_path2)
@@ -543,16 +541,15 @@ def test_fetch_device_metadata(tmpdir):
         }
     )
     mock_resp.return_value.ok = True
-    with mock.patch('builtins.print'), \
-            mock.patch('agent.can_read_cert') as cr, \
+    with mock.patch('agent.can_read_cert') as cr, \
             mock.patch('requests.request') as req, \
-            mock.patch('builtins.print'), \
+            mock.patch('agent.logger'), \
             mock.patch('os.chmod') as chm:
 
         cr.return_value = True
         req.return_value = mock_resp
         mock_resp.return_value.ok = True
-        agent.fetch_device_metadata(False, False)
+        agent.fetch_device_metadata(False, agent.logger)
 
         assert Path.exists(json3_path)
 

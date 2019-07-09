@@ -10,9 +10,9 @@ from googleapiclient.errors import HttpError
 
 
 # Google IoT core project settings
-PROJECT_ID = "gcloud-test-for-wott"
-CLOUD_REGION = "asia-east1"
-REGISTRY_ID = "wott-test-registry-eugenos"
+PROJECT_ID = "project-id"
+CLOUD_REGION = "asia-east1"  # possible values "us-central1", "europe-west1", and "asia-east1"
+REGISTRY_ID = "registry-id"
 SERVICE_ACCOUNT_JSON = 'service_account.json'
 
 # remove expired certs from google IoT registry

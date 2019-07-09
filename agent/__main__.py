@@ -2,8 +2,8 @@ import argparse
 import asyncio
 import logging
 
-from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
-from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
+from agent import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
+from agent import fetch_credentials, fetch_device_metadata, setup_logging, logger
 
 
 def main():

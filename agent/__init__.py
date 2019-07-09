@@ -10,7 +10,7 @@ import glob
 import logging
 import logging.config
 from math import floor
-from sys import exit
+from sys import exit, stdout
 from pathlib import Path
 
 import requests
@@ -302,6 +302,13 @@ def get_ini_log_level():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
     return config['DEFAULT'].get('log_level', None)
+
+
+def get_ini_log_file():
+    return '/home/pi/agent/lllll.txt'
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].get('log_file', None)
 
 
 def get_claim_url(dev=False):
@@ -728,6 +735,7 @@ def setup_logging(level=logging.INFO, log_format="%(message)s"):
     if there is `log_level` item in wott-agent `config.ini` it would be used as actual log level
     otherwise used value of level parameter
     """
+
     log_level = level
     ini_level = get_ini_log_level()
     if ini_level is not None and isinstance(ini_level, str):
@@ -735,7 +743,16 @@ def setup_logging(level=logging.INFO, log_format="%(message)s"):
         if ini_level in ['CRITICAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
             log_level = ini_level
 
-    logging.basicConfig(level=log_level, format=log_format)
+    filename = get_ini_log_file()
+    handlers = []
+    if filename is not None and filename != 'stdout':
+        file_handler = logging.FileHandler(filename=filename)
+        handlers.append(file_handler)
+    else:
+        stdout_handler = logging.StreamHandler(stdout)
+        handlers.append(stdout_handler)
+
+    logging.basicConfig(level=log_level, format=log_format, handlers=handlers)
 
     logging.getLogger('agent').setLevel(log_level)
     logging.getLogger('agent.iptables_helper').setLevel(log_level)

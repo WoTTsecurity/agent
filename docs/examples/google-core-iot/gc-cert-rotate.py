@@ -75,7 +75,6 @@ def enroll_device(client, registry_path, device_id, certificate):
 
 
 def patch_device(client, registry_path, device_id, credentials):
-    print('Patch device with ES256-X509-PEM certificate')
 
     patch = {
         'credentials': credentials
@@ -200,7 +199,7 @@ def print_giot_devices(giot_dev_list):
             if idx == 0:
                 print("{:>50}|{}".format(device.get('id'), credential.get('expirationTime')))
             else:
-                print("{:^50}|{}".format('-- // --', credential.get('expirationTime')))
+                print("{:^50}|{}".format('-- ... --', credential.get('expirationTime')))
 
     print("-" * 8)
 

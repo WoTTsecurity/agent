@@ -10,7 +10,8 @@ import glob
 import logging
 import logging.config
 from math import floor
-from sys import exit, stdout
+from sys import exit
+from sys import stdout
 from pathlib import Path
 
 import requests

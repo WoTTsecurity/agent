@@ -111,7 +111,12 @@ def get_devices(client, registry_path):
 
 
 def get_device_list(client, registry_path):
-
+    """
+    Get Google IoT Registry device list
+    :param client: Google IoT access client object
+    :param registry_path: Google IoT Registry path
+    :return: list of devices in registry (names and ids only)
+    """
     try:
         devices = client.projects().locations().registries().devices(
         ).list(parent=registry_path).execute().get('devices', [])

@@ -19,7 +19,7 @@ SERVICE_ACCOUNT_JSON = 'service_account.json'
 REMOVE_EXPIRED_CERTS = True
 
 # wott api token
-token = '0123456789abcdef0123456789abcdef01234567'
+WOTT_API_TOKEN = '0123456789abcdef0123456789abcdef01234567'
 
 
 def _error_print(e, msg):
@@ -226,7 +226,7 @@ def main():
     client = get_client(service_account_json)
 
     print('retrieving device list from wott dashboard...')
-    dev_list_resp = get_wott_device_list(token)
+    dev_list_resp = get_wott_device_list(WOTT_API_TOKEN)
     if dev_list_resp is None or not dev_list_resp.ok:
         print("Could not get device list from WoTT server")
         exit(1)

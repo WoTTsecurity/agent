@@ -157,7 +157,7 @@ The following example script allows you to do this. This works in the following 
 For script working you need:
 
 - To get WoTT API token. You can get it from the WoTT Dash profile page. (On the upper right corner, click by your username, and select the `Profile` menu. In profile settings select `API token` and press `Create`)
-- To get the Google service account secret JSON. You need to open your project on Google Cloud Platform, and in `IAM & Admon`/`Service accounts` menu select `+CREATE SERVICE ACCOUNT`. For created service account you need to select two roles `Cloud IoT Device Controller` and `Cloud IoT Provisioner`.  
+- To get the Google service account secret JSON. You need to open your project on Google Cloud Platform, and in `IAM & Admin`/`Service accounts` menu select `+CREATE SERVICE ACCOUNT`. For created service account you need to select two roles `Cloud IoT Device Controller` and `Cloud IoT Provisioner`.  
   After the account was created press on the `Create Key` button and save the JSON file.
 - Install requirements.
 
@@ -167,7 +167,7 @@ source ~/.gc-rt-venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Update `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID`, `SERVICE_ACCOUNT_JSON` and `token` values according to your project and security settings. 
+Update `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID`, `SERVICE_ACCOUNT_JSON` and `WOTT_API_TOKEN` values according to your project and security settings. 
   
 Now you can run it as follows  
 ```

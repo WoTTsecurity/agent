@@ -1,8 +1,9 @@
 import argparse
 import asyncio
+import logging
 
 from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
-from . import fetch_credentials, fetch_device_metadata
+from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
 
 
 def main():
@@ -31,24 +32,28 @@ or renews it if necessary.
                         metavar='action',
                         help=help_string)
     parser.add_argument(
-        '--debug',
-        required=False,
-        action="store_true",
-        help="Enable debug output.")
-    parser.add_argument(
         '--dev',
         required=False,
         action="store_true",
         help="Developer mode: work with locally running server.")
     args = parser.parse_args()
 
-    if not args.action:
-        run(ping=True, debug=args.debug, dev=args.dev)
-    elif args.action == 'daemon':
-        run_daemon(debug=args.debug, dev=args.dev)
+    if args.action == 'daemon':
+        setup_logging(level=logging.INFO,
+                      log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
     else:
-        run(ping=False, debug=args.debug, dev=args.dev)
-        print(actions[args.action][0](debug=args.debug, dev=args.dev))
+        setup_logging(level=logging.INFO, daemon=False,
+                      log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    if not args.action:
+        logger.info("start in ping mode...")
+        run(ping=True, dev=args.dev)
+    elif args.action == 'daemon':
+        logger.info("start in daemon mode...")
+        run_daemon(dev=args.dev)
+    else:
+        run(ping=False, dev=args.dev)
+        print(actions[args.action][0](dev=args.dev))
 
 
 PING_INTERVAL = 60 * 60
@@ -60,28 +65,28 @@ DEV_MD_INTERVAL = 15 * 60
 DEV_MD_TIMEOUT = 1 * 60
 
 
-def run_daemon(debug, dev):
+def run_daemon(dev):
     exes = [
-        executor.Executor(PING_INTERVAL, run, (True, debug, dev), timeout=PING_TIMEOUT, debug=debug),
-        executor.Executor(CREDS_INTERVAL, fetch_credentials, (debug, dev), timeout=CREDS_TIMEOUT, debug=debug),
-        executor.Executor(DEV_MD_INTERVAL, fetch_device_metadata, (debug, dev), timeout=DEV_MD_TIMEOUT, debug=debug)
+        executor.Executor(PING_INTERVAL, run, (True, dev, logger), timeout=PING_TIMEOUT),
+        executor.Executor(CREDS_INTERVAL, fetch_credentials, (dev, logger), timeout=CREDS_TIMEOUT),
+        executor.Executor(DEV_MD_INTERVAL, fetch_device_metadata, (dev, logger), timeout=DEV_MD_TIMEOUT)
     ]
     futures = [executor.schedule(exe) for exe in exes]
 
     def stop_exe():
-        print('Stopping all tasks...')
+        logger.info('Stopping all tasks...')
         for fut in futures:
             fut.cancel()
         for exe in exes:
             exe.stop()
         asyncio.get_event_loop().stop()
-        print('All tasks stopped.')
+        logger.info('All tasks stopped.')
 
     try:
         executor.spin()
-        print('Daemon exiting.')
+        logger.info('Daemon exiting.')
     except KeyboardInterrupt:
-        print('Daemon was interrupted!')
+        logger.info('Daemon was interrupted!')
         stop_exe()
 
 

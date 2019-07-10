@@ -1,13 +1,28 @@
 import configparser
 import os
-import requests
 import datetime
-import pytz
-import pkg_resources
 import platform
 import socket
 import netifaces
 import json
+import pwd
+import glob
+import logging
+import logging.config
+from math import floor
+from sys import exit
+from sys import stdout
+from pathlib import Path
+
+import requests
+import pkg_resources
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
+import pytz
 
 from agent import iptables_helper
 from agent import journal_helper
@@ -15,17 +30,6 @@ from agent import rpi_helper
 from agent import security_helper
 from agent.executor import Locker
 from agent.rpi_helper import Confinement, detect_confinement, detect_installation
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import NameOID
-from math import floor
-from pathlib import Path
-from sys import exit
-import pwd
-import glob
 
 
 CONFINEMENT = detect_confinement()
@@ -65,6 +69,8 @@ if not os.path.isdir(CONFIG_PATH):
 # changed the certificate life span from 7 days.
 RENEWAL_THRESHOLD = 3
 
+logger = logging.getLogger('agent')
+
 
 def is_bootstrapping():
     # Create path if it doesn't exist
@@ -75,12 +81,12 @@ def is_bootstrapping():
     client_cert = Path(CLIENT_CERT_PATH)
 
     if not client_cert.is_file():
-        print('No certificate found on disk.')
+        logger.warning('No certificate found on disk.')
         return True
 
     # Make sure there is no empty cert on disk
     if os.path.getsize(CLIENT_CERT_PATH) == 0:
-        print('Certificate found but it is broken')
+        logger.warning('Certificate found but it is broken')
         return True
 
     return False
@@ -88,11 +94,11 @@ def is_bootstrapping():
 
 def can_read_cert():
     if not os.access(CLIENT_CERT_PATH, os.R_OK):
-        print('Permission denied when trying to read the certificate file.')
+        logger.error('Permission denied when trying to read the certificate file.')
         exit(1)
 
     if not os.access(CLIENT_KEY_PATH, os.R_OK):
-        print('Permission denied when trying to read the key file.')
+        logger.error('Permission denied when trying to read the key file.')
         exit(1)
 
 
@@ -129,7 +135,7 @@ def is_certificate_expired():
     return datetime.datetime.now(datetime.timezone.utc) > get_certificate_expiration_date()
 
 
-def generate_device_id(debug=False):
+def generate_device_id():
     """
     Device ID is generated remotely.
     """
@@ -137,13 +143,12 @@ def generate_device_id(debug=False):
         '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
     ).json()
 
-    if debug:
-        print("[RECEIVED] Generate Device ID: {}".format(device_id_request))
+    logger.debug("[RECEIVED] Generate Device ID: {}".format(device_id_request))
 
     return device_id_request['device_id']
 
 
-def get_device_id(debug=False, dev=False):
+def get_device_id(dev=False):
     """
     Returns the WoTT Device ID (i.e. fqdn) by reading the first subject from
     the certificate on disk.
@@ -194,57 +199,53 @@ def generate_cert(device_id):
     }
 
 
-def get_ca_cert(debug=False):
+def get_ca_cert():
     ca = requests.get('{}/v0.2/ca-bundle'.format(WOTT_ENDPOINT))
 
-    if debug:
-        print("[RECEIVED] Get CA Cert: {}".format(ca.status_code))
-        print("[RECEIVED] Get CA Cert: {}".format(ca.content))
+    logger.debug("[RECEIVED] Get CA Cert: {}".format(ca.status_code))
+    logger.debug("[RECEIVED] Get CA Cert: {}".format(ca.content))
 
     if not ca.ok:
-        print('Failed to get CA...')
-        print(ca.status_code)
-        print(ca.content)
+        logger.error('Failed to get CA...')
+        logger.error(ca.status_code)
+        logger.error(ca.content)
         return
 
     return ca.json()['ca_bundle']
 
 
-def get_mtls_header(debug=False, dev=False):
+def get_mtls_header(dev=False):
     return {
-        'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(debug=debug, dev=dev),
+        'SSL-CLIENT-SUBJECT-DN': 'CN=' + get_device_id(),
         'SSL-CLIENT-VERIFY': 'SUCCESS'
     } if dev else {}
 
 
-def mtls_req_error_log(request_url, req_type, requester_name, response):
+def req_error_log(req_type, requester, response, log_on_ok=False, caller=''):
     """
     logs error of mtls_request functions
-    :param request_url: request url string
     :param req_type: 'GET', 'POST', ...
-    :param requester_name: requester id for message, if None then request_url string used
-    :param response - request response
+    :param requester: requester id for message, if None then request_url string used
+    :param response:  request response
+    :param log_on_ok: if True then debug log message even if response.ok
+    :param caller: caller string id
     :return: None
     """
-    if not requester_name:
-        requester_name = "({})".format(request_url)
-    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
-        requester_name, req_type, response.status_code))
-    print("wott-agent :: mtls_request :: [RECEIVED] {} {}: {}".format(
-        requester_name, req_type, response.content))
+
+    if log_on_ok or not response.ok:
+        logger.debug("{} :: [RECEIVED] {} {}: {}".format(caller, requester, req_type, response.status_code))
+        logger.debug("{} :: [RECEIVED] {} {}: {}".format(caller, requester, req_type, response.content))
 
 
-def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug_on_ok=False,
-                 return_exception=False, **kwargs):
+def mtls_request(method, url, dev=False, requester_name=None, log_on_ok=False, return_exception=False, **kwargs):
     """
     MTLS  Request.request wrapper function.
     :param method = 'get,'put,'post','delete','patch','head','options'
     :param url: request url string (without endpoint)
-    :param debug: if true then log error messages
     :param dev: if true use dev endpoint and dev headers
     :param requester_name: displayed requester id for error messages
-    :param debug_on_ok: if true with debug then log successful response status/content too
-    :param return_exception if true, then returns tuple ( response, None ) or (None, RequestException)
+    :param log_on_ok: if true then log debug message even if response.ok
+    :param return_exception: if true, then returns tuple ( response, None ) or (None, RequestException)
     :return: response or None (if there was exception raised), or tuple (see above, return_exception)
     """
     try:
@@ -252,40 +253,42 @@ def mtls_request(method, url, debug=False, dev=False, requester_name=None, debug
             method,
             '{}/v0.2/{}'.format(MTLS_ENDPOINT, url),
             cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-            headers=get_mtls_header(debug=debug, dev=dev),
+            headers=get_mtls_header(dev=dev),
             **kwargs
         )
 
-        if (debug_on_ok or not r.ok) and debug:
-            mtls_req_error_log(url, method.upper(), requester_name, r)
+        if not requester_name:
+            requester_name = "({})".format(url)
+
+        req_error_log(method.upper(), requester_name, r, log_on_ok=log_on_ok, caller='mtls_request')
         if return_exception:
             return r, None
         else:
             return r
 
     except requests.exceptions.RequestException as e:
-        print('wott-agent :: mtls_request :: rises exception: {}'.format(e))
+        logger.exception("mtls_request :: rises exception:")
         if return_exception:
             return None, e
         else:
             return None
 
 
-def get_claim_token(debug=False, dev=False):
-    setup_endpoints(dev, debug)
+def get_claim_token(dev=False):
+
+    setup_endpoints(dev)
     can_read_cert()
 
-    response = mtls_request('get', 'claimed', debug=debug, dev=dev, requester_name="Get Device Claim Info")
+    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
     if response is None or not response.ok:
-        print('Did not manage to get claim info from the server.')
+        logger.error('Did not manage to get claim info from the server.')
         exit(2)
 
-    if debug:
-        print("[RECEIVED] Get Device Claim Info: {}".format(response))
+    logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
 
     claim_info = response.json()
     if claim_info['claimed']:
-        print('The device is already claimed.')
+        logger.error('The device is already claimed.')
         exit(1)
     return claim_info['claim_token']
 
@@ -296,11 +299,23 @@ def get_fallback_token():
     return config['DEFAULT'].get('fallback_token', None)
 
 
-def get_claim_url(debug=False, dev=False):
+def get_ini_log_level():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].get('log_level', None)
+
+
+def get_ini_log_file():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].get('log_file', None)
+
+
+def get_claim_url(dev=False):
     return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
         WOTT_ENDPOINT=DASH_ENDPOINT,
         device_id=get_device_id(),
-        claim_token=get_claim_token(debug, dev)
+        claim_token=get_claim_token(dev)
     )
 
 
@@ -315,18 +330,18 @@ def get_uptime():
     return uptime_seconds
 
 
-def get_open_ports(debug=False, dev=False):
+def get_open_ports(dev=False):
     connections, ports = security_helper.netstat_scan()
     return ports
 
 
-def send_ping(debug=False, dev=False):
+def send_ping(dev=False):
     can_read_cert()
 
-    ping = mtls_request('get', 'ping', debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_request('get', 'ping', dev=dev, requester_name="Ping", log_on_ok=True)
 
     if ping is None or not ping.ok:
-        print('Ping failed.')
+        logger.error('Ping failed.')
         return
 
     connections, ports = security_helper.netstat_scan()
@@ -351,7 +366,7 @@ def send_ping(debug=False, dev=False):
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
         blocklist = ping.json()
-        iptables_helper.block(blocklist, debug)
+        iptables_helper.block(blocklist)
 
         payload.update({
             'selinux_status': security_helper.selinux_status(),
@@ -368,24 +383,23 @@ def send_ping(debug=False, dev=False):
             'device_model': rpi_metadata['hardware_model'],
         })
 
-    if debug:
-        print("[GATHER] POST Ping: {}".format(payload))
+    logger.debug("[GATHER] POST Ping: {}".format(payload))
 
-    ping = mtls_request('post', 'ping', json=payload, debug=debug, dev=dev, requester_name="Ping", debug_on_ok=True)
+    ping = mtls_request('post', 'ping', json=payload, dev=dev, requester_name="Ping", log_on_ok=True)
 
     if ping is None or not ping.ok:
-        print('Ping failed.')
+        logger.error('Ping failed.')
         return
 
 
-def say_hello(debug=False, dev=False):
-    hello = mtls_request('get', 'hello', debug=debug, dev=dev, requester_name='Hello')
+def say_hello(dev=False):
+    hello = mtls_request('get', 'hello', dev=dev, requester_name='Hello')
     if hello is None or not hello.ok:
-        print('Hello failed.')
+        logger.error('Hello failed.')
     return hello.json()
 
 
-def sign_cert(csr, device_id, debug=False):
+def sign_cert(csr, device_id):
     """
     This is the function for the initial certificate generation.
     This is only valid for the first time. Future renewals require the
@@ -408,11 +422,8 @@ def sign_cert(csr, device_id, debug=False):
     )
 
     if not crt_req.ok:
-        print('Failed to submit CSR...')
-        if debug:
-            print("[RECEIVED] Sign Cert: {}".format(crt_req.status_code))
-            print("[RECEIVED] Sign Cert: {}".format(crt_req.content))
-        return
+        logger.error('Failed to submit CSR...')
+        req_error_log('post', 'Sign Cert', crt_req, caller='sign_cert')
 
     res = crt_req.json()
     return {
@@ -423,13 +434,13 @@ def sign_cert(csr, device_id, debug=False):
     }
 
 
-def renew_cert(csr, device_id, debug=False):
+def renew_cert(csr, device_id):
     """
     This is the renewal function. We need to use the existing certificate to
     verify ourselves in order to get a renewed certificate
     """
 
-    print('Attempting to renew certificate...')
+    logger.info('Attempting to renew certificate...')
     can_read_cert()
 
     payload = {
@@ -442,17 +453,10 @@ def renew_cert(csr, device_id, debug=False):
         'ipv4_address': get_primary_ip()
     }
 
-    crt_req = requests.post(
-        '{}/v0.2/sign-csr'.format(MTLS_ENDPOINT),
-        cert=(CLIENT_CERT_PATH, CLIENT_KEY_PATH),
-        json=payload
-    )
+    crt_req = mtls_request('post', 'sign-csr', False, 'Renew Cert', json=payload)
 
-    if not crt_req.ok:
-        print('Failed to submit CSR...')
-        if debug:
-            print("[RECEIVED] Renew Cert: {}".format(crt_req.status_code))
-            print("[RECEIVED] Renew Cert: {}".format(crt_req.content))
+    if crt_req is None or not crt_req.ok:
+        logger.error('Failed to submit CSR...')
         return
 
     res = crt_req.json()
@@ -464,13 +468,13 @@ def renew_cert(csr, device_id, debug=False):
     }
 
 
-def renew_expired_cert(csr, device_id, debug=False):
+def renew_expired_cert(csr, device_id):
     """
     This is the renewal function. We need to use the existing certificate to
     verify ourselves in order to get a renewed certificate
     """
 
-    print('Attempting to renew expired certificate...')
+    logger.info('Attempting to renew expired certificate...')
     can_read_cert()
 
     payload = {
@@ -490,10 +494,8 @@ def renew_expired_cert(csr, device_id, debug=False):
     )
 
     if not crt_req.ok:
-        print('Failed to submit CSR...')
-        if debug:
-            print("[RECEIVED] Renew expired Cert: {}".format(crt_req.status_code))
-            print("[RECEIVED] Renew expired Cert: {}".format(crt_req.content))
+        logger.error('Failed to submit CSR...')
+        req_error_log('post', 'Renew expired Cert', crt_req)
         return
 
     res = crt_req.json()
@@ -505,37 +507,38 @@ def renew_expired_cert(csr, device_id, debug=False):
     }
 
 
-def setup_endpoints(dev, debug):
+def setup_endpoints(dev):
     if dev:
         global WOTT_ENDPOINT, MTLS_ENDPOINT, DASH_ENDPOINT
         endpoint = os.getenv('WOTT_ENDPOINT', 'http://localhost')
         DASH_ENDPOINT = endpoint + ':' + str(DASH_DEV_PORT)
         WOTT_ENDPOINT = endpoint + ':' + str(WOTT_DEV_PORT) + '/api'
         MTLS_ENDPOINT = endpoint + ':' + str(MTLS_DEV_PORT) + '/api'
-    if debug:
-        print("DASH_ENDPOINT: {}\nWOTT_ENDPOINT: {}\nMTLS_ENDPOINT: {}".format(
-              DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
-              ))
+
+    logger.debug(
+        "\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s",
+        DASH_ENDPOINT, WOTT_ENDPOINT, MTLS_ENDPOINT
+    )
 
 
-def fetch_device_metadata(debug, dev):
+def fetch_device_metadata(dev, logger=logger):
 
     with Locker('dev.metadata'):
-        setup_endpoints(dev, debug)
-        print('Fetching device metadata...')
+        setup_endpoints(dev)
+        logger.info('Fetching device metadata...')
         can_read_cert()
 
-        dev_md_req = mtls_request('get', 'dev-md', debug=debug, dev=dev, requester_name="Fetching device metadata")
+        dev_md_req = mtls_request('get', 'dev-md', dev=dev, requester_name="Fetching device metadata")
         if dev_md_req is None or not dev_md_req.ok:
-            print('Fetching failed.')
+            logger.error('Fetching failed.')
             return
 
         metadata = dev_md_req.json()
 
-        print('metadata retrieved.')
+        logger.info('metadata retrieved.')
 
         if os.path.exists(SECRET_DEV_METADATA_PATH) and not os.path.isfile(SECRET_DEV_METADATA_PATH):
-            print("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
+            logger.error("Error: The filesystem object '{}' is not a file. Looks like a break-in attempt.".format(
                 SECRET_DEV_METADATA_PATH
             ))
             exit(1)
@@ -543,30 +546,29 @@ def fetch_device_metadata(debug, dev):
         with open(SECRET_DEV_METADATA_PATH, "w") as outfile:
             json.dump(metadata, outfile, indent=4)
         os.chmod(SECRET_DEV_METADATA_PATH, 0o600)
-        print('metadata stored.')
+        logger.info('metadata stored.')
 
 
-def fetch_credentials(debug, dev):
+def fetch_credentials(dev, logger=logger):
 
     def clear_credentials(path):
         files = glob.glob(os.path.join(path, '**/*.json'), recursive=True)
         for file in files:
             os.remove(os.path.join(path, file))
-            if debug:
-                print("remove...{}".format(file))
+            logger.debug("remove...{}".format(file))
 
     with Locker('credentials'):
-        setup_endpoints(dev, debug)
-        print('Fetching credentials...')
+        setup_endpoints(dev)
+        logger.info('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = mtls_request('get', 'creds', debug=debug, dev=dev, requester_name="Fetch credentials")
+        credentials_req = mtls_request('get', 'creds', dev=dev, requester_name="Fetch credentials")
         if credentials_req is None or not credentials_req.ok:
-            print('Fetching failed.')
+            logger.error('Fetching failed.')
             return
         credentials = credentials_req.json()
 
-        print('Credentials retrieved.')
+        logger.info('Credentials retrieved.')
 
         if not os.path.exists(CREDENTIALS_PATH):
             os.mkdir(CREDENTIALS_PATH, 0o711)
@@ -574,7 +576,7 @@ def fetch_credentials(debug, dev):
             os.chmod(CREDENTIALS_PATH, 0o711)
 
         if not os.path.isdir(CREDENTIALS_PATH):
-            print("There is file named as our credentials dir({}), that's strange...".format(CREDENTIALS_PATH))
+            logger.error("There is file named as our credentials dir(%s), that's strange...", CREDENTIALS_PATH)
             exit(1)
 
         clear_credentials(CREDENTIALS_PATH)
@@ -599,7 +601,7 @@ def fetch_credentials(debug, dev):
                 try:
                     pw = pwd.getpwnam(owner)
                 except KeyError:
-                    print("Warning. There are credentials with wrong owner ({}). Skipped.".format(owner))
+                    logger.warning("There are credentials with wrong owner ({}). Skipped.".format(owner))
                     continue
 
             uid = pw.pw_uid
@@ -609,7 +611,9 @@ def fetch_credentials(debug, dev):
 
             if owner and not os.path.isdir(owner_path):
                 if os.path.exists(owner_path):
-                    print("There is a file with name of system user in credentials directory ({}).".format(owner_path))
+                    logger.error(
+                        "There is a file with name of system user in credentials directory ({}).".format(owner_path)
+                    )
                     exit(1)
                 os.mkdir(owner_path, 0o700)
             os.chown(owner_path, uid, gid)  # update ownership if user existence in system changed
@@ -621,8 +625,7 @@ def fetch_credentials(debug, dev):
                 for cred in credentials_grouped[owner][name]:
                     file_credentials[cred] = credentials_grouped[owner][name][cred]
 
-                if debug:
-                    print('Store credentials to {} \n '.format(credential_file_path))
+                logger.debug('Store credentials to {}'.format(credential_file_path))
 
                 with open(credential_file_path, 'w') as outfile:
                     json.dump(file_credentials, outfile)
@@ -639,61 +642,66 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def run(ping=True, debug=False, dev=False):
+def run(ping=True, dev=False, logger=logger):
+
     with Locker('ping'):
-        setup_endpoints(dev, debug)
+        setup_endpoints(dev)
         bootstrapping = is_bootstrapping()
 
         if bootstrapping:
-            device_id = generate_device_id(debug=debug)
-            print('Got WoTT ID: {}'.format(device_id))
+            device_id = generate_device_id()
+            logger.info('Got WoTT ID: {}'.format(device_id))
             write_metadata({'device_id': device_id}, rewrite_file=True)
         else:
             device_id = get_device_id()
             write_metadata({'device_id': device_id}, rewrite_file=False)
             if not time_for_certificate_renewal() and not is_certificate_expired():
                 if ping:
-                    send_ping(debug=debug, dev=dev)
+                    send_ping(dev=dev)
                     time_to_cert_expires = get_certificate_expiration_date() - datetime.datetime.now(datetime.timezone.utc)
-                    print("Certificate expires in {} days and {} hours. No need for renewal. Renewal threshold is set to {} days.".format(
-                        time_to_cert_expires.days,
-                        floor(time_to_cert_expires.seconds / 60 / 60),
-                        RENEWAL_THRESHOLD,
-                    ))
+                    logger.info(
+                        "Certificate expires in {} days and {} hours. No need for renewal."
+                        "Renewal threshold is set to {} days.".format(
+                            time_to_cert_expires.days,
+                            floor(time_to_cert_expires.seconds / 60 / 60),
+                            RENEWAL_THRESHOLD,
+                        )
+                    )
                     exit(0)
                 else:
                     return
-            print('My WoTT ID is: {}'.format(device_id))
+            logger.info('My WoTT ID is: {}'.format(device_id))
 
-        print('Generating certificate...')
+        logger.info('Generating certificate...')
         gen_key = generate_cert(device_id)
 
-        ca = get_ca_cert(debug=debug)
+        ca = get_ca_cert()
         if not ca:
-            print('Unable to retrieve CA cert. Exiting.')
+            logger.error('Unable to retrieve CA cert. Exiting.')
             exit(1)
 
-        print('Submitting CSR...')
+        logger.info('Submitting CSR...')
 
         if bootstrapping:
-            crt = sign_cert(gen_key['csr'], device_id, debug=debug)
+            crt = sign_cert(gen_key['csr'], device_id)
         elif is_certificate_expired():
-            crt = renew_expired_cert(gen_key['csr'], device_id, debug=debug)
+            crt = renew_expired_cert(gen_key['csr'], device_id)
         else:
-            crt = renew_cert(gen_key['csr'], device_id, debug=debug)
+            crt = renew_cert(gen_key['csr'], device_id)
 
         if not crt:
-            print('Unable to sign CSR. Exiting.')
+            logger.error('Unable to sign CSR. Exiting.')
             exit(1)
 
-        print('Got Claim Token: {}'.format(crt['claim_token']))
-        print('Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
-            WOTT_ENDPOINT=DASH_ENDPOINT,
-            device_id=device_id,
-            claim_token=crt['claim_token']
+        logger.info('Got Claim Token: {}'.format(crt['claim_token']))
+        logger.info(
+            'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+                WOTT_ENDPOINT=DASH_ENDPOINT,
+                device_id=device_id,
+                claim_token=crt['claim_token']
+            )
         )
-        )
-        print('Writing certificate and key to disk...')
+        logger.info('Writing certificate and key to disk...')
         with open(CLIENT_CERT_PATH, 'w') as f:
             f.write(crt['crt'])
         os.chmod(CLIENT_CERT_PATH, 0o644)
@@ -711,11 +719,45 @@ def run(ping=True, debug=False, dev=False):
             f.write(crt['crt'])
         os.chmod(COMBINED_PEM_PATH, 0o600)
 
-        print("Writing config...")
+        logger.info("Writing config...")
         config = configparser.ConfigParser()
         config['DEFAULT'] = {'fallback_token': crt['fallback_token']}
         with open(INI_PATH, 'w') as configfile:
             config.write(configfile)
         os.chmod(INI_PATH, 0o600)
 
-        send_ping(debug=debug, dev=dev)
+        send_ping(dev=dev)
+
+
+def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):
+    """
+    Setup logging configuration
+    if there is `log_level` item in wott-agent `config.ini` it would be used as actual log level
+    otherwise used value of level parameter
+    """
+
+    log_level = level
+    ini_level = get_ini_log_level()
+    if ini_level is not None and isinstance(ini_level, str):
+        ini_level = ini_level.upper()
+        if ini_level in ['CRITICAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
+            log_level = ini_level
+
+    filename = get_ini_log_file()
+    handlers = []
+    if filename is not None and filename != 'stdout':
+        file_handler = logging.FileHandler(filename=filename)
+        handlers.append(file_handler)
+
+    if filename is None or filename == 'stdout' or not daemon:
+        stdout_handler = logging.StreamHandler(stdout)
+        handlers.append(stdout_handler)
+
+    if not daemon:
+        stdout_handler.setFormatter(logging.Formatter("%(message)s"))
+
+    logging.basicConfig(level=log_level, format=log_format, handlers=handlers)
+
+    logging.getLogger('agent').setLevel(log_level)
+    logging.getLogger('agent.iptables_helper').setLevel(log_level)
+    logging.getLogger('agent.executor').setLevel(log_level)

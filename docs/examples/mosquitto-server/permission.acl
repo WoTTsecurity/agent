@@ -9,3 +9,8 @@
 # This device can only read
 #user z.d.wott.local
 #topic read wott/temperature
+
+# This user has full access
+#user z.d.wott.local
+#topic read #
+#topic write #

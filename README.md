@@ -83,7 +83,6 @@ Many of the IoT cloud service examples use MQTT to publish/subscribe messages wh
 
 Google Cloud Platform provides services that developers can use. Here we show you how to set up your WoTT Agent device and enroll it to your Google Cloud project to communicate with Google's services. Includes Google's MQTT example.
 
-
 #### [Simple WebApp](https://wott.io/blog/tutorials/2019/06/16/simple-webapp)
 
 A simple example use case of securing a Python 3 WebApp using two WoTT Agent devices acting as server and client. This guide includes an example WebApp, but the principle applies to any WebApp that you develop yourself- just ensure you do the correct setup.

@@ -565,6 +565,65 @@ def test_fetch_device_metadata(tmpdir):
         ])
 
 
+def test_enroll_device_ok(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    content = {"message": "f'Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local claimed!"}
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 200
+    mock_resp.json = mock.Mock(return_value=content)
+    mock_resp.return_value.ok = True
+
+    with mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+
+        req.return_value = mock_resp
+        req.return_value.ok = True
+        req.return_value.status_code = 200
+        req.return_value.content = content
+        agent.enroll_device(
+            enroll_token="1dc99d48e67b427a9dc00b0f19003802",
+            device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
+            claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
+        )
+
+        assert prn.error.call_count == 0
+        assert prn.info.call_count == 1
+        assert mock.call("{}".format(content["message"])) in prn.info.mock_calls
+
+
+def test_enroll_device_nok(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    error_content = {
+         "key": ["Pairnig-token not found"],
+         "claim_token": ["Claim-token not found"]
+    }
+
+    mock_resp = mock.Mock()
+    mock_resp.raise_status = 400
+    mock_resp.json = mock.Mock(return_value=error_content)
+    mock_resp.return_value.ok = False
+
+    with mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+
+        req.return_value = mock_resp
+        req.return_value.ok = False
+        req.return_value.status_code = 400
+        req.return_value.content = error_content
+        agent.enroll_device(
+            enroll_token="1dc99d48e67b427a9dc00b0f19003802",
+            device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
+            claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
+        )
+
+        assert (prn.error.call_count == 1 and mock.call('Failed to enroll device...') in prn.error.mock_calls)
+        assert prn.debug.call_count == 2
+        assert mock.call("enroll-device :: [RECEIVED] Enroll by token post: 400") in prn.debug.mock_calls
+        log_dbg_text = "enroll-device :: [RECEIVED] Enroll by token post: {}".format(error_content)
+        assert mock.call(log_dbg_text) in prn.debug.mock_calls
+
+
 def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
     """
     Execute two "sleepers" at once.

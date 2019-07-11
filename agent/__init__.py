@@ -311,6 +311,12 @@ def get_ini_log_file():
     return config['DEFAULT'].get('log_file', None)
 
 
+def get_enroll_token():
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    return config['DEFAULT'].get('enroll_token', None)
+
+
 def get_claim_url(dev=False):
     return '{WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
         WOTT_ENDPOINT=DASH_ENDPOINT,
@@ -640,6 +646,29 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
+def enroll_device(enroll_token,claim_token, device_id):
+
+    payload = {
+        'key': enroll_token,
+        'claim_token': claim_token,
+        'device_id': device_id
+    }
+
+    try:
+        enroll_req = requests.post(
+            '{}/v0.2/enroll-device'.format(WOTT_ENDPOINT),
+            json=payload
+        )
+    except requests.exceptions.RequestException as e:
+        logger.exception("enroll_device :: rises exception:")
+
+    if not enroll_req.ok:
+        logger.error('Failed to enroll device...')
+        req_error_log('post', 'Enroll by token', enroll_req, caller='enroll-device')
+    else:
+        logger.info(enroll_req.json()['message'])
+
+
 def run(ping=True, dev=False, logger=logger):
 
     with Locker('ping'):
@@ -680,8 +709,12 @@ def run(ping=True, dev=False, logger=logger):
 
         logger.info('Submitting CSR...')
 
+        enroll_token = None
         if bootstrapping:
             crt = sign_cert(gen_key['csr'], device_id)
+            enroll_token = get_enroll_token()
+            if enroll_token is not None:
+                logger.info('Device enrollment token found...')
         elif is_certificate_expired():
             crt = renew_expired_cert(gen_key['csr'], device_id)
         else:
@@ -691,14 +724,16 @@ def run(ping=True, dev=False, logger=logger):
             logger.error('Unable to sign CSR. Exiting.')
             exit(1)
 
-        logger.info('Got Claim Token: {}'.format(crt['claim_token']))
-        logger.info(
-            'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
-                WOTT_ENDPOINT=DASH_ENDPOINT,
-                device_id=device_id,
-                claim_token=crt['claim_token']
+        if enroll_token is None:
+            logger.info('Got Claim Token: {}'.format(crt['claim_token']))
+            logger.info(
+                'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+                    WOTT_ENDPOINT=DASH_ENDPOINT,
+                    device_id=device_id,
+                    claim_token=crt['claim_token']
+                )
             )
-        )
+
         logger.info('Writing certificate and key to disk...')
         with open(CLIENT_CERT_PATH, 'w') as f:
             f.write(crt['crt'])
@@ -725,6 +760,10 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
         send_ping(dev=dev)
+
+        if enroll_token is not None:
+            logger.info('Enroll device by token...')
+            enroll_device(enroll_token, crt['claim_token'], device_id )
 
 
 def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):

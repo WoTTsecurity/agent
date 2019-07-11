@@ -1,0 +1,11 @@
+# This device can read and write
+#user x.d.wott.local
+#topic readwrite wott/temperature
+
+# This device can only write
+#user y.d.wott.local
+#topic write wott/temperature
+
+# This device can only read
+#user z.d.wott.local
+#topic read wott/temperature

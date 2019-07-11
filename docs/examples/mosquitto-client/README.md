@@ -14,7 +14,7 @@
 $ sudo docker build . -t wott-mqtt-client
 $ export MQTT_SERVER_WOTT_ID=abc.d.wott.local
 $ export MQTT_SERVER_IP=192.168.200.50
-$ sudo docker run -t --rm \
+$ sudo docker run -ti --rm \
     -e MQTT_SERVER=$MQTT_SERVER_WOTT_ID \
     --add-host $MQTT_SERVER_WOTT_ID:$MQTT_SERVER_IP \
     -v /opt/wott/certs:/opt/wott/certs:ro \
@@ -26,9 +26,8 @@ $ sudo docker run -t --rm \
 ```
 $ export MQTT_SERVER_WOTT_ID=abc.d.wott.local
 $ export MQTT_SERVER_IP=192.168.200.50
-$ sudo docker run -t --rm \
+$ sudo docker run -ti --rm \
     -e MQTT_SERVER=$MQTT_SERVER_WOTT_ID \
-    -e MQTT_MESSAGE="Hello World" \
     --add-host $MQTT_SERVER_WOTT_ID:$MQTT_SERVER_IP \
     -v /opt/wott/certs:/opt/wott/certs:ro \
     wott-mqtt-client /pub.sh

@@ -148,11 +148,9 @@ If you have a fleet of devices, it is difficult to perform the above steps from 
 It would be right to have a script that allows you to perform all these tasks, as well as register new devices in the Google IoT registry, according to the list of devices in WoTT Dash.
 The following example script allows you to do this. This works in the following scenario.
 
-- Retrieve all devices from WoTT Dash
-- Retrieve all devices from Google IoT Registry.
-- Check all" Google devices " for updated certificates in the WoTT list. And update if so.
-- Enroll devices that are present in the WoTT Dash and not in the Google Registry  
-- All devices with expired certificates in WoTT Dash will be skipped.
+- Retrieves all devices certificates from your WoTT Dash account.
+- Checks all devices from Google IoT Registry of your project for an updated certificates in WoTT Dash account. Uploads new certificates and removes expired, if needed. 
+- If some new devices was found in WoTT Dash account which are not in Google IoT Registry, enrolls them and uploads certificates.
   
 For script working you need:
 

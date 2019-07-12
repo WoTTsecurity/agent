@@ -646,7 +646,7 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def enroll_device(enroll_token,claim_token, device_id):
+def enroll_device(enroll_token, claim_token, device_id):
 
     payload = {
         'key': enroll_token,
@@ -659,7 +659,7 @@ def enroll_device(enroll_token,claim_token, device_id):
             '{}/v0.2/enroll-device'.format(WOTT_ENDPOINT),
             json=payload
         )
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         logger.exception("enroll_device :: rises exception:")
 
     if not enroll_req.ok:
@@ -763,7 +763,7 @@ def run(ping=True, dev=False, logger=logger):
 
         if enroll_token is not None:
             logger.info('Enroll device by token...')
-            enroll_device(enroll_token, crt['claim_token'], device_id )
+            enroll_device(enroll_token, crt['claim_token'], device_id)
 
 
 def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):

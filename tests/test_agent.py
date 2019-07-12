@@ -595,8 +595,8 @@ def test_enroll_device_ok(tmpdir):
 def test_enroll_device_nok(tmpdir):
     executor.Locker.LOCKDIR = str(tmpdir)
     error_content = {
-         "key": ["Pairnig-token not found"],
-         "claim_token": ["Claim-token not found"]
+        "key": ["Pairnig-token not found"],
+        "claim_token": ["Claim-token not found"]
     }
 
     mock_resp = mock.Mock()

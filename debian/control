@@ -7,8 +7,7 @@ Build-Depends:
  debhelper (>= 8),
  dh-python,
  python3-setuptools,
- python3-all,
- python3-setuptools
+ python3-all
 Standards-Version: 3.9.8
 Vcs-Git: https://github.com/WoTTsecurity/agent.git
 Vcs-Browser: https://github.com/WoTTsecurity/agent

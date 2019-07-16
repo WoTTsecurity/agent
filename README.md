@@ -115,4 +115,3 @@ Screenly OSE is a free digital signage platform. Access to Screenly OSE's manage
 
 
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
- * [Nginx (mTLS)](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/nginx)

@@ -87,6 +87,14 @@ Google Cloud Platform provides services that developers can use. Here we show yo
 
 A simple example use case of securing a Python 3 WebApp using two WoTT Agent devices acting as server and client. This guide includes an example WebApp, but the principle applies to any WebApp that you develop yourself- just ensure you do the correct setup.
 
+#### [Configuring Nginx with Client Certificate Authentication (mTLS)](https://wott.io/blog/tutorials/2019/07/15/mtls-with-nginx)
+
+One of our harder examples. Nginx is a web server with several other useful functions including reverse proxy. For this example, you will need two WoTT Agent devices: one as the server and one as the client. We recommend a Debian and Raspberry Pi. Here we use certificates as a means to verify browser access (note current browser only verify the server) to a server run by Nginx using their reverse proxy capabilitites.
+
+#### [Securing Access to Mosquitto Brokered MQTT Client and Server](https://wott.io/blog/tutorials/2019/07/15/mosquitto-mqtt)
+
+Although this example does not technically use certificates, it still relies on cryptographically identifying devices through their unique WoTT ID. Mosquitto is a popular broker for the MQTT protocol with several inbuilt functions that allow for security conifguration to protect the server from fradulent or malicious access. Here you will need two WoTT Agent devices, one acting as server and the other as client. We'll show you how to use WoTT's unqiue ID to prevent access to secure access to a server without the need for a username and password.
+
 ### Credential managed examples
 
 Unfortunately, there are still many cases where we cannot verify a device's access rights through certificates such as browser access which is not restricted to device or using another service with your IoT device which requires authentication. WoTT secures this by providing a credential service that you can manage yourself through WoTT's dash. Here are some examples:
@@ -107,4 +115,3 @@ Screenly OSE is a free digital signage platform. Access to Screenly OSE's manage
 
 
  * [Web of Things](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/webofthings)
- * [Nginx (mTLS)](https://github.com/WoTTsecurity/agent/tree/master/docs/examples/nginx)

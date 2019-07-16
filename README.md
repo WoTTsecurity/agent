@@ -93,7 +93,7 @@ One of our harder examples. Nginx is a web server with several other useful func
 
 #### [Securing Access to Mosquitto Brokered MQTT Client and Server](https://wott.io/blog/tutorials/2019/07/15/mosquitto-mqtt)
 
-Although this example does not technically use certificates, it still relies on cryptographically identifying devices through their unique WoTT ID. Mosquitto is a popular borker for the MQTT protocol with several inbuilt functions that allow for security conifguration to protect the server from fradulent or malicious access. Here you will need two WoTT Agent devices, one acting as server and the other as client. We'll show you how to use WoTT's unqiue ID to prevent access to secure access to a server without the need for a username and password.
+Although this example does not technically use certificates, it still relies on cryptographically identifying devices through their unique WoTT ID. Mosquitto is a popular broker for the MQTT protocol with several inbuilt functions that allow for security conifguration to protect the server from fradulent or malicious access. Here you will need two WoTT Agent devices, one acting as server and the other as client. We'll show you how to use WoTT's unqiue ID to prevent access to secure access to a server without the need for a username and password.
 
 ### Credential managed examples
 

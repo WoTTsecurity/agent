@@ -621,10 +621,7 @@ def fetch_credentials(dev, logger=logger):
 
             for name in credentials_grouped[owner]:
                 credential_file_path = os.path.join(owner_path, "{}.json".format(name))
-                file_credentials = {}
-
-                for cred in credentials_grouped[owner][name]:
-                    file_credentials[cred] = credentials_grouped[owner][name][cred]
+                file_credentials = credentials_grouped[owner][name]
 
                 logger.debug('Store credentials to {}'.format(credential_file_path))
 

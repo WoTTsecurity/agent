@@ -567,11 +567,11 @@ def test_fetch_device_metadata(tmpdir):
 
 def test_enroll_device_ok(tmpdir):
     executor.Locker.LOCKDIR = str(tmpdir)
-    content = {"message": "f'Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local claimed!"}
+    message = "Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local enrolled successfully."
 
     mock_resp = mock.Mock()
     mock_resp.raise_status = 200
-    mock_resp.json = mock.Mock(return_value=content)
+    mock_resp.json = mock.Mock(return_value={})
     mock_resp.return_value.ok = True
 
     with mock.patch('requests.post') as req, \
@@ -580,7 +580,7 @@ def test_enroll_device_ok(tmpdir):
         req.return_value = mock_resp
         req.return_value.ok = True
         req.return_value.status_code = 200
-        req.return_value.content = content
+        req.return_value.content = {}
         agent.enroll_device(
             enroll_token="1dc99d48e67b427a9dc00b0f19003802",
             device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
@@ -589,7 +589,7 @@ def test_enroll_device_ok(tmpdir):
 
         assert prn.error.call_count == 0
         assert prn.info.call_count == 1
-        assert mock.call("{}".format(content["message"])) in prn.info.mock_calls
+        assert mock.call(message) in prn.info.mock_calls
 
 
 def test_enroll_device_nok(tmpdir):
@@ -610,6 +610,7 @@ def test_enroll_device_nok(tmpdir):
         req.return_value = mock_resp
         req.return_value.ok = False
         req.return_value.status_code = 400
+        req.return_value.reason = "Bad Request"
         req.return_value.content = error_content
         agent.enroll_device(
             enroll_token="1dc99d48e67b427a9dc00b0f19003802",
@@ -617,7 +618,12 @@ def test_enroll_device_nok(tmpdir):
             claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
         )
 
-        assert (prn.error.call_count == 1 and mock.call('Failed to enroll device...') in prn.error.mock_calls)
+        assert prn.error.call_count == 4
+        assert mock.call('Failed to enroll device...') in prn.error.mock_calls
+        assert mock.call('Code:400, Reason:Bad Request') in prn.error.mock_calls
+        assert mock.call('claim_token : Claim-token not found') in prn.error.mock_calls
+        assert mock.call('key : Pairnig-token not found') in prn.error.mock_calls
+
         assert prn.debug.call_count == 2
         assert mock.call("enroll-device :: [RECEIVED] Enroll by token post: 400") in prn.debug.mock_calls
         log_dbg_text = "enroll-device :: [RECEIVED] Enroll by token post: {}".format(error_content)

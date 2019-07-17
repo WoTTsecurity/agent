@@ -296,25 +296,25 @@ def get_claim_token(dev=False):
 def get_fallback_token():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
-    return config['DEFAULT'].get('fallback_token', None)
+    return config['DEFAULT'].get('fallback_token')
 
 
 def get_ini_log_level():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
-    return config['DEFAULT'].get('log_level', None)
+    return config['DEFAULT'].get('log_level')
 
 
 def get_ini_log_file():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
-    return config['DEFAULT'].get('log_file', None)
+    return config['DEFAULT'].get('log_file')
 
 
 def get_enroll_token():
     config = configparser.ConfigParser()
     config.read(INI_PATH)
-    return config['DEFAULT'].get('enroll_token', None)
+    return config['DEFAULT'].get('enroll_token')
 
 
 def get_claim_url(dev=False):
@@ -646,27 +646,39 @@ def write_metadata(data, rewrite_file):
     metadata_path.chmod(0o644)
 
 
-def enroll_device(enroll_token, claim_token, device_id):
+def _log_request_errors(req):
+    errors = req.json()
+    logger.error("Code:{}, Reason:{}".format(req.status_code, req.reason))
+    for key in errors:
+        key_errors = errors[key]
+        if isinstance(key_errors, list):
+            for msg in key_errors:
+                logger.error("{} : {}".format(key, msg))
+        else:
+            logger.error("{} : {}".format(key, key_errors))
 
+
+def enroll_device(enroll_token, claim_token, device_id):
     payload = {
         'key': enroll_token,
         'claim_token': claim_token,
         'device_id': device_id
     }
-
     try:
         enroll_req = requests.post(
             '{}/v0.2/enroll-device'.format(WOTT_ENDPOINT),
             json=payload
         )
+        if not enroll_req.ok:
+            logger.error('Failed to enroll device...')
+            _log_request_errors(enroll_req)
+            req_error_log('post', 'Enroll by token', enroll_req, caller='enroll-device')
+        else:
+            logger.info('Device {} enrolled successfully.'.format(device_id))
+
     except requests.exceptions.RequestException:
         logger.exception("enroll_device :: rises exception:")
 
-    if not enroll_req.ok:
-        logger.error('Failed to enroll device...')
-        req_error_log('post', 'Enroll by token', enroll_req, caller='enroll-device')
-    else:
-        logger.info(enroll_req.json()['message'])
 
 
 def run(ping=True, dev=False, logger=logger):

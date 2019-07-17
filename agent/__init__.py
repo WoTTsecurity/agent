@@ -680,7 +680,6 @@ def enroll_device(enroll_token, claim_token, device_id):
         logger.exception("enroll_device :: rises exception:")
 
 
-
 def run(ping=True, dev=False, logger=logger):
 
     with Locker('ping'):

@@ -274,6 +274,36 @@ def mtls_request(method, url, dev=False, requester_name=None, log_on_ok=False, r
             return None
 
 
+def try_enroll_in_operation_mode(device_id, dev):
+    enroll_token = get_enroll_token()
+    if enroll_token is None:
+        return
+    logger.info("Enroll token found. Trying to automatically enroll the device.")
+
+    setup_endpoints(dev)
+    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
+    if response is None or not response.ok:
+        logger.error('Did not manage to get claim info from the server.')
+        return
+    logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
+    claim_info = response.json()
+    if claim_info['claimed']:
+        logger.info('The device is already claimed. No enrolling required.')
+    else:
+        claim_token = claim_info['claim_token']
+        if not enroll_device(enroll_token, claim_token, device_id):
+            logger.error('Device enrolling failed. Will try next time.')
+            return
+
+    logger.info("Update config...")
+    config = configparser.ConfigParser()
+    config.read(INI_PATH)
+    config.remove_option('DEFAULT', 'enroll_token')
+    with open(INI_PATH, 'w') as configfile:
+        config.write(configfile)
+    os.chmod(INI_PATH, 0o600)
+
+
 def get_claim_token(dev=False):
 
     setup_endpoints(dev)
@@ -673,12 +703,13 @@ def enroll_device(enroll_token, claim_token, device_id):
             logger.error('Failed to enroll device...')
             _log_request_errors(enroll_req)
             req_error_log('post', 'Enroll by token', enroll_req, caller='enroll-device')
+            return False
         else:
             logger.info('Device {} enrolled successfully.'.format(device_id))
-
+            return True
     except requests.exceptions.RequestException:
         logger.exception("enroll_device :: rises exception:")
-
+        return False
 
 def run(ping=True, dev=False, logger=logger):
 
@@ -692,6 +723,7 @@ def run(ping=True, dev=False, logger=logger):
             write_metadata({'device_id': device_id}, rewrite_file=True)
         else:
             device_id = get_device_id()
+            try_enroll_in_operation_mode(device_id=device_id, dev=dev)
             write_metadata({'device_id': device_id}, rewrite_file=False)
             if not time_for_certificate_renewal() and not is_certificate_expired():
                 if ping:
@@ -763,18 +795,21 @@ def run(ping=True, dev=False, logger=logger):
             f.write(crt['crt'])
         os.chmod(COMBINED_PEM_PATH, 0o600)
 
-        logger.info("Writing config...")
-        config = configparser.ConfigParser()
-        config['DEFAULT'] = {'fallback_token': crt['fallback_token']}
-        with open(INI_PATH, 'w') as configfile:
-            config.write(configfile)
-        os.chmod(INI_PATH, 0o600)
-
         send_ping(dev=dev)
 
         if enroll_token is not None:
             logger.info('Enroll device by token...')
-            enroll_device(enroll_token, crt['claim_token'], device_id)
+            if enroll_device(enroll_token, crt['claim_token'], device_id):
+                enroll_token = None
+
+        logger.info("Writing config...")
+        config = configparser.ConfigParser()
+        config['DEFAULT'] = {'fallback_token': crt['fallback_token']}
+        if enroll_token is not None:
+            config['DEFAULT']['enroll_token'] = enroll_token  # if enroll fails, store enroll token for next run
+        with open(INI_PATH, 'w') as configfile:
+            config.write(configfile)
+        os.chmod(INI_PATH, 0o600)
 
 
 def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):

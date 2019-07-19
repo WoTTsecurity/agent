@@ -669,7 +669,7 @@ def test_enroll_in_operation_mode_ok(tmpdir):
 
         assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
-                            'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
         assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
         assert mock.call.info('Device deviceid000 enrolled successfully.') in prn.method_calls
         assert mock.call.info('Update config...') in prn.method_calls
@@ -719,7 +719,7 @@ def test_enroll_in_operation_mode_enroll_fail(tmpdir):
 
         assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
-                               'http://localhost:8001/api', 'http://localhost:8002/api')  in prn.method_calls
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
         assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
         assert mock.call.error('Failed to enroll device...') in prn.method_calls
         assert mock.call.error('Code:400, Reason:Bad Request') in prn.method_calls

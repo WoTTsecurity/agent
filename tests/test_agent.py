@@ -570,23 +570,18 @@ def test_enroll_device_ok(tmpdir):
     message = "Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local enrolled successfully."
 
     mock_resp = mock.Mock()
-    mock_resp.raise_status = 200
-    mock_resp.json = mock.Mock(return_value={})
-    mock_resp.return_value.ok = True
 
     with mock.patch('requests.post') as req, \
             mock.patch('agent.logger') as prn:
-
         req.return_value = mock_resp
         req.return_value.ok = True
         req.return_value.status_code = 200
         req.return_value.content = {}
-        agent.enroll_device(
+        assert agent.enroll_device(
             enroll_token="1dc99d48e67b427a9dc00b0f19003802",
             device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
             claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
         )
-
         assert prn.error.call_count == 0
         assert prn.info.call_count == 1
         assert mock.call(message) in prn.info.mock_calls
@@ -600,9 +595,7 @@ def test_enroll_device_nok(tmpdir):
     }
 
     mock_resp = mock.Mock()
-    mock_resp.raise_status = 400
     mock_resp.json = mock.Mock(return_value=error_content)
-    mock_resp.return_value.ok = False
 
     with mock.patch('requests.post') as req, \
             mock.patch('agent.logger') as prn:
@@ -612,18 +605,16 @@ def test_enroll_device_nok(tmpdir):
         req.return_value.status_code = 400
         req.return_value.reason = "Bad Request"
         req.return_value.content = error_content
-        agent.enroll_device(
+        assert not agent.enroll_device(
             enroll_token="1dc99d48e67b427a9dc00b0f19003802",
             device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
             claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
         )
-
         assert prn.error.call_count == 4
         assert mock.call('Failed to enroll device...') in prn.error.mock_calls
         assert mock.call('Code:400, Reason:Bad Request') in prn.error.mock_calls
         assert mock.call('claim_token : Claim-token not found') in prn.error.mock_calls
         assert mock.call('key : Pairnig-token not found') in prn.error.mock_calls
-
         assert prn.debug.call_count == 2
         assert mock.call("enroll-device :: [RECEIVED] Enroll by token post: 400") in prn.debug.mock_calls
         log_dbg_text = "enroll-device :: [RECEIVED] Enroll by token post: {}".format(error_content)
@@ -641,20 +632,15 @@ def test_enroll_in_operation_mode_ok(tmpdir):
         f.write("[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n")
 
     mock_resp = mock.Mock()
-    mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(return_value={})
-    mock_resp.return_value.ok = True
 
     mock_mtls = mock.Mock()
-    mock_mtls.raise_status = 200
     mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': False})
-    mock_mtls.return_value.ok = True
     mock_mtls.return_value = "TestClaimToken"
 
     with mock.patch('agent.mtls_request') as mtls, \
             mock.patch('requests.post') as req, \
             mock.patch('agent.logger') as prn:
-
         req.return_value = mock_resp
         req.return_value.ok = True
         req.return_value.status_code = 200
@@ -689,20 +675,15 @@ def test_enroll_in_operation_mode_enroll_fail(tmpdir):
         f.write(file_content)
 
     mock_resp = mock.Mock()
-    mock_resp.raise_status = 400
     mock_resp.json = mock.Mock(return_value=error_content)
-    mock_resp.return_value.ok = False
 
     mock_mtls = mock.Mock()
-    mock_mtls.raise_status = 200
     mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': False})
-    mock_mtls.return_value.ok = True
     mock_mtls.return_value = "TestClaimToken"
 
     with mock.patch('agent.mtls_request') as mtls, \
             mock.patch('requests.post') as req, \
             mock.patch('agent.logger') as prn:
-
         req.return_value = mock_resp
         req.return_value.ok = False
         req.return_value.status_code = 400
@@ -740,9 +721,7 @@ def test_enroll_in_operation_mode_already_claimed(tmpdir):
         f.write("[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n")
 
     mock_mtls = mock.Mock()
-    mock_mtls.raise_status = 200
     mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': True})
-    mock_mtls.return_value.ok = True
     mock_mtls.return_value = "TestClaimToken"
 
     with mock.patch('agent.mtls_request') as mtls, \
@@ -772,14 +751,10 @@ def test_enroll_in_operation_mode_no_claim_info(tmpdir):   # or server error
     with open(agent.INI_PATH, "w") as f:
         f.write(file_content)
     mock_mtls = mock.Mock()
-    mock_mtls.raise_status = 400
     mock_mtls.json = mock.Mock(return_value={})
-    mock_mtls.return_value.ok = False
-    mock_mtls.return_value = "TestClaimToken"
 
     with mock.patch('agent.mtls_request') as mtls, \
             mock.patch('agent.logger') as prn:
-
         mtls.return_value = mock_mtls
         mtls.return_value.__repr__ = _mock_repr
         mtls.return_value.ok = False

@@ -689,6 +689,13 @@ def _log_request_errors(req):
 
 
 def enroll_device(enroll_token, claim_token, device_id):
+    """
+    Enroll device using enroll_token to authorize
+    :param enroll_token: enroll pairing key
+    :param claim_token: claim token
+    :param device_id: device id
+    :return: True if enrolled successfully, otherwise return False
+    """
     payload = {
         'key': enroll_token,
         'claim_token': claim_token,

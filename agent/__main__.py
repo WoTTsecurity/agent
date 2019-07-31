@@ -14,7 +14,8 @@ def main():
         'claim-token': (get_claim_token, "Print claim token."),
         'claim-url': (get_claim_url, "Print claim URL."),
         'daemon': (run_daemon, "Run as daemon"),
-        'dev-metadata': (fetch_device_metadata, "Fetch device specific, secret metadata.")
+        'dev-metadata': (fetch_device_metadata, "Fetch device specific, secret metadata."),
+        'credentials': (fetch_credentials, "Fetch credentials."),
     }
     help_string = "One of the following:\n\n" + "\n".join(
         ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])

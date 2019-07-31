@@ -589,8 +589,9 @@ def fetch_credentials(dev, logger=logger):
             if owner not in credentials_grouped:
                 credentials_grouped[owner] = {}
             if name not in credentials_grouped[owner]:
-                credentials_grouped[owner][name] = {}
-            credentials_grouped[owner][name][cred['key']] = cred['value']
+                credentials_grouped[owner][name] = cred['data']
+            else:
+                logger.error("Duplicated owner/name combination for credentials ({}/{}). Skipped.".format(owner, name))
 
         root_pw = pwd.getpwnam("root")
 
@@ -620,15 +621,12 @@ def fetch_credentials(dev, logger=logger):
 
             for name in credentials_grouped[owner]:
                 credential_file_path = os.path.join(owner_path, "{}.json".format(name))
-                file_credentials = {}
-
-                for cred in credentials_grouped[owner][name]:
-                    file_credentials[cred] = credentials_grouped[owner][name][cred]
+                file_credentials = credentials_grouped[owner][name]
 
                 logger.debug('Store credentials to {}'.format(credential_file_path))
 
                 with open(credential_file_path, 'w') as outfile:
-                    json.dump(file_credentials, outfile)
+                    json.dump(file_credentials, outfile, indent=4)
 
                 os.chmod(credential_file_path, 0o400)
                 os.chown(credential_file_path, uid, gid)

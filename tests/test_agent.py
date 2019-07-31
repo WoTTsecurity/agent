@@ -436,10 +436,9 @@ def test_fetch_credentials(tmpdir):
     mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(
         return_value=[
-            {'name': 'name1', 'key': 'key1', 'value': 'v1', 'linux_user': user},
-            {'name': 'name2', 'key': 'key1', 'value': 'v21', 'linux_user': user},
-            {'name': 'name2', 'key': 'key2', 'value': 'v22', 'linux_user': user},
-            {'name': 'name2', 'key': 'key3', 'value': 'v23', 'linux_user': ''},
+            {'name': 'name1', 'data': {'key1': 'v1'}, 'linux_user': user},
+            {'name': 'name2', 'data': {'key1': 'v21', 'key2': 'v22'}, 'linux_user': user},
+            {'name': 'name2', 'data': {'key3': 'v23'}, 'linux_user': ''},
         ]
     )
     mock_resp.return_value.ok = True
@@ -494,8 +493,8 @@ def test_fetch_credentials_no_dir(tmpdir):
     mock_resp.raise_status = 200
     mock_resp.json = mock.Mock(
         return_value=[
-            {'name': 'name1', 'key': 'key1', 'value': 'v1'},
-            {'name': 'name2', 'key': 'key1', 'value': 'v21'}
+            {'name': 'name1', 'data': {'key1': 'v1'}},
+            {'name': 'name2', 'data': {'key1': 'v21'}}
         ]
     )
     mock_resp.return_value.ok = True

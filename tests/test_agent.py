@@ -565,6 +565,226 @@ def test_fetch_device_metadata(tmpdir):
         ])
 
 
+def test_enroll_device_ok(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    message = "Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local enrolled successfully."
+
+    mock_resp = mock.Mock()
+
+    with mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+        req.return_value = mock_resp
+        req.return_value.ok = True
+        req.return_value.status_code = 200
+        req.return_value.content = {}
+        assert agent.enroll_device(
+            enroll_token="1dc99d48e67b427a9dc00b0f19003802",
+            device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
+            claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
+        )
+        assert prn.error.call_count == 0
+        assert prn.info.call_count == 1
+        assert mock.call(message) in prn.info.mock_calls
+
+
+def test_enroll_device_nok(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    error_content = {
+        "key": ["Pairnig-token not found"],
+        "claim_token": ["Claim-token not found"]
+    }
+
+    mock_resp = mock.Mock()
+    mock_resp.json = mock.Mock(return_value=error_content)
+
+    with mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+
+        req.return_value = mock_resp
+        req.return_value.ok = False
+        req.return_value.status_code = 400
+        req.return_value.reason = "Bad Request"
+        req.return_value.content = error_content
+        assert not agent.enroll_device(
+            enroll_token="1dc99d48e67b427a9dc00b0f19003802",
+            device_id="d3d301961e6c4095b59583083bdec290.d.wott-dev.local",
+            claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
+        )
+        assert prn.error.call_count == 4
+        assert mock.call('Failed to enroll device...') in prn.error.mock_calls
+        assert mock.call('Code:400, Reason:Bad Request') in prn.error.mock_calls
+        assert mock.call('claim_token : Claim-token not found') in prn.error.mock_calls
+        assert mock.call('key : Pairnig-token not found') in prn.error.mock_calls
+        assert prn.debug.call_count == 2
+        assert mock.call("enroll-device :: [RECEIVED] Enroll by token post: 400") in prn.debug.mock_calls
+        log_dbg_text = "enroll-device :: [RECEIVED] Enroll by token post: {}".format(error_content)
+        assert mock.call(log_dbg_text) in prn.debug.mock_calls
+
+
+def _mock_repr(self):
+    return self.return_value
+
+
+def test_enroll_in_operation_mode_ok(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    agent.INI_PATH = str(tmpdir / 'config.ini')
+    with open(agent.INI_PATH, "w") as f:
+        f.write("[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n")
+
+    mock_resp = mock.Mock()
+    mock_resp.json = mock.Mock(return_value={})
+
+    mock_mtls = mock.Mock()
+    mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': False})
+    mock_mtls.return_value = "TestClaimToken"
+
+    with mock.patch('agent.mtls_request') as mtls, \
+            mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+        req.return_value = mock_resp
+        req.return_value.ok = True
+        req.return_value.status_code = 200
+        req.return_value.content = {}
+
+        mtls.return_value = mock_mtls
+        mtls.return_value.__repr__ = _mock_repr
+        mtls.return_value.ok = True
+        mtls.return_value.status_code = 200
+        mtls.return_value.content = {}
+        agent.try_enroll_in_operation_mode('deviceid000', True)
+
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.info('Device deviceid000 enrolled successfully.') in prn.method_calls
+        assert mock.call.info('Update config...') in prn.method_calls
+        assert len(prn.method_calls) == 5
+        with open(agent.INI_PATH) as f:
+            assert f.read() == "[DEFAULT]\nrollback_token = 123456\n\n"
+
+
+def test_enroll_in_operation_mode_enroll_fail(tmpdir):
+    error_content = {
+        "key": ["Pairnig-token not found"],
+    }
+    executor.Locker.LOCKDIR = str(tmpdir)
+    file_content = "[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n"
+    agent.INI_PATH = str(tmpdir / 'config.ini')
+    with open(agent.INI_PATH, "w") as f:
+        f.write(file_content)
+
+    mock_resp = mock.Mock()
+    mock_resp.json = mock.Mock(return_value=error_content)
+
+    mock_mtls = mock.Mock()
+    mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': False})
+    mock_mtls.return_value = "TestClaimToken"
+
+    with mock.patch('agent.mtls_request') as mtls, \
+            mock.patch('requests.post') as req, \
+            mock.patch('agent.logger') as prn:
+        req.return_value = mock_resp
+        req.return_value.ok = False
+        req.return_value.status_code = 400
+        req.return_value.content = {}
+        req.return_value.reason = "Bad Request"
+        req.return_value.content = error_content
+
+        mtls.return_value = mock_mtls
+        mtls.return_value.__repr__ = _mock_repr
+        mtls.return_value.ok = True
+        mtls.return_value.status_code = 200
+        mtls.return_value.content = {}
+        agent.try_enroll_in_operation_mode('deviceid000', True)
+
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.error('Failed to enroll device...') in prn.method_calls
+        assert mock.call.error('Code:400, Reason:Bad Request') in prn.method_calls
+        assert mock.call.error('key : Pairnig-token not found') in prn.method_calls
+        assert mock.call.debug('enroll-device :: [RECEIVED] Enroll by token post: 400') in prn.method_calls
+        assert mock.call.debug("enroll-device :: [RECEIVED] Enroll by token post: {"
+                               "'key': ['Pairnig-token not found']}") in prn.method_calls
+        assert mock.call.error('Device enrolling failed. Will try next time.') in prn.method_calls
+        assert len(prn.method_calls) == 9
+        with open(agent.INI_PATH) as f:
+            assert f.read() == file_content
+
+
+def test_enroll_in_operation_mode_already_claimed(tmpdir):
+    executor.Locker.LOCKDIR = str(tmpdir)
+    agent.INI_PATH = str(tmpdir / 'config.ini')
+    with open(agent.INI_PATH, "w") as f:
+        f.write("[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n")
+
+    mock_mtls = mock.Mock()
+    mock_mtls.json = mock.Mock(return_value={'claim_token': '3456', 'claimed': True})
+    mock_mtls.return_value = "TestClaimToken"
+
+    with mock.patch('agent.mtls_request') as mtls, \
+            mock.patch('agent.logger') as prn:
+        mtls.return_value = mock_mtls
+        mtls.return_value.__repr__ = _mock_repr
+        mtls.return_value.ok = True
+        mtls.return_value.status_code = 200
+        mtls.return_value.content = {}
+        agent.try_enroll_in_operation_mode('deviceid000', True)
+
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.info('The device is already claimed. No enrolling required.') in prn.method_calls
+        assert mock.call.info('Update config...') in prn.method_calls
+        assert len(prn.method_calls) == 5
+        with open(agent.INI_PATH) as f:
+            assert f.read() == "[DEFAULT]\nrollback_token = 123456\n\n"
+
+
+def test_enroll_in_operation_mode_no_claim_info(tmpdir):   # or server error
+    executor.Locker.LOCKDIR = str(tmpdir)
+    agent.INI_PATH = str(tmpdir / 'config.ini')
+    file_content = "[DEFAULT]\nenroll_token = 123456\nrollback_token = 123456\n"
+    with open(agent.INI_PATH, "w") as f:
+        f.write(file_content)
+    mock_mtls = mock.Mock()
+    mock_mtls.json = mock.Mock(return_value={})
+
+    with mock.patch('agent.mtls_request') as mtls, \
+            mock.patch('agent.logger') as prn:
+        mtls.return_value = mock_mtls
+        mtls.return_value.__repr__ = _mock_repr
+        mtls.return_value.ok = False
+        mtls.return_value.status_code = 400
+        mtls.return_value.content = {}
+        agent.try_enroll_in_operation_mode('deviceid000', True)
+
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
+                               'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
+        assert mock.call.error('Did not manage to get claim info from the server.') in prn.method_calls
+        assert len(prn.method_calls) == 3
+        with open(agent.INI_PATH) as f:
+            assert f.read() == file_content
+
+
+def test_enroll_in_operation_mode_no_token(tmpdir):   # or server error
+    executor.Locker.LOCKDIR = str(tmpdir)
+    file_content = "[DEFAULT]\nrollback_token = 123456\n"
+    agent.INI_PATH = str(tmpdir / 'config.ini')
+    with open(agent.INI_PATH, "w") as f:
+        f.write(file_content)
+
+    with mock.patch('agent.logger') as prn:
+        agent.try_enroll_in_operation_mode('deviceid000', True)
+        assert len(prn.method_calls) == 0
+        with open(agent.INI_PATH) as f:
+            assert f.read() == file_content
+
+
 def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
     """
     Execute two "sleepers" at once.

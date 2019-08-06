@@ -846,13 +846,13 @@ def _is_parallel(tmpdir, use_lock: bool, use_pairs: bool = False):
     # Schedule two identical tasks to executor. They will write before/after timestamps
     # to their files every 100 ms.
     test_files = [tmpdir / 'test_locker_' + str(i) for i in range(2)]
-    exes = [executor.Executor(0.1, sleeper, (use_lock, test_file, 'one')) for test_file in test_files]
+    exes = [executor.Executor(0.5, sleeper, (use_lock, test_file, 'one')) for test_file in test_files]
 
     # If testing independent locking, schedule another couple of tasks with another lock and another
     # set of timestamp files.
     if use_pairs:
         test_files_2 = [tmpdir / 'test_locker_2_' + str(i) for i in range(2)]
-        exes += [executor.Executor(0.1, sleeper, (use_lock, test_file, 'two')) for test_file in test_files_2]
+        exes += [executor.Executor(0.5, sleeper, (use_lock, test_file, 'two')) for test_file in test_files_2]
 
     futs = [executor.schedule(exe) for exe in exes]
 

@@ -1,5 +1,6 @@
 #DEBHELPER#
 
+ldconfig
 CLAIM_RESULT=$(wott-agent claim-url)
 EXIT_CODE=$?
 CLAIM_URL=$(printf "${CLAIM_RESULT}" | tail -n1)

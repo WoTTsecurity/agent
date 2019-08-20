@@ -10,5 +10,8 @@ export PYBUILD_NAME=wott-agent
 %:
 	dh $@ --with python3 --with=systemd --buildsystem=pybuild 
 
+override_dh_python3:
+	dh_python3 --no-guessing-deps --shebang=/usr/bin/python3.5
+
 override_dh_auto_test:
 	# Don't run the tests!

@@ -23,11 +23,13 @@ jobs:
       - run:
           name: Build dpkg packages
           command: |
+            mkdir -p /tmp/deb/jessie
             python3 -c 'import version; version.write_changelog()'
+            debuild -e CIRCLE_BUILD_NUM -i -us -uc -b
+            mv ../*.deb /tmp/deb
             cp -v debian/jessie/* debian/
             debuild -e CIRCLE_BUILD_NUM -i -us -uc -b
-            mkdir -p /tmp/deb
-            mv ../*.deb /tmp/deb
+            mv ../*.deb /tmp/deb/jessie
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then

@@ -1,1 +1,2 @@
 misc/pass_hashes.txt opt/wott
+debian/usercustomize.py usr/lib/python3.5

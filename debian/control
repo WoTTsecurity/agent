@@ -34,6 +34,7 @@ Depends: ghostunnel,
  python3.5-tz,
  python3.5-urllib3,
  python3.5-requests,
+ python3.5-pkg-resources,
  python3.5-six,
  python3.5-pycparser,
  python3.5-ply

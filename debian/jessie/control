@@ -37,5 +37,6 @@ Depends: ghostunnel,
  python3.5-pkg-resources,
  python3.5-six,
  python3.5-pycparser,
- python3.5-ply
+ python3.5-ply,
+ systemd, systemd-sysv
 Description: Let's Encrypt for IoT (with more bells and whistles).

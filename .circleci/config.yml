@@ -37,6 +37,9 @@ jobs:
               for distro in debian/stretch raspbian/stretch debian/buster raspbian/buster ubuntu/xenial; do
                 package_cloud push wott/agent/$distro /tmp/deb/*.deb
               done
+              for distro in debian/jessie raspbian/jessie ubuntu/trusty; do
+                package_cloud push wott/agent/$distro /tmp/deb/jessie/*.deb
+              done
             fi
       - store_artifacts:
           path: test-reports

@@ -7,7 +7,7 @@ export DH_SYSTEMD_ENABLE
 export PYBUILD_NAME=wott-agent
 export PYBUILD_VERSIONS=3.5
 export PYBUILD_INTERPRETERS=python{version}
-export PYBUILD_INSTALL_ARGS_python3=--executable=/usr/bin/python3.5
+export PYBUILD_BUILD_ARGS_python3=--executable=/usr/bin/python3.5
 
 %:
 	dh $@ --with python3 --with=systemd --buildsystem=pybuild 

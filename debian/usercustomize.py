@@ -4,6 +4,6 @@
 # effectively gives python3.5 dist-packages more priority.
 import sys
 
-print('CUSTOMIZING')
+
 sys.path.remove('/usr/lib/python3/dist-packages')
 sys.path.append('/usr/lib/python3/dist-packages')

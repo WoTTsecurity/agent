@@ -4,7 +4,7 @@ Homepage: https://www.wott.io/
 Section: python
 Priority: extra
 Build-Depends:
- debhelper (>= 8),
+ debhelper (>= 9),
  dh-python,
  python3-setuptools,
  python3-all
@@ -16,7 +16,25 @@ X-Python3-Version: >= 3.5
 Package: wott-agent
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python3:Depends}, 
- ghostunnel,
- rng-tools
+Depends: ghostunnel,
+ rng-tools,
+ python3.5,
+ python3.5-chardet,
+ python3.5-netifaces,
+ python3.5-pyasn1,
+ python3.5-openssl,
+ python3.5-cryptography,
+ python3.5-cffi,
+ python3.5-certifi,
+ python3.5-idna,
+ python3.5-iptables,
+ python3.5-psutil,
+ python3.5-sh,
+ python3.5-systemd,
+ python3.5-tz,
+ python3.5-urllib3,
+ python3.5-requests,
+ python3.5-six,
+ python3.5-pycparser,
+ python3.5-ply
 Description: Let's Encrypt for IoT (with more bells and whistles).

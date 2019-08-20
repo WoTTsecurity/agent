@@ -1,12 +1,12 @@
 version: 2
 jobs:
-  build_debian_stretch:
+  build_debian_buster:
     docker:
-      - image: debian:stretch
+      - image: debian:buster
     steps:
       - checkout
       - run:
-          name: Install Python deps
+          name: Install Python deps in a venv
           command: |
             apt update
             apt install -y python3-pip python3-netifaces python3-requests python3-tz python3-iptables python3-systemd \
@@ -31,9 +31,47 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               gem install rake package_cloud
-              for distro in debian/stretch raspbian/stretch debian/buster raspbian/buster ubuntu/xenial; do
-                package_cloud push wott/agent/$distro /tmp/deb/*.deb
-              done
+              package_cloud push wott/agent/debian/buster /tmp/deb/*.deb
+              package_cloud push wott/agent/raspbian/buster /tmp/deb/*.deb
+            fi
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
+      - store_artifacts:
+          path: /tmp/deb
+  build_debian_stretch:
+    docker:
+      - image: debian:stretch
+    steps:
+      - checkout
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            apt update
+            apt install -y python3-pip python3-netifaces python3-requests python3-tz python3-iptables python3-systemd \
+            python3-psutil devscripts python3-all ruby-dev
+            pip3 install -r requirements-dev.txt
+      - run:
+          name: Run linting and metrics
+          command: |
+            flake8 ./ --exclude=venv --ignore=E501 --output-file test-reports
+      - run:
+          name: Run tests
+          command: |
+            pytest --cov=agent
+      - run:
+          name: Build dpkg packages
+          command: |
+            python3 -c 'import version; version.write_changelog()'
+            debuild -e CIRCLE_BUILD_NUM -i -us -uc -b
+            mkdir -p /tmp/deb
+            mv ../*.deb /tmp/deb
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              gem install rake package_cloud
+              package_cloud push wott/agent/debian/stretch /tmp/deb/*.deb
+              package_cloud push wott/agent/raspbian/stretch /tmp/deb/*.deb
             fi
       - store_artifacts:
           path: test-reports
@@ -44,4 +82,7 @@ workflows:
   version: 2
   build_all:
     jobs:
-      - build_debian_stretch
+      - build_debian_buster
+      - build_debian_stretch:
+          requires:
+            - build_debian_buster

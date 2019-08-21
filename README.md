@@ -43,20 +43,9 @@ You can use this to introduce user authentication to your applications in scenar
 
 We have included below some examples that you can experiment with using both the WoTT certificates and credentials. Before you can access all this however, you will need to install the WoTT agent.
 
-## Installation
+### Installing on Debian/Raspbian/Ubuntu
 
-Supported hardware:
-
-* Raspberry Pi
-
-### Installing on Raspbian
-
-Recommended installation steps:
-
-```
-$ curl -s https://packagecloud.io/install/repositories/wott/agent/script.deb.sh | sudo bash
-$ sudo apt install wott-agent
-```
+See the [Getting Started Guide](https://wott.io/documentation/getting-started).
 
 #### Alternative runtime environments
 
@@ -101,7 +90,7 @@ Although this example does not technically use certificates, it still relies on 
 
 #### [Securing Access to Mosquitto Broker from Paho Client](https://wott.io/blog/tutorials/2019/07/19/paho-mqtt)
 
-We've covered previously how to secure a Mosquitto-Mosquitto client and server. Now we are using the very same trusty Mosquitto broker and connecting to it from a Paho client instead. Paho is part of the Eclipse foundation just like Mosquitto so it's a natural progression from our previous example. Once again, this example uses an MQTT topic to publish and subscribe to. You will need two WoTT Agent enabled devices. 
+We've covered previously how to secure a Mosquitto-Mosquitto client and server. Now we are using the very same trusty Mosquitto broker and connecting to it from a Paho client instead. Paho is part of the Eclipse foundation just like Mosquitto so it's a natural progression from our previous example. Once again, this example uses an MQTT topic to publish and subscribe to. You will need two WoTT Agent enabled devices.
 
 ### Credential managed examples
 

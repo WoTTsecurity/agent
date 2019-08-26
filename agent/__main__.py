@@ -37,13 +37,18 @@ or renews it if necessary.
         required=False,
         action="store_true",
         help="Developer mode: work with locally running server.")
+    parser.add_argument(
+        '--debug',
+        required=False,
+        action="store_true",
+        help="Debug mode: set log level to DEBUG.")
     args = parser.parse_args()
 
+    level = logging.DEBUG if args.debug is True else None
     if args.action == 'daemon':
-        setup_logging(level=logging.INFO,
-                      log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
+        setup_logging(level=level, log_format="%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s")
     else:
-        setup_logging(level=logging.INFO, daemon=False,
+        setup_logging(level=level, daemon=False,
                       log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     if not args.action:

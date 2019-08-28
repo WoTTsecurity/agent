@@ -564,7 +564,7 @@ def fetch_device_metadata(dev, logger=logger):
         logger.info('Fetching device metadata...')
         can_read_cert()
 
-        dev_md_req = mtls_request('get', 'dev-md', dev=dev, requester_name="Fetching device metadata")
+        dev_md_req = mtls_request('get', 'device-metadata', dev=dev, requester_name="Fetching device metadata")
         if dev_md_req is None or not dev_md_req.ok:
             logger.error('Fetching failed.')
             return
@@ -598,7 +598,7 @@ def fetch_credentials(dev, logger=logger):
         logger.info('Fetching credentials...')
         can_read_cert()
 
-        credentials_req = mtls_request('get', 'creds', dev=dev, requester_name="Fetch credentials")
+        credentials_req = mtls_request('get', 'credentials', dev=dev, requester_name="Fetch credentials")
         if credentials_req is None or not credentials_req.ok:
             logger.error('Fetching failed.')
             return
@@ -820,19 +820,20 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
 
-def setup_logging(level=logging.INFO, log_format="%(message)s", daemon=True):
+def setup_logging(level=None, log_format="%(message)s", daemon=True):
     """
     Setup logging configuration
     if there is `log_level` item in wott-agent `config.ini` it would be used as actual log level
     otherwise used value of level parameter
     """
 
-    log_level = level
+    log_level = level if level is not None else logging.INFO
     ini_level = get_ini_log_level()
     if ini_level is not None and isinstance(ini_level, str):
         ini_level = ini_level.upper()
         if ini_level in ['CRITICAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
-            log_level = ini_level
+            if level is None:
+                log_level = ini_level
 
     filename = get_ini_log_file()
     handlers = []

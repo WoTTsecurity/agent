@@ -11,7 +11,10 @@ interactions:
     method: GET
     uri: https://mtls.wott.io/v0.2/ping
   response:
-    body: {string: '{"block_networks": [], "block_ports": []}'}
+    body: {string: '{
+    "firewall": {"block_networks": [], "block_ports": []},
+    "deb_packages_hash": null
+    }'}
     headers:
       Allow: ['GET, POST, OPTIONS']
       Connection: [keep-alive]

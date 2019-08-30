@@ -17,6 +17,7 @@ Package: wott-agent
 Architecture: all
 Section: python
 Depends: ${misc:Depends}, ${python3:Depends}, 
+ python3-apt,
  ghostunnel,
  rng-tools
 Description: Let's Encrypt for IoT (with more bells and whistles).

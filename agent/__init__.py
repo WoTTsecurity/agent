@@ -380,6 +380,8 @@ def send_ping(dev=False):
         logger.error('Ping failed.')
         return
 
+    ping = ping.json()
+    packages = get_deb_packages()
     connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
@@ -388,9 +390,10 @@ def send_ping(dev=False):
         'uptime': get_uptime(),
         'agent_version': str(__version__),
         'confinement': CONFINEMENT.name,
-        'installation': detect_installation().name,
-        'deb_packages': get_deb_packages()
+        'installation': detect_installation().name
     }
+    if ping['deb_packages_hash'] != packages['hash']:
+        payload['deb_packages'] = packages
 
     # Things we can't do within a Snap or Docker
     if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):
@@ -402,7 +405,7 @@ def send_ping(dev=False):
 
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
-        blocklist = ping.json()
+        blocklist = ping['firewall']
         iptables_helper.block(blocklist)
 
         payload.update({

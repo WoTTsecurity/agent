@@ -1,3 +1,4 @@
+import hashlib
 import os
 from enum import Enum
 import pkg_resources
@@ -69,4 +70,10 @@ def detect_installation():
 
 def get_deb_packages():
     cache = apt.Cache()
-    return [{'name': deb.installed.package.name, 'version': deb.installed.version} for deb in cache if deb.is_installed]
+    packages = [deb for deb in cache if deb.is_installed]
+    packages_str = str(sorted((deb.installed.package.name, deb.installed.version) for deb in packages))
+    packages_hash = hashlib.md5(packages_str.encode()).hexdigest()
+    return {
+        'hash': packages_hash,
+        'packages': [{'name': deb.installed.package.name, 'version': deb.installed.version} for deb in packages]
+    }

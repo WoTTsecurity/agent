@@ -392,7 +392,7 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'installation': detect_installation().name
     }
-    if ping['deb_packages_hash'] != packages['hash']:
+    if ping.get('deb_packages_hash') != packages['hash']:
         payload['deb_packages'] = packages
 
     # Things we can't do within a Snap or Docker
@@ -405,7 +405,7 @@ def send_ping(dev=False):
 
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
-        blocklist = ping['firewall']
+        blocklist = ping
         iptables_helper.block(blocklist)
 
         payload.update({

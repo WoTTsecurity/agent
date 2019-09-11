@@ -75,5 +75,9 @@ def get_deb_packages():
     packages_hash = hashlib.md5(packages_str.encode()).hexdigest()
     return {
         'hash': packages_hash,
-        'packages': [{'name': deb.installed.package.name, 'version': deb.installed.version} for deb in packages]
+        'packages': [{
+            'name': deb.installed.package.name,
+            'version': deb.installed.version,
+            'arch': deb.installed.architecture
+        } for deb in packages]
     }

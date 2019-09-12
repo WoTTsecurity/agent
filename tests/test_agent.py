@@ -886,3 +886,64 @@ def test_no_locker(tmpdir):
 def test_independent_lockers(tmpdir):
     one, two, both = _is_parallel(tmpdir, True, True)
     assert (one, two, both) == (False, False, True)
+
+
+@pytest.mark.vcr
+def test_deb_package_cache(tmpdir, cert, key, raspberry_cpuinfo, net_connections_fixture, uptime):
+    """
+    Test the package list cahing behavior.
+    """
+    crt_path = tmpdir / 'client.crt'
+    key_path = tmpdir / 'client.key'
+    agent.CERT_PATH = str(tmpdir)
+    agent.CLIENT_CERT_PATH = str(crt_path)
+    agent.CLIENT_KEY_PATH = str(key_path)
+    Path(agent.CLIENT_CERT_PATH).write_text(cert)
+    Path(agent.CLIENT_KEY_PATH).write_text(key)
+
+    with mock.patch(
+            'builtins.open',
+            mock.mock_open(read_data=raspberry_cpuinfo),
+            create=True
+    ), \
+            mock.patch('socket.getfqdn') as getfqdn, \
+            mock.patch('psutil.net_connections') as net_connections, \
+            mock.patch('agent.iptables_helper.dump') as fr, \
+            mock.patch('agent.security_helper.check_for_default_passwords') as chdf, \
+            mock.patch('agent.security_helper.process_scan') as ps, \
+            mock.patch('agent.iptables_helper.block_ports') as bp, \
+            mock.patch('agent.iptables_helper.block_networks') as bn, \
+            mock.patch('agent.journal_helper.logins_last_hour') as logins, \
+            mock.patch('builtins.print') as prn, \
+            mock.patch('apt.Cache') as aptCache, \
+            mock.patch('agent.mtls_request', wraps=agent.mtls_request) as mtls, \
+            mock.patch(
+                'builtins.open',
+                mock.mock_open(read_data=uptime),
+                create=True
+            ):  # noqa E213
+        deb_pkg = mock.MagicMock()
+        deb_pkg.installed.package.name='thepackage'
+        deb_pkg.installed.version='theversion'
+        deb_pkg.installed.architecture='i386'
+        aptCache.return_value = [deb_pkg]
+        net_connections.return_value = net_connections_fixture[0],
+        fr.return_value = {}
+        chdf.return_value = False
+        ps.return_value = []
+        getfqdn.return_value = 'localhost'
+        bp.return_value = None
+        bn.return_value = None
+        logins.return_value = {}
+
+        # If the server doesn't have our package list yet it won't send deb_package_hash.
+        # In this case send_ping should send the package list and the hash.
+        agent.send_ping()
+        deb_packages_json = mtls.call_args[1]['json']['deb_packages']
+        assert deb_packages_json['hash'] == 'e88b4875f08ede2e1068e117bdaa80ac'
+
+        # The second time the server already knows the hash and sends it in deb_package_hash.
+        # send_ping should not send deb_packages in this case.
+        agent.send_ping()
+        deb_packages_json = mtls.call_args[1]['json']
+        assert not 'deb_packages' in deb_packages_json

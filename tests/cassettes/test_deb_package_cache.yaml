@@ -1,0 +1,100 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['124']
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.20.1]
+    method: GET
+    uri: https://mtls.wott.io/v0.2/ping
+  response:
+    body: {string: '{"block_networks": [], "block_ports": []}'}
+    headers:
+      Allow: ['GET, POST, OPTIONS']
+      Connection: [keep-alive]
+      Content-Length: ['18']
+      Content-Type: [application/json]
+      Date: ['Tue, 12 Mar 2019 15:31:54 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Vary: ['Accept, Cookie']
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: '{"device_operating_system_version": "4.15.0-45-generic", "fqdn": "localhost",
+      "ipv4_address": "192.168.1.3", "uptime": 60.0}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['124']
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.20.1]
+    method: POST
+    uri: https://mtls.wott.io/v0.2/ping
+  response:
+    body: {string: '{"message":"pong"}'}
+    headers:
+      Allow: ['GET, POST, OPTIONS']
+      Connection: [keep-alive]
+      Content-Length: ['18']
+      Content-Type: [application/json]
+      Date: ['Tue, 12 Mar 2019 15:31:54 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Vary: ['Accept, Cookie']
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['124']
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.20.1]
+    method: GET
+    uri: https://mtls.wott.io/v0.2/ping
+  response:
+    body: {string: '{"block_networks": [], "block_ports": [], "deb_packages_hash": "e88b4875f08ede2e1068e117bdaa80ac"}'}
+    headers:
+      Allow: ['GET, POST, OPTIONS']
+      Connection: [keep-alive]
+      Content-Length: ['18']
+      Content-Type: [application/json]
+      Date: ['Tue, 12 Mar 2019 15:31:54 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Vary: ['Accept, Cookie']
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+- request:
+    body: '{"device_operating_system_version": "4.15.0-45-generic", "fqdn": "localhost",
+      "ipv4_address": "192.168.1.3", "uptime": 60.0}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['124']
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.20.1]
+    method: POST
+    uri: https://mtls.wott.io/v0.2/ping
+  response:
+    body: {string: '{"message":"pong"}'}
+    headers:
+      Allow: ['GET, POST, OPTIONS']
+      Connection: [keep-alive]
+      Content-Length: ['18']
+      Content-Type: [application/json]
+      Date: ['Tue, 12 Mar 2019 15:31:54 GMT']
+      Server: [nginx/1.15.8]
+      Strict-Transport-Security: [max-age=15724800; includeSubDomains]
+      Vary: ['Accept, Cookie']
+      X-Frame-Options: [SAMEORIGIN]
+    status: {code: 200, message: OK}
+version: 1

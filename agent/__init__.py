@@ -29,7 +29,7 @@ from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
 from agent.executor import Locker
-from agent.rpi_helper import Confinement, detect_confinement, detect_installation
+from agent.rpi_helper import Confinement, detect_confinement, detect_installation, get_deb_packages
 
 
 CONFINEMENT = detect_confinement()
@@ -367,7 +367,7 @@ def get_uptime():
 
 
 def get_open_ports(dev=False):
-    connections, ports = security_helper.netstat_scan()
+    _, ports = security_helper.netstat_scan()
     return ports
 
 
@@ -380,6 +380,8 @@ def send_ping(dev=False):
         logger.error('Ping failed.')
         return
 
+    ping = ping.json()
+    packages = get_deb_packages()
     connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
@@ -390,6 +392,8 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'installation': detect_installation().name
     }
+    if ping.get('deb_packages_hash') != packages['hash']:
+        payload['deb_packages'] = packages
 
     # Things we can't do within a Snap or Docker
     if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):
@@ -401,7 +405,7 @@ def send_ping(dev=False):
 
     # Things we cannot do in Docker
     if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
-        blocklist = ping.json()
+        blocklist = ping
         iptables_helper.block(blocklist)
 
         payload.update({

@@ -914,7 +914,6 @@ def test_deb_package_cache(tmpdir, cert, key, raspberry_cpuinfo, net_connections
             mock.patch('agent.iptables_helper.block_ports') as bp, \
             mock.patch('agent.iptables_helper.block_networks') as bn, \
             mock.patch('agent.journal_helper.logins_last_hour') as logins, \
-            mock.patch('builtins.print') as prn, \
             mock.patch('apt.Cache') as aptCache, \
             mock.patch('agent.mtls_request', wraps=agent.mtls_request) as mtls, \
             mock.patch(
@@ -923,9 +922,9 @@ def test_deb_package_cache(tmpdir, cert, key, raspberry_cpuinfo, net_connections
                 create=True
             ):  # noqa E213
         deb_pkg = mock.MagicMock()
-        deb_pkg.installed.package.name='thepackage'
-        deb_pkg.installed.version='theversion'
-        deb_pkg.installed.architecture='i386'
+        deb_pkg.installed.package.name = 'thepackage'
+        deb_pkg.installed.version = 'theversion'
+        deb_pkg.installed.architecture = 'i386'
         aptCache.return_value = [deb_pkg]
         net_connections.return_value = net_connections_fixture[0],
         fr.return_value = {}
@@ -946,4 +945,4 @@ def test_deb_package_cache(tmpdir, cert, key, raspberry_cpuinfo, net_connections
         # send_ping should not send deb_packages in this case.
         agent.send_ping()
         deb_packages_json = mtls.call_args[1]['json']
-        assert not 'deb_packages' in deb_packages_json
+        assert 'deb_packages' not in deb_packages_json

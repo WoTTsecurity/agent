@@ -374,13 +374,26 @@ def test_check_for_default_passwords_neg():
         assert not check_for_default_passwords('/doesntmatter/file.txt')
 
 
-def test_audit_sshd(sshd_config):
+def test_audit_config_files(sshd_config):
+    def mock_open(filename, mode='r'):
+        if mode != 'rb':
+            content = sshd_config
+        else:
+            content = sshd_config.encode()
+        file_object = mock.mock_open(read_data=content).return_value
+        file_object.__iter__.return_value = content.splitlines(True)
+        return file_object
     with mock.patch('builtins.open',
-                    mock.mock_open(read_data=sshd_config),
-                    create=True),\
-            mock.patch('os.path.isfile') as isfile:
+                    new=mock_open),\
+            mock.patch('os.path.isfile') as isfile,\
+            mock.patch('os.path.getmtime') as getmtime:
         isfile.return_value = True
-        assert agent.security_helper.audit_sshd() == {'PermitRootLogin': 'yes', 'PasswordAuthentication': 'yes', 'Protocol': '2,1'}
+        getmtime.return_value = 0
+        audit = agent.security_helper.audit_config_files()
+        assert len(audit) == 4 and\
+            audit[0]['sha256'] == audit[1]['sha256'] and \
+            audit[0]['last_modified'] == 0 and \
+            audit[3]['issues'] == {'PermitRootLogin': 'yes', 'PasswordAuthentication': 'yes', 'Protocol': '2,1'}
 
 
 def test_block_networks(ipt_networks, ipt_rules):

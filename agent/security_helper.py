@@ -132,8 +132,10 @@ SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
 
 def audit_config_files():
     """
-
-    :return:
+    For a predefined list of system config files (see AUDITED_CONFIG_FILES)
+    get their last modified time and SHA256 hash.
+    The same info regarding SSHD_CONFIG_PATH is appended (see audit_sshd below),
+    :return: [{'name': ..., 'sha256': ..., 'last_modified': ...}]
     """
 
     def digest_sha256(file_path):
@@ -166,8 +168,8 @@ def audit_config_files():
 
 def audit_sshd():
     """
-
-    :return:
+    Read and parse SSHD_CONFIG_PATH, detect all unsafe parameters.
+    :return: a dict where key is an unsafe parameter and value is its (unsafe) value.
     """
     issues = {}
     with open(SSHD_CONFIG_PATH) as sshd_config:

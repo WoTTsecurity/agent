@@ -376,6 +376,11 @@ def test_check_for_default_passwords_neg():
 
 def test_audit_config_files(sshd_config):
     def mock_open(filename, mode='r'):
+        """
+        This will return either a Unicode string needed for "r" mode or bytes for "rb" mode.
+        The contents are still the same which is the mock sshd_config. But they are only interpreted
+        by audit_sshd.
+        """
         if mode != 'rb':
             content = sshd_config
         else:

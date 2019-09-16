@@ -123,7 +123,7 @@ def selinux_status():
 
 
 AUDITED_CONFIG_FILES = [
-    '/etc/password',
+    '/etc/passwd',
     '/etc/shadow',
     '/etc/group'
 ]

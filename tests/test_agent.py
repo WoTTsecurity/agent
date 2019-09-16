@@ -374,6 +374,15 @@ def test_check_for_default_passwords_neg():
         assert not check_for_default_passwords('/doesntmatter/file.txt')
 
 
+def test_audit_sshd(sshd_config):
+    with mock.patch('builtins.open',
+                    mock.mock_open(read_data=sshd_config),
+                    create=True),\
+            mock.patch('os.path.isfile') as isfile:
+        isfile.return_value = True
+        assert agent.security_helper.audit_sshd() == {'PermitRootLogin': 'yes', 'PasswordAuthentication': 'yes', 'Protocol': '2,1'}
+
+
 def test_block_networks(ipt_networks, ipt_rules):
     rule1, rule2 = ipt_rules
     net1, net2 = ipt_networks

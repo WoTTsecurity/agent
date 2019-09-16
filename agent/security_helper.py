@@ -1,5 +1,7 @@
 import crypt
+from hashlib import sha256
 import socket
+import os
 from pathlib import Path
 from socket import SocketKind
 import spwd
@@ -118,3 +120,67 @@ def selinux_status():
             selinux_mode = row[1].strip()
 
     return {'enabled': selinux_enabled, 'mode': selinux_mode}
+
+
+AUDITED_CONFIG_FILES = [
+    '/etc/password',
+    '/etc/shadow',
+    '/etc/group'
+]
+SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
+
+
+def audit_config_files():
+    """
+
+    :return:
+    """
+
+    def digest_sha256(file_path):
+        h = sha256()
+
+        with open(file_path, 'rb') as file:
+            while True:
+                # Reading is buffered, so we can read smaller chunks.
+                chunk = file.read(h.block_size)
+                if not chunk:
+                    break
+                h.update(chunk)
+
+        return h.hexdigest()
+
+    def audit_common(file_path):
+        return {
+            'name': file_path,
+            'sha256': digest_sha256(file_path),
+            'last_modified': os.path.getmtime(file_path)
+        }
+
+    audited_files = [audit_common(file_path) for file_path in AUDITED_CONFIG_FILES if os.path.isfile(file_path)]
+    if os.path.isfile(SSHD_CONFIG_PATH):
+        audited_sshd = audit_common(SSHD_CONFIG_PATH)
+        audited_sshd['issues'] = audit_sshd()
+        audited_files.append(audited_sshd)
+    return audited_files
+
+
+def audit_sshd():
+    """
+
+    :return:
+    """
+    issues = {}
+    with open(SSHD_CONFIG_PATH) as sshd_config:
+        for line in sshd_config:
+            line = line.strip()
+            if not line or line[0] == '#':
+                # skip empty lines and comments
+                continue
+
+            parameter, value = line.split(maxsplit=1)
+            value = value.strip('"')
+            if parameter in ['PermitEmptyPasswords', 'PermitRootLogin', 'PasswordAuthentication', 'AllowAgentForwarding']\
+                    and value == 'yes' or\
+               parameter == 'Protocol' and value in ['2,1', '1']:
+                issues[parameter] = value
+    return issues

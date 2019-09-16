@@ -177,7 +177,12 @@ def audit_sshd():
                 # skip empty lines and comments
                 continue
 
-            parameter, value = line.split(maxsplit=1)
+            line_split = line.split(maxsplit=1)
+            if len(line_split) != 2:
+                # skip invalid lines
+                continue
+
+            parameter, value = line_split
             value = value.strip('"')
             if parameter in ['PermitEmptyPasswords', 'PermitRootLogin', 'PasswordAuthentication', 'AllowAgentForwarding']\
                     and value == 'yes' or\

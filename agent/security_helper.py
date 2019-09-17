@@ -1,7 +1,5 @@
 import crypt
-from hashlib import sha256
 import socket
-import os
 from pathlib import Path
 from socket import SocketKind
 import spwd
@@ -120,74 +118,3 @@ def selinux_status():
             selinux_mode = row[1].strip()
 
     return {'enabled': selinux_enabled, 'mode': selinux_mode}
-
-
-AUDITED_CONFIG_FILES = [
-    '/etc/passwd',
-    '/etc/shadow',
-    '/etc/group'
-]
-SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
-
-
-def audit_config_files():
-    """
-    For a predefined list of system config files (see AUDITED_CONFIG_FILES)
-    get their last modified time and SHA256 hash.
-    The same info regarding SSHD_CONFIG_PATH is appended (see audit_sshd below),
-    :return: [{'name': ..., 'sha256': ..., 'last_modified': ...}]
-    """
-
-    def digest_sha256(file_path):
-        h = sha256()
-
-        with open(file_path, 'rb') as file:
-            while True:
-                # Reading is buffered, so we can read smaller chunks.
-                chunk = file.read(h.block_size)
-                if not chunk:
-                    break
-                h.update(chunk)
-
-        return h.hexdigest()
-
-    def audit_common(file_path):
-        return {
-            'name': file_path,
-            'sha256': digest_sha256(file_path),
-            'last_modified': os.path.getmtime(file_path)
-        }
-
-    audited_files = [audit_common(file_path) for file_path in AUDITED_CONFIG_FILES if os.path.isfile(file_path)]
-    if os.path.isfile(SSHD_CONFIG_PATH):
-        audited_sshd = audit_common(SSHD_CONFIG_PATH)
-        audited_sshd['issues'] = audit_sshd()
-        audited_files.append(audited_sshd)
-    return audited_files
-
-
-def audit_sshd():
-    """
-    Read and parse SSHD_CONFIG_PATH, detect all unsafe parameters.
-    :return: a dict where key is an unsafe parameter and value is its (unsafe) value.
-    """
-    issues = {}
-    with open(SSHD_CONFIG_PATH) as sshd_config:
-        for line in sshd_config:
-            line = line.strip()
-            if not line or line[0] == '#':
-                # skip empty lines and comments
-                continue
-
-            line_split = line.split(maxsplit=1)
-            if len(line_split) != 2:
-                # skip invalid lines
-                continue
-
-            parameter, value = line_split
-            value = value.strip('"')
-            if parameter in ['PermitEmptyPasswords', 'PermitRootLogin', 'PasswordAuthentication', 'AllowAgentForwarding']\
-                    and value == 'yes' or\
-               parameter == 'Protocol' and value in ['2,1', '1']:
-                issues[parameter] = value
-    return issues

@@ -236,3 +236,18 @@ def netstat_result():
             'state': 'LISTENING',
         }
     )
+
+
+@pytest.fixture
+def sshd_config():
+    return """
+# a comment
+PermitEmptyPasswords no
+
+# another comment
+PermitRootLogin   "yes"
+PasswordAuthentication yes
+Protocol  "2,1"
+
+AnotherOption another value
+"""

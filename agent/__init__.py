@@ -413,7 +413,8 @@ def send_ping(dev=False):
             'app_armor_enabled': security_helper.is_app_armor_enabled(),
             'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
-            'netstat': connections
+            'netstat': connections,
+            'audit_files': security_helper.audit_config_files()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

@@ -151,7 +151,7 @@ AUDITED_CONFIG_FILES = [
 SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
 SSHD_CONFIG_DEFAULTS = {
     'PermitEmptyPasswords': 'no',
-    'PermitRootLogin': 'no',
+    'PermitRootLogin': 'yes',
     'PasswordAuthentication': 'yes',
     'AllowAgentForwarding': 'yes',
     'Protocol': '2,1'

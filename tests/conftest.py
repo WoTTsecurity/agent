@@ -237,3 +237,17 @@ def netstat_result():
             'pid': 1234
         }
     )
+
+
+@pytest.fixture
+def sshd_config():
+    return """
+# a comment
+PermitEmptyPasswords no
+
+# another comment
+PermitRootLogin   "yes"
+Protocol  "2,1"
+
+AnotherOption another value
+"""

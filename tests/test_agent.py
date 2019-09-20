@@ -820,7 +820,9 @@ def test_deb_package_cache(tmpdir, cert, key, raspberry_cpuinfo, net_connections
             ):  # noqa E213
         deb_pkg = mock.MagicMock()
         deb_pkg.installed.package.name = 'thepackage'
+        deb_pkg.installed.source_name = 'thepackage'
         deb_pkg.installed.version = 'theversion'
+        deb_pkg.installed.source_version = 'theversion'
         deb_pkg.installed.architecture = 'i386'
         aptCache.return_value = [deb_pkg]
         net_connections.return_value = net_connections_fixture[0],

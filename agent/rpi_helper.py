@@ -78,6 +78,8 @@ def get_deb_packages():
         'packages': [{
             'name': deb.installed.package.name,
             'version': deb.installed.version,
-            'arch': deb.installed.architecture
+            'arch': deb.installed.architecture,
+            'source_name': deb.installed.source_name,
+            'source_version': deb.installed.source_version
         } for deb in packages]
     }

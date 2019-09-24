@@ -381,7 +381,6 @@ def send_ping(dev=False):
         return
 
     ping = ping.json()
-    packages = get_deb_packages()
     connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
@@ -392,8 +391,10 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'installation': detect_installation().name
     }
-    if ping.get('deb_packages_hash') != packages['hash']:
-        payload['deb_packages'] = packages
+    if CONFINEMENT != Confinement.SNAP:
+        packages = get_deb_packages()
+        if ping.get('deb_packages_hash') != packages['hash']:
+            payload['deb_packages'] = packages
 
     # Things we can't do within a Snap or Docker
     if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):

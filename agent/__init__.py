@@ -383,7 +383,6 @@ def send_ping(dev=False):
         return
 
     ping = ping.json()
-    connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),
@@ -400,18 +399,14 @@ def send_ping(dev=False):
 
     # Things we can't do within a Snap or Docker
     if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):
-        payload.update({
-            'processes': security_helper.process_scan(),
-            'logins': journal_helper.logins_last_hour(),
-            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH)
-        })
-
-    # Things we cannot do in Docker
-    if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
+        connections, ports = security_helper.netstat_scan()
         blocklist = ping
         iptables_helper.block(blocklist)
 
         payload.update({
+            'processes': security_helper.process_scan(),
+            'logins': journal_helper.logins_last_hour(),
+            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
             'selinux_status': security_helper.selinux_status(),
             'app_armor_enabled': security_helper.is_app_armor_enabled(),
             'firewall_rules': iptables_helper.dump(),

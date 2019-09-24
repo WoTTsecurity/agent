@@ -51,6 +51,8 @@ MTLS_DEV_PORT = 8002
 CONFINEMENT = detect_confinement()
 
 CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+if CONFINEMENT == Confinement.SNAP:
+    Locker.LOCKDIR = CONFIG_PATH
 CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
 

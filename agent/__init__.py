@@ -392,13 +392,13 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'installation': detect_installation().name
     }
+
     if CONFINEMENT != Confinement.SNAP:
         packages = get_deb_packages()
         if ping.get('deb_packages_hash') != packages['hash']:
             payload['deb_packages'] = packages
 
-    # Things we can't do within a Snap or Docker
-    if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):
+    if CONFINEMENT in (Confinement.NONE, Confinement.SNAP):
         connections, ports = security_helper.netstat_scan()
         blocklist = ping
         iptables_helper.block(blocklist)
@@ -406,12 +406,16 @@ def send_ping(dev=False):
         payload.update({
             'processes': security_helper.process_scan(),
             'logins': journal_helper.logins_last_hour(),
-            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
-            'selinux_status': security_helper.selinux_status(),
-            'app_armor_enabled': security_helper.is_app_armor_enabled(),
             'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
             'netstat': connections
+        })
+
+    if CONFINEMENT == Confinement.NONE:
+        payload.update({
+            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
+            'selinux_status': security_helper.selinux_status(),
+            'app_armor_enabled': security_helper.is_app_armor_enabled()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

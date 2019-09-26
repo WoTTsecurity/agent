@@ -51,6 +51,8 @@ MTLS_DEV_PORT = 8002
 CONFINEMENT = detect_confinement()
 
 CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
+if CONFINEMENT == Confinement.SNAP:
+    Locker.LOCKDIR = CONFIG_PATH
 CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
 
@@ -381,8 +383,6 @@ def send_ping(dev=False):
         return
 
     ping = ping.json()
-    packages = get_deb_packages()
-    connections, ports = security_helper.netstat_scan()
     payload = {
         'device_operating_system_version': platform.release(),
         'fqdn': socket.getfqdn(),
@@ -392,28 +392,30 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'installation': detect_installation().name
     }
-    if ping.get('deb_packages_hash') != packages['hash']:
-        payload['deb_packages'] = packages
 
-    # Things we can't do within a Snap or Docker
-    if CONFINEMENT not in (Confinement.SNAP, Confinement.DOCKER, Confinement.BALENA):
-        payload.update({
-            'processes': security_helper.process_scan(),
-            'logins': journal_helper.logins_last_hour(),
-            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH)
-        })
+    if CONFINEMENT != Confinement.SNAP:
+        packages = get_deb_packages()
+        if ping.get('deb_packages_hash') != packages['hash']:
+            payload['deb_packages'] = packages
 
-    # Things we cannot do in Docker
-    if CONFINEMENT not in (Confinement.DOCKER, Confinement.BALENA):
+    if CONFINEMENT in (Confinement.NONE, Confinement.SNAP):
+        connections, ports = security_helper.netstat_scan()
         blocklist = ping
         iptables_helper.block(blocklist)
 
         payload.update({
-            'selinux_status': security_helper.selinux_status(),
-            'app_armor_enabled': security_helper.is_app_armor_enabled(),
+            'processes': security_helper.process_scan(),
+            'logins': journal_helper.logins_last_hour(),
             'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
             'netstat': connections
+        })
+
+    if CONFINEMENT == Confinement.NONE:
+        payload.update({
+            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
+            'selinux_status': security_helper.selinux_status(),
+            'app_armor_enabled': security_helper.is_app_armor_enabled()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

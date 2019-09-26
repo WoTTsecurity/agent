@@ -3,8 +3,6 @@ import os
 from enum import Enum
 import pkg_resources
 
-import apt
-
 import agent
 
 
@@ -59,6 +57,7 @@ def detect_confinement():
 
 def detect_installation():
     try:
+        import apt
         cache = apt.Cache()
         if __file__ in cache['wott-agent'].installed_files:
             return Installation.DEB
@@ -69,6 +68,7 @@ def detect_installation():
 
 
 def get_deb_packages():
+    import apt
     cache = apt.Cache()
     packages = [deb for deb in cache if deb.is_installed]
     packages_str = str(sorted((deb.installed.package.name, deb.installed.version) for deb in packages))

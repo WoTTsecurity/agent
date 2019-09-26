@@ -234,5 +234,6 @@ def netstat_result():
             'port': 1234,
             'proto': 'tcp',
             'state': 'LISTENING',
+            'process_info': {'name': 'aaa', 'user': 'bbb', 'cmdline': ['path', '-D']}
         }
     )

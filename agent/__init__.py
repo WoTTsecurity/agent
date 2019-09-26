@@ -369,8 +369,7 @@ def get_uptime():
 
 
 def get_open_ports(dev=False):
-    _, ports = security_helper.netstat_scan()
-    return ports
+    return security_helper.netstat_scan()[1]
 
 
 def send_ping(dev=False):

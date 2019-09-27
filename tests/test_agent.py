@@ -18,16 +18,38 @@ import pwd
 from os import getenv
 
 
-def test_detect_raspberry_pi(raspberry_cpuinfo):
-    with mock.patch(
-            'builtins.open',
-            mock.mock_open(read_data=raspberry_cpuinfo),
-            create=True
-    ):
+def test_detect_raspberry_pi():
+    class mockPath():
+        def __init__(self, filename):
+            self._filename = filename
+
+        def is_file(self):
+            return True
+
+        def open(self):
+            return mock_open(self._filename)
+
+    def mock_open(filename, mode='r'):
+        """
+        This will return either a Unicode string needed for "r" mode or bytes for "rb" mode.
+        The contents are still the same which is the mock sshd_config. But they are only interpreted
+        by audit_sshd.
+        """
+        if filename == '/proc/device-tree/model':
+            content = 'Raspberry Pi 3 Model B Plus Rev 1.3\x00'
+        elif filename == '/proc/device-tree/serial-number':
+            content = '0000000060e3b222\x00'
+        else:
+            raise FileNotFoundError
+        file_object = mock.mock_open(read_data=content).return_value
+        file_object.__iter__.return_value = content.splitlines(True)
+        return file_object
+
+    with mock.patch('agent.rpi_helper.Path', mockPath):
         metadata = detect_raspberry_pi()
         assert metadata['is_raspberry_pi']
-        assert metadata['hardware_model'] == '900092'
-        assert metadata['serial_number'] == '00000000ebd5f1e8'
+        assert metadata['hardware_model'] == 'Raspberry Pi 3 Model B Plus Rev 1.3'
+        assert metadata['serial_number'] == '0000000060e3b222'
 
 
 def test_failed_logins():

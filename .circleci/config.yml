@@ -10,7 +10,7 @@ jobs:
           command: |
             apt update
             apt install -y python3-pip python3-netifaces python3-requests python3-tz python3-iptables python3-systemd \
-            python3-psutil python3-apt devscripts python3-all ruby-dev
+            python3-psutil python3-apt python3-selinux python3-apparmor devscripts python3-all ruby-dev
             pip3 install -r requirements-dev.txt
       - run:
           name: Run linting and metrics

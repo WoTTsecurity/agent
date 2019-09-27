@@ -2,9 +2,11 @@ import crypt
 import socket
 from pathlib import Path
 from socket import SocketKind
-import spwd
 
+import LibAppArmor
 import psutil
+import selinux
+import spwd
 
 
 def check_for_default_passwords(config_path):
@@ -82,16 +84,7 @@ def is_app_armor_enabled():
     """
     Returns a True/False if AppArmor is enabled.
     """
-    try:
-        from sh import aa_status
-    except ImportError:
-        return False
-
-    # Returns 0 if enabled and 1 if disable
-    get_aa_status = aa_status(['--enabled'], _ok_code=[0, 1]).exit_code
-    if get_aa_status == 1:
-        return False
-    return True
+    return LibAppArmor.aa_is_enabled()
 
 
 def selinux_status():
@@ -99,22 +92,11 @@ def selinux_status():
     Returns a dict as similar to:
         {'enabled': False, 'mode': 'enforcing'}
     """
-    selinux_enabled = None
+    selinux_enabled = False
     selinux_mode = None
 
-    try:
-        from sh import sestatus
-    except ImportError:
-        return {'enabled': False}
-
-    # Manually parse out the output for SELinux status
-    for line in sestatus().stdout.split(b'\n'):
-        row = line.split(b':')
-
-        if row[0].startswith(b'SELinux status'):
-            selinux_enabled = row[1].strip() == b'enabled'
-
-        if row[0].startswith(b'Current mode'):
-            selinux_mode = row[1].strip()
+    if selinux.is_selinux_enabled() == 1:
+        selinux_enabled = True
+        selinux_mode = {-1: None, 0: 'permissive', 1: 'enforcing'}[selinux.security_getenforce()]
 
     return {'enabled': selinux_enabled, 'mode': selinux_mode}

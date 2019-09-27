@@ -12,7 +12,7 @@ import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.iptables_helper import block_networks, block_ports, OUTPUT_CHAIN, INPUT_CHAIN
-from agent.security_helper import check_for_default_passwords
+from agent.security_helper import check_for_default_passwords, selinux_status
 from agent import executor
 import pwd
 from os import getenv
@@ -972,3 +972,19 @@ def test_no_locker(tmpdir):
 def test_independent_lockers(tmpdir):
     one, two, both = _is_parallel(tmpdir, True, True)
     assert (one, two, both) == (False, False, True)
+
+
+def test_selinux_status():
+    with mock.patch('selinux.is_selinux_enabled') as selinux_enabled,\
+            mock.patch('selinux.security_getenforce') as getenforce:
+
+        selinux_enabled.return_value = 1
+        getenforce.return_value = 1
+        assert selinux_status() == {'enabled': True, 'mode': 'enforcing'}
+
+        selinux_enabled.return_value = 1
+        getenforce.return_value = 0
+        assert selinux_status() == {'enabled': True, 'mode': 'permissive'}
+
+        selinux_enabled.return_value = 0
+        assert selinux_status() == {'enabled': False, 'mode': None}

@@ -554,8 +554,7 @@ def test_fetch_device_metadata(tmpdir):
             'string': 'test string value',
             'array': [1, 2, 3, 4, 5, 'penelopa'],
             'test': 'value',
-            'model': 'a020d3',
-            'model-decoded': 'Pi 3 Model B+'
+            'model': 'Pi 3 Model B+'
         }
     )
     mock_resp.return_value.ok = True
@@ -578,8 +577,7 @@ def test_fetch_device_metadata(tmpdir):
                 'string': 'test string value',
                 'array': [1, 2, 3, 4, 5, 'penelopa'],
                 'test': 'value',
-                'model': 'a020d3',
-                'model-decoded': 'Pi 3 Model B+'
+                'model': 'Pi 3 Model B+'
             }
 
         chm.assert_has_calls([

@@ -42,18 +42,6 @@ def check_for_default_passwords(config_path):
     return False
 
 
-def get_process_info(pid):
-    """
-    Collect all required info for given process id.
-    """
-    process = psutil.Process(pid)
-    process_info = {'name': process.name(), 'user': process.username()}
-    process_cmdline = list(process.cmdline())
-    # 1-element command line is useless.
-    process_info['cmdline'] = process_cmdline if len(process_cmdline) > 1 else []
-    return process_info
-
-
 def netstat_scan():
     """
     Returns all open inet connections with their addresses and PIDs.
@@ -74,7 +62,7 @@ def netstat_scan():
             'port': c.laddr[1],
             'proto': {SocketKind.SOCK_STREAM: 'tcp', SocketKind.SOCK_DGRAM: 'udp'}.get(c.type),
             'state': c.status if c.type == socket.SOCK_STREAM else None,
-            'process_info': get_process_info(c.pid)
+            'pid': c.pid
         } for c in connections if not c.raddr and c.laddr]
     )
 

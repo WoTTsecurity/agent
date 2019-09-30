@@ -243,22 +243,8 @@ def test_get_ca_cert_none_on_fail():
     assert prn.error.call_count == 3
 
 
-class ProcessMock:
-    def __init__(self, pid):
-        pass
-
-    def name(self):
-        return 'aaa'
-
-    def username(self):
-        return 'bbb'
-
-    def cmdline(self):
-        return ['path', '-D']
-
-
 def test_get_open_ports(net_connections_fixture, netstat_result):
-    with mock.patch('psutil.net_connections') as net_connections, mock.patch('psutil.Process', new=ProcessMock):
+    with mock.patch('psutil.net_connections') as net_connections:
         net_connections.return_value = net_connections_fixture
         connections_ports = agent.get_open_ports()
         assert connections_ports == [netstat_result[1]]

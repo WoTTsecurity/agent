@@ -3,9 +3,7 @@ import socket
 from pathlib import Path
 from socket import SocketKind
 
-import LibAppArmor
 import psutil
-import selinux
 import spwd
 
 
@@ -84,7 +82,17 @@ def is_app_armor_enabled():
     """
     Returns a True/False if AppArmor is enabled.
     """
-    return LibAppArmor.aa_is_enabled()
+    try:
+        import LibAppArmor
+        return LibAppArmor.aa_is_enabled() == 1
+    except ImportError:
+        try:
+            from sh import aa_status
+        except ImportError:
+            return False
+
+        # Returns 0 if enabled and 1 if disabled
+        return aa_status(['--enabled'], _ok_code=[0, 1]).exit_code != 1
 
 
 def selinux_status():
@@ -95,8 +103,25 @@ def selinux_status():
     selinux_enabled = False
     selinux_mode = None
 
-    if selinux.is_selinux_enabled() == 1:
-        selinux_enabled = True
-        selinux_mode = {-1: None, 0: 'permissive', 1: 'enforcing'}[selinux.security_getenforce()]
+    try:
+        import selinux
+        if selinux.is_selinux_enabled() == 1:
+            selinux_enabled = True
+            selinux_mode = {-1: None, 0: 'permissive', 1: 'enforcing'}[selinux.security_getenforce()]
+    except ImportError:
+        try:
+            from sh import sestatus
+        except ImportError:
+            return {'enabled': False}
 
-    return {'enabled': selinux_enabled, 'mode': selinux_mode}
+        # Manually parse out the output for SELinux status
+        for line in sestatus().stdout.split(b'\n'):
+            row = line.split(b':')
+
+            if row[0].startswith(b'SELinux status'):
+                selinux_enabled = row[1].strip() == b'enabled'
+
+            if row[0].startswith(b'Current mode'):
+                selinux_mode = row[1].strip()
+    finally:
+        return {'enabled': selinux_enabled, 'mode': selinux_mode}

@@ -16,7 +16,7 @@ X-Python3-Version: >= 3.5
 Package: wott-agent
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python3:Depends}, 
+Depends: ${misc:Depends}, ${python3:Depends}, ${dist:Depends},
  python3-apt, python3-selinux, python3-apparmor,
  ghostunnel,
  rng-tools

@@ -62,6 +62,7 @@ def netstat_scan():
             'port': c.laddr[1],
             'proto': {SocketKind.SOCK_STREAM: 'tcp', SocketKind.SOCK_DGRAM: 'udp'}.get(c.type),
             'state': c.status if c.type == socket.SOCK_STREAM else None,
+            'pid': c.pid
         } for c in connections if not c.raddr and c.laddr]
     )
 

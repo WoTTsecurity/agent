@@ -234,5 +234,6 @@ def netstat_result():
             'port': 1234,
             'proto': 'tcp',
             'state': 'LISTENING',
+            'pid': 1234
         }
     )

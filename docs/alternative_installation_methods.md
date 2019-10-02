@@ -1,6 +1,4 @@
-# Snap for WoTT Agent
-
-Packages the WoTT Agent into a Snap.
+## Installation: Snap runtime
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/wott-agent)
 
@@ -10,6 +8,7 @@ Packages the WoTT Agent into a Snap.
 $ sudo snap install wott-agent
 ```
 The "unsafe" interfaces needed by this snap are not auto-connected (may change in the future). Manual connection is needed:
+
 ```
 $ sudo snap connect wott-agent:network-control :network-control
 $ sudo snap connect wott-agent:network-setup-control :network-setup-control
@@ -24,9 +23,7 @@ $ sudo snap connect wott-agent:log-observe :log-observe
 
 ### Pre-requisites
 
-* A Raspberry Pi 2 or newer with Raspbian
 * [Docker CE installed](https://docs.docker.com/install/linux/docker-ce/debian/)
-  * It is advised that you also run `sudo usermod -aG docker pi` in order to run docker as the user pi without the need for `sudo`
 
 ### Building
 

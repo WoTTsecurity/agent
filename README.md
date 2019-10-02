@@ -6,7 +6,7 @@
 
 **TL;DR:** WoTT provides seamless security audit of linux nodes
 
-Our goal is to improve the security posture of your servers and devices.
+Our goal is to improve the security posture of your servers and devices. This is our open source agent that connects to the [WoTT Dashboard](https://dash.wott.io).
 
 Here are some of the things that WoTT will check for:
 
@@ -38,7 +38,7 @@ You can also browser our [Use cases](https://wott.io/documentation/use-cases) fo
 
 ### Alternative runtime environments
 
-* [Snap](https://github.com/WoTTsecurity/agent/tree/master/snap#ubuntu-snap-for-wott-agent)
+* [Snap](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#snap-runtime)
 * [Docker](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation-docker-runtime)
 * [Python library](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#installation--python-runtime-advanced)
 

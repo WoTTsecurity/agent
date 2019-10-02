@@ -1,6 +1,0 @@
-Vagrantfile
-snap/
-.vagrant/
-*console.log
-*.snap
-*_source.tar.bz2

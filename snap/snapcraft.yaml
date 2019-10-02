@@ -97,11 +97,9 @@ parts:
   wott-agent:
     plugin: python
     python-version: python3
-    source: https://github.com/WoTTsecurity/agent.git
+    source: .
     requirements:
       - requirements.txt
-    source-type: git
-    source-branch: master
     build-packages:
       - python3-git
       - libffi-dev

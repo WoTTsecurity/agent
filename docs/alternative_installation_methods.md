@@ -1,3 +1,25 @@
+# Snap for WoTT Agent
+
+Packages the WoTT Agent into a Snap.
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/wott-agent)
+
+## Installing
+
+```
+$ sudo snap install wott-agent
+```
+The "unsafe" interfaces needed by this snap are not auto-connected (may change in the future). Manual connection is needed:
+```
+$ sudo snap connect wott-agent:network-control :network-control
+$ sudo snap connect wott-agent:network-setup-control :network-setup-control
+$ sudo snap connect wott-agent:process-control :process-control
+$ sudo snap connect wott-agent:system-observe :system-observe
+$ sudo snap connect wott-agent:firewall-control :firewall-control
+$ sudo snap connect wott-agent:account-control :account-control
+$ sudo snap connect wott-agent:log-observe :log-observe
+```
+
 ## Installation: Docker runtime
 
 ### Pre-requisites

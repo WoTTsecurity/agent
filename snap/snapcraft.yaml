@@ -1,0 +1,131 @@
+name: wott-agent
+version: '0.1.5.0-26'
+summary: Web of Trusted Things agent.
+description: |
+  tl;dr - WoTT Agent is the Let's Encrypt for IoT.
+grade: stable
+confinement: strict
+base: core18
+
+apps:
+  daemon:
+    command: bin/snapcraft-preload $SNAP/bin/wott-agent daemon
+    daemon: simple
+    plugs:
+      - firewall-control
+      - hardware-observe
+      - network
+      - network-setup-control
+      - network-bind
+      - network-observe
+      - network-control
+      - process-control
+      - system-observe
+      - account-control
+      - log-observe
+      - tpm
+    environment:
+      XTABLES_LIBDIR: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/xtables
+      CONFIG_PATH: $SNAP_DATA
+      CERT_PATH: $SNAP_COMMON/certs
+      CREDENTIALS_PATH: $SNAP_COMMON/credentials
+
+  wott-agent:
+    command: wott-agent
+    plugs:
+      - firewall-control
+      - hardware-observe
+      - network
+      - network-observe
+      - network-control
+      - system-observe
+      - account-control
+      - log-observe
+      - tpm
+    environment:
+      XTABLES_LIBDIR: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/xtables
+      CONFIG_PATH: $SNAP_DATA
+      CERT_PATH: $SNAP_COMMON/certs
+      CREDENTIALS_PATH: $SNAP_COMMON/credentials
+
+  ghostunnel:
+    command: ghostunnel
+    plugs:
+      - network
+      - network-bind
+
+  server:
+    command: server.sh
+    plugs:
+      - network
+      - network-bind
+
+  client:
+    command: client.sh
+    plugs:
+      - network
+      - network-bind
+
+  verify-cert:
+    command: openssl verify -CAfile "$SNAP_DATA/ca.crt" "$SNAP_DATA/client.crt"
+
+  inspect-cert:
+    command: openssl x509 -in "$SNAP_DATA/client.crt" -text -noout
+
+
+slots:
+  wott-certs:
+    content: wott-certs
+    interface: content
+    read:
+      - $SNAP_DATA
+
+parts:
+  snapcraft-preload:
+    source: https://github.com/diddlesnaps/snapcraft-preload.git
+    source-type: git
+    source-branch: semaphore-support
+    plugin: cmake
+    build-packages:
+      - on amd64:
+        - gcc-multilib
+        - g++-multilib
+      - else:
+        - gcc
+        - g++
+
+  wott-agent:
+    plugin: python
+    python-version: python3
+    source: .
+    requirements:
+      - requirements.txt
+    build-packages:
+      - python3-git
+      - libffi-dev
+      - libffi6
+      - libssl-dev
+      - pkg-config
+      - libsystemd0
+      - libsystemd-dev
+    stage-packages:
+      - iptables
+      - python3-selinux
+      - python3-apparmor
+
+  ghostunnel:
+    plugin: go
+    go-importpath: github.com/square/ghostunnel
+    source: https://github.com/square/ghostunnel.git
+    source-tag: v1.3.0
+    build-packages:
+      - build-essential
+      - libltdl-dev
+    stage-packages:
+      - libltdl7
+
+  tools:
+    source: bin/
+    plugin: dump
+    organize:
+        '*': bin/

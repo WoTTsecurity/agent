@@ -25,7 +25,7 @@ In addition to this, we also provide:
 
 For more details and installation instructions, please see our [Getting Started Guide](https://wott.io/documentation/getting-started).
 
-You can also browser our [Use cases](https://wott.io/documentation/use-cases) for more inspiration.
+You can also browser our [Use Cases](https://wott.io/documentation/use-cases) for more inspiration.
 
 ## Supported operating systems
 

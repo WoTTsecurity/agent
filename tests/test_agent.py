@@ -12,22 +12,44 @@ import agent
 from agent.journal_helper import logins_last_hour
 from agent.rpi_helper import detect_raspberry_pi
 from agent.iptables_helper import block_networks, block_ports, OUTPUT_CHAIN, INPUT_CHAIN
-from agent.security_helper import check_for_default_passwords
+from agent.security_helper import check_for_default_passwords, selinux_status
 from agent import executor
 import pwd
 from os import getenv
 
 
-def test_detect_raspberry_pi(raspberry_cpuinfo):
-    with mock.patch(
-            'builtins.open',
-            mock.mock_open(read_data=raspberry_cpuinfo),
-            create=True
-    ):
+def test_detect_raspberry_pi():
+    class mockPath():
+        def __init__(self, filename):
+            self._filename = filename
+
+        def is_file(self):
+            return True
+
+        def open(self):
+            return mock_open(self._filename)
+
+    def mock_open(filename, mode='r'):
+        """
+        This will return either a Unicode string needed for "r" mode or bytes for "rb" mode.
+        The contents are still the same which is the mock sshd_config. But they are only interpreted
+        by audit_sshd.
+        """
+        if filename == '/proc/device-tree/model':
+            content = 'Raspberry Pi 3 Model B Plus Rev 1.3\x00'
+        elif filename == '/proc/device-tree/serial-number':
+            content = '0000000060e3b222\x00'
+        else:
+            raise FileNotFoundError
+        file_object = mock.mock_open(read_data=content).return_value
+        file_object.__iter__.return_value = content.splitlines(True)
+        return file_object
+
+    with mock.patch('agent.rpi_helper.Path', mockPath):
         metadata = detect_raspberry_pi()
         assert metadata['is_raspberry_pi']
-        assert metadata['hardware_model'] == '900092'
-        assert metadata['serial_number'] == '00000000ebd5f1e8'
+        assert metadata['hardware_model'] == 'Raspberry Pi 3 Model B Plus Rev 1.3'
+        assert metadata['serial_number'] == '0000000060e3b222'
 
 
 def test_failed_logins():
@@ -532,8 +554,7 @@ def test_fetch_device_metadata(tmpdir):
             'string': 'test string value',
             'array': [1, 2, 3, 4, 5, 'penelopa'],
             'test': 'value',
-            'model': 'a020d3',
-            'model-decoded': 'Pi 3 Model B+'
+            'model': 'Pi 3 Model B+'
         }
     )
     mock_resp.return_value.ok = True
@@ -556,8 +577,7 @@ def test_fetch_device_metadata(tmpdir):
                 'string': 'test string value',
                 'array': [1, 2, 3, 4, 5, 'penelopa'],
                 'test': 'value',
-                'model': 'a020d3',
-                'model-decoded': 'Pi 3 Model B+'
+                'model': 'Pi 3 Model B+'
             }
 
         chm.assert_has_calls([
@@ -950,3 +970,19 @@ def test_no_locker(tmpdir):
 def test_independent_lockers(tmpdir):
     one, two, both = _is_parallel(tmpdir, True, True)
     assert (one, two, both) == (False, False, True)
+
+
+def test_selinux_status():
+    with mock.patch('selinux.is_selinux_enabled') as selinux_enabled,\
+            mock.patch('selinux.security_getenforce') as getenforce:
+
+        selinux_enabled.return_value = 1
+        getenforce.return_value = 1
+        assert selinux_status() == {'enabled': True, 'mode': 'enforcing'}
+
+        selinux_enabled.return_value = 1
+        getenforce.return_value = 0
+        assert selinux_status() == {'enabled': True, 'mode': 'permissive'}
+
+        selinux_enabled.return_value = 0
+        assert selinux_status() == {'enabled': False, 'mode': None}

@@ -1,5 +1,6 @@
 import hashlib
 import os
+from pathlib import Path
 from enum import Enum
 import pkg_resources
 
@@ -13,18 +14,16 @@ def detect_raspberry_pi():
         'serial_number': None
     }
 
-    with open('/proc/cpuinfo') as f:
-        cpuinfo = f.readlines()
+    proc_model = Path('/proc/device-tree/model')
+    proc_serial = Path('/proc/device-tree/serial-number')
 
-    # Assume it is a Raspberry Pi if these three elements are present.
-    metadata['is_raspberry_pi'] = 'Hardware' in str(cpuinfo) and 'Revision' in str(cpuinfo) and 'Serial' in str(cpuinfo)
+    if proc_model.is_file():
+        model = proc_model.open().read().strip('\0')
+        metadata['hardware_model'] = model
+        metadata['is_raspberry_pi'] = model.startswith('Raspberry Pi')
 
-    if metadata['is_raspberry_pi']:
-        for line in cpuinfo:
-            if line.startswith('Revision'):
-                metadata['hardware_model'] = line.split()[-1]
-            if line.startswith('Serial'):
-                metadata['serial_number'] = line.split()[-1]
+    if proc_serial.is_file():
+        metadata['serial_number'] = proc_serial.open().read().strip('\0')
 
     return metadata
 

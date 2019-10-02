@@ -12,3 +12,6 @@ export PYBUILD_NAME=wott-agent
 
 override_dh_auto_test:
 	# Don't run the tests!
+
+override_dh_gencontrol:
+	dh_gencontrol -- -Vdist:Depends="$(EXTRA_DEPS)"

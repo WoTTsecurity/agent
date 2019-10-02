@@ -10,7 +10,7 @@ jobs:
           command: |
             apt update
             apt install -y python3-pip python3-netifaces python3-requests python3-tz python3-iptables python3-systemd \
-            python3-psutil python3-apt devscripts python3-all ruby-dev
+            python3-psutil python3-apt python3-selinux python3-apparmor devscripts python3-all ruby-dev
             pip3 install -r requirements-dev.txt
       - run:
           name: Run linting and metrics
@@ -23,10 +23,15 @@ jobs:
       - run:
           name: Build dpkg packages
           command: |
-            mkdir -p /tmp/deb/jessie
+            mkdir -p /tmp/deb/jessie /tmp/deb/stretch /tmp/deb/buster
             python3 -c 'import version; version.write_changelog()'
+
+            debuild -e CIRCLE_BUILD_NUM --set-envvar=EXTRA_DEPS=python3-distutils -i -us -uc -b
+            mv ../*.deb /tmp/deb/buster
+
             debuild -e CIRCLE_BUILD_NUM -i -us -uc -b
-            mv ../*.deb /tmp/deb
+            mv ../*.deb /tmp/deb/stretch
+
             cp -v debian/jessie/* debian/
             debuild -e CIRCLE_BUILD_NUM -i -us -uc -b
             mv ../*.deb /tmp/deb/jessie
@@ -34,8 +39,11 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               gem install rake package_cloud
-              for distro in debian/stretch raspbian/stretch debian/buster raspbian/buster ubuntu/xenial; do
-                package_cloud push wott/agent/$distro /tmp/deb/*.deb
+              for distro in debian/buster raspbian/buster ubuntu/bionic; do
+                package_cloud push wott/agent/$distro /tmp/deb/buster/*.deb
+              done
+              for distro in debian/stretch raspbian/stretch ubuntu/xenial; do
+                package_cloud push wott/agent/$distro /tmp/deb/stretch/*.deb
               done
               for distro in debian/jessie raspbian/jessie ubuntu/trusty; do
                 package_cloud push wott/agent/$distro /tmp/deb/jessie/*.deb

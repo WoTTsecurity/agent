@@ -248,6 +248,7 @@ PermitEmptyPasswords no
 # another comment
 PermitRootLogin   "yes"
 Protocol  "2,1"
+# PasswordAuthentication param's default value is gonna be checked
 
 AnotherOption another value
 """

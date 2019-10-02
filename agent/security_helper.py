@@ -4,6 +4,7 @@ import socket
 import os
 from pathlib import Path
 from socket import SocketKind
+import copy
 
 import psutil
 import spwd
@@ -148,14 +149,17 @@ AUDITED_CONFIG_FILES = [
     '/etc/shadow',
     '/etc/group'
 ]
+
 SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
-SSHD_CONFIG_DEFAULTS = {
-    'PermitEmptyPasswords': 'no',
-    'PermitRootLogin': 'yes',
-    'PasswordAuthentication': 'yes',
-    'AllowAgentForwarding': 'yes',
-    'Protocol': '2,1'
+# Value: (default, safe).
+SSHD_CONFIG_PARAMS_INFO = {
+    'PermitEmptyPasswords': ['no', 'no'],
+    'PermitRootLogin': ['yes', 'no'],
+    'PasswordAuthentication': ['yes', 'no'],
+    'AllowAgentForwarding': ['yes', 'no'],
+    'Protocol': ['2', '2']
 }
+
 BLOCK_SIZE = 64 * 1024
 
 
@@ -200,9 +204,26 @@ def audit_sshd():
     Read and parse SSHD_CONFIG_PATH, detect all unsafe parameters.
     :return: a dict where key is an unsafe parameter and value is its (unsafe) value.
     """
-    issues = {}
-    config = SSHD_CONFIG_DEFAULTS.copy()
+    sshd_version = None
+    try:
+        from sh import sshd
+    except ImportError:
+        pass
+    else:
+        sshd_help = sshd(['--help'], _ok_code=[1]).stderr
+        sshd_help_lines = sshd_help.splitlines()
+        for l in sshd_help_lines:
+            if l.startswith(b'OpenSSH_'):
+                sshd_version = float(l.lstrip(b'OpenSSH_')[:3])
+                break
+    config = copy.deepcopy(SSHD_CONFIG_PARAMS_INFO)
+    if sshd_version is not None and sshd_version >= 7.0:
+        # According to https://www.openssh.com/releasenotes.html those things were changed in 7.0.
+        del (config['Protocol'])
+        config['PermitRootLogin'][0] = 'prohibit-password'
 
+    # Fill the dict with default values which are gonna be updated with found config parameters' values.
+    insecure_params = {k: config[k][0] for k in config}
     with open(SSHD_CONFIG_PATH) as sshd_config:
         for line in sshd_config:
             line = line.strip()
@@ -217,11 +238,10 @@ def audit_sshd():
 
             parameter, value = line_split
             value = value.strip('"')
-            if parameter in SSHD_CONFIG_DEFAULTS:
-                config[parameter] = value
-
-    unsafe_yes = ['PermitEmptyPasswords', 'PermitRootLogin', 'PasswordAuthentication', 'AllowAgentForwarding']
-    issues = {parameter: config[parameter] for parameter in unsafe_yes if config[parameter] == 'yes'}
-    if config['Protocol'] != '2':
-        issues['Protocol'] = config['Protocol']
+            if parameter in insecure_params:
+                insecure_params[parameter] = value
+    issues = {}
+    for param in insecure_params:
+        if insecure_params[param] != config[param][1]:
+            issues[param] = insecure_params[param]
     return issues

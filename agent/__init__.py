@@ -407,14 +407,14 @@ def send_ping(dev=False):
             'logins': journal_helper.logins_last_hour(),
             'firewall_rules': iptables_helper.dump(),
             'scan_info': ports,
-            'netstat': connections
+            'netstat': connections,
+            'selinux_status': security_helper.selinux_status(),
+            'app_armor_enabled': security_helper.is_app_armor_enabled()
         })
 
     if CONFINEMENT == Confinement.NONE:
         payload.update({
             'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
-            'selinux_status': security_helper.selinux_status(),
-            'app_armor_enabled': security_helper.is_app_armor_enabled(),
             'audit_files': security_helper.audit_config_files()
         })
 

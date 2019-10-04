@@ -1,5 +1,5 @@
 name: wott-agent
-version: '0.1.5.0-26'
+version: '0.1.5.0-27'
 summary: Web of Trusted Things agent.
 description: |
   tl;dr - WoTT Agent is the Let's Encrypt for IoT.

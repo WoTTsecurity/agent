@@ -414,7 +414,8 @@ def send_ping(dev=False):
         payload.update({
             'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
             'selinux_status': security_helper.selinux_status(),
-            'app_armor_enabled': security_helper.is_app_armor_enabled()
+            'app_armor_enabled': security_helper.is_app_armor_enabled(),
+            'audit_files': security_helper.audit_config_files()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

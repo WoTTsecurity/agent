@@ -1,7 +1,10 @@
 import crypt
+from hashlib import sha256
 import socket
+import os
 from pathlib import Path
 from socket import SocketKind
+import copy
 
 import psutil
 import spwd
@@ -139,3 +142,106 @@ def selinux_status():
             selinux_enabled = True
             selinux_mode = {-1: None, 0: 'permissive', 1: 'enforcing'}[selinux.security_getenforce()]
     return {'enabled': selinux_enabled, 'mode': selinux_mode}
+
+
+AUDITED_CONFIG_FILES = [
+    '/etc/passwd',
+    '/etc/shadow',
+    '/etc/group'
+]
+
+SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
+# Value: (default, safe).
+SSHD_CONFIG_PARAMS_INFO = {
+    'PermitEmptyPasswords': ['no', 'no'],
+    'PermitRootLogin': ['yes', 'no'],
+    'PasswordAuthentication': ['yes', 'no'],
+    'AllowAgentForwarding': ['yes', 'no'],
+    'Protocol': ['2', '2']
+}
+
+BLOCK_SIZE = 64 * 1024
+
+
+def audit_config_files():
+    """
+    For a predefined list of system config files (see AUDITED_CONFIG_FILES)
+    get their last modified time and SHA256 hash.
+    The same info regarding SSHD_CONFIG_PATH is appended (see audit_sshd below),
+    :return: [{'name': ..., 'sha256': ..., 'last_modified': ...}]
+    """
+
+    def digest_sha256(file_path):
+        h = sha256()
+
+        with open(file_path, 'rb') as file:
+            while True:
+                # Reading is buffered, so we can read smaller chunks.
+                chunk = file.read(BLOCK_SIZE)
+                if not chunk:
+                    break
+                h.update(chunk)
+
+        return h.hexdigest()
+
+    def audit_common(file_path):
+        return {
+            'name': file_path,
+            'sha256': digest_sha256(file_path),
+            'last_modified': os.path.getmtime(file_path)
+        }
+
+    audited_files = [audit_common(file_path) for file_path in AUDITED_CONFIG_FILES if os.path.isfile(file_path)]
+    if os.path.isfile(SSHD_CONFIG_PATH):
+        audited_sshd = audit_common(SSHD_CONFIG_PATH)
+        audited_sshd['issues'] = audit_sshd()
+        audited_files.append(audited_sshd)
+    return audited_files
+
+
+def audit_sshd():
+    """
+    Read and parse SSHD_CONFIG_PATH, detect all unsafe parameters.
+    :return: a dict where key is an unsafe parameter and value is its (unsafe) value.
+    """
+    sshd_version = None
+    try:
+        from sh import sshd
+    except ImportError:
+        pass
+    else:
+        sshd_help = sshd(['--help'], _ok_code=[1]).stderr
+        sshd_help_lines = sshd_help.splitlines()
+        for l in sshd_help_lines:
+            if l.startswith(b'OpenSSH_'):
+                sshd_version = float(l.lstrip(b'OpenSSH_')[:3])
+                break
+    config = copy.deepcopy(SSHD_CONFIG_PARAMS_INFO)
+    if sshd_version is not None and sshd_version >= 7.0:
+        # According to https://www.openssh.com/releasenotes.html those things were changed in 7.0.
+        del (config['Protocol'])
+        config['PermitRootLogin'][0] = 'prohibit-password'
+
+    # Fill the dict with default values which are gonna be updated with found config parameters' values.
+    insecure_params = {k: config[k][0] for k in config}
+    with open(SSHD_CONFIG_PATH) as sshd_config:
+        for line in sshd_config:
+            line = line.strip()
+            if not line or line[0] == '#':
+                # skip empty lines and comments
+                continue
+
+            line_split = line.split(maxsplit=1)
+            if len(line_split) != 2:
+                # skip invalid lines
+                continue
+
+            parameter, value = line_split
+            value = value.strip('"')
+            if parameter in insecure_params:
+                insecure_params[parameter] = value
+    issues = {}
+    for param in insecure_params:
+        if insecure_params[param] != config[param][1]:
+            issues[param] = insecure_params[param]
+    return issues

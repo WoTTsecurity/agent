@@ -17,6 +17,7 @@ $ sudo snap connect wott-agent:system-observe :system-observe
 $ sudo snap connect wott-agent:firewall-control :firewall-control
 $ sudo snap connect wott-agent:account-control :account-control
 $ sudo snap connect wott-agent:log-observe :log-observe
+$ sudo snap connect wott-agent:hardware-observe :hardware-observe
 ```
 
 ## Installation: Docker runtime

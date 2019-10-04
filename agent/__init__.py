@@ -48,7 +48,6 @@ DASH_ENDPOINT = WOTT_ENDPOINT.replace('api', 'dash')
 DASH_DEV_PORT = 8000
 WOTT_DEV_PORT = 8001
 MTLS_DEV_PORT = 8002
-CONFINEMENT = detect_confinement()
 
 CONFIG_PATH = os.getenv('CONFIG_PATH', '/opt/wott')
 if CONFINEMENT == Confinement.SNAP:

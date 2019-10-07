@@ -7,7 +7,18 @@
 ```
 $ sudo snap install wott-agent
 ```
-The "unsafe" interfaces needed by this snap are not auto-connected (may change in the future). Manual connection is needed:
+
+Because the Snap version of the agent does not allow you to pass on a claim token, we need to manually pair the node. You can do this by running:
+
+```
+$ sudo wott-agent whoami
+$ sudo wott-agent claim-token
+```
+
+You now need to enter the above information on the [Claim Device](https://dash.wott.io/claim-device/) page to associate your device with the dashboard.
+
+
+You also need to grant the agent "unsafe" interfaces needed by this snap are not auto-connected (may change in the future). To do this, run:
 
 ```
 $ sudo snap connect wott-agent:network-control :network-control

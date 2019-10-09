@@ -388,7 +388,8 @@ def send_ping(dev=False):
         'uptime': get_uptime(),
         'agent_version': str(__version__),
         'confinement': CONFINEMENT.name,
-        'installation': detect_installation().name
+        'installation': detect_installation().name,
+        'os_release': rpi_helper.get_os_release()
     }
 
     if CONFINEMENT != Confinement.SNAP:

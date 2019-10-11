@@ -115,5 +115,10 @@ def get_os_release():
     }
     with os_release.open() as os_release_file:
         lines = os_release_file.read().splitlines()
-        return {PARAM_NAMES[param]: value.strip('"') for param, value in map(lambda line: line.split('=', 1), lines)
-                if param in PARAM_NAMES}
+        os_info = {PARAM_NAMES[param]: value.strip('"') for param, value in map(
+            lambda line: line.split('=', 1), lines) if param in PARAM_NAMES}
+        # Set proper codename for Debian/Raspbian Jessie.
+        if 'codename' not in os_info and os_info.get('distro', '') in ('debian', 'raspbian') and \
+                os_info.get('version', '') == '8':
+            os_info['codename'] = 'jessie'
+        return os_info

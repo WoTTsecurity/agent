@@ -122,3 +122,21 @@ def get_os_release():
                 os_info.get('version', '') == '8':
             os_info['codename'] = 'jessie'
         return os_info
+
+
+def auto_upgrades_enabled():
+    """
+    Checks if auto-updates are enabled on a Debian system.
+    :return: boolean
+    """
+    import apt_pkg
+    apt_pkg.init_config()
+
+    config = apt_pkg.config
+    unattended_upgrade = config.get('APT::Periodic::Unattended-Upgrade')
+    update_package_lists = config.get('APT::Periodic::Update-Package-Lists')
+    allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
+    return unattended_upgrade == '1' and \
+        update_package_lists == '1' and \
+        '${distro_id}:${distro_codename}' in allowed_origins and \
+        '${distro_id}:${distro_codename}-security' in allowed_origins

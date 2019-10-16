@@ -617,7 +617,7 @@ def test_fetch_device_metadata(tmpdir):
 
 def test_enroll_device_ok(tmpdir):
     executor.Locker.LOCKDIR = str(tmpdir)
-    message = "Device d3d301961e6c4095b59583083bdec290.d.wott-dev.local enrolled successfully."
+    message = "Node d3d301961e6c4095b59583083bdec290.d.wott-dev.local enrolled successfully."
 
     mock_resp = mock.Mock()
 
@@ -661,7 +661,7 @@ def test_enroll_device_nok(tmpdir):
             claim_token="762f9d82-4e10-4d8b-826c-ac802219ec47"
         )
         assert prn.error.call_count == 4
-        assert mock.call('Failed to enroll device...') in prn.error.mock_calls
+        assert mock.call('Failed to enroll node...') in prn.error.mock_calls
         assert mock.call('Code:400, Reason:Bad Request') in prn.error.mock_calls
         assert mock.call('claim_token : Claim-token not found') in prn.error.mock_calls
         assert mock.call('key : Pairnig-token not found') in prn.error.mock_calls
@@ -703,11 +703,11 @@ def test_enroll_in_operation_mode_ok(tmpdir):
         mtls.return_value.content = {}
         agent.try_enroll_in_operation_mode('deviceid000', True)
 
-        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the node.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
                                'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
-        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
-        assert mock.call.info('Device deviceid000 enrolled successfully.') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Node Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.info('Node deviceid000 enrolled successfully.') in prn.method_calls
         assert mock.call.info('Update config...') in prn.method_calls
         assert len(prn.method_calls) == 5
         with open(agent.INI_PATH) as f:
@@ -748,17 +748,17 @@ def test_enroll_in_operation_mode_enroll_fail(tmpdir):
         mtls.return_value.content = {}
         agent.try_enroll_in_operation_mode('deviceid000', True)
 
-        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the node.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
                                'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
-        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
-        assert mock.call.error('Failed to enroll device...') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Node Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.error('Failed to enroll node...') in prn.method_calls
         assert mock.call.error('Code:400, Reason:Bad Request') in prn.method_calls
         assert mock.call.error('key : Pairnig-token not found') in prn.method_calls
         assert mock.call.debug('enroll-device :: [RECEIVED] Enroll by token post: 400') in prn.method_calls
         assert mock.call.debug("enroll-device :: [RECEIVED] Enroll by token post: {"
                                "'key': ['Pairnig-token not found']}") in prn.method_calls
-        assert mock.call.error('Device enrolling failed. Will try next time.') in prn.method_calls
+        assert mock.call.error('Node enrolling failed. Will try next time.') in prn.method_calls
         assert len(prn.method_calls) == 9
         with open(agent.INI_PATH) as f:
             assert f.read() == file_content
@@ -783,11 +783,11 @@ def test_enroll_in_operation_mode_already_claimed(tmpdir):
         mtls.return_value.content = {}
         agent.try_enroll_in_operation_mode('deviceid000', True)
 
-        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the node.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
                                'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
-        assert mock.call.debug('[RECEIVED] Get Device Claim Info: TestClaimToken') in prn.method_calls
-        assert mock.call.info('The device is already claimed. No enrolling required.') in prn.method_calls
+        assert mock.call.debug('[RECEIVED] Get Node Claim Info: TestClaimToken') in prn.method_calls
+        assert mock.call.info('The node is already claimed. No enrolling required.') in prn.method_calls
         assert mock.call.info('Update config...') in prn.method_calls
         assert len(prn.method_calls) == 5
         with open(agent.INI_PATH) as f:
@@ -812,7 +812,7 @@ def test_enroll_in_operation_mode_no_claim_info(tmpdir):   # or server error
         mtls.return_value.content = {}
         agent.try_enroll_in_operation_mode('deviceid000', True)
 
-        assert mock.call.info('Enroll token found. Trying to automatically enroll the device.') in prn.method_calls
+        assert mock.call.info('Enroll token found. Trying to automatically enroll the node.') in prn.method_calls
         assert mock.call.debug('\nDASH_ENDPOINT: %s\nWOTT_ENDPOINT: %s\nMTLS_ENDPOINT: %s', 'http://localhost:8000',
                                'http://localhost:8001/api', 'http://localhost:8002/api') in prn.method_calls
         assert mock.call.error('Did not manage to get claim info from the server.') in prn.method_calls

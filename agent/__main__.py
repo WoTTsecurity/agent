@@ -8,13 +8,13 @@ from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
 
 def main():
     actions = {
-        'whoami': (get_device_id, "Print device ID."),
+        'whoami': (get_device_id, "Print node ID."),
         'portscan': (get_open_ports, "Print open ports."),
-        'test-cert': (say_hello, "Validate device certificate."),
+        'test-cert': (say_hello, "Validate node certificate."),
         'claim-token': (get_claim_token, "Print claim token."),
         'claim-url': (get_claim_url, "Print claim URL."),
         'daemon': (run_daemon, "Run as daemon"),
-        'device-metadata': (fetch_device_metadata, "Fetch device specific, secret metadata."),
+        'node-metadata': (fetch_device_metadata, "Fetch node specific, secret metadata."),
         'credentials': (fetch_credentials, "Fetch credentials."),
     }
     help_string = "One of the following:\n\n" + "\n".join(
@@ -23,7 +23,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
         description="""
 Let's Encrypt for IoT (with more bells and whistles).
-When called without arguments, generates device certificate
+When called without arguments, generates node certificate
 or renews it if necessary.
 """,
         prog="wott-agent")

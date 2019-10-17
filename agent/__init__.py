@@ -144,7 +144,7 @@ def generate_device_id():
         '{}/v0.2/generate-id'.format(WOTT_ENDPOINT)
     ).json()
 
-    logger.debug("[RECEIVED] Generate Device ID: {}".format(device_id_request))
+    logger.debug("[RECEIVED] Generate Node ID: {}".format(device_id_request))
 
     return device_id_request['device_id']
 
@@ -279,21 +279,21 @@ def try_enroll_in_operation_mode(device_id, dev):
     enroll_token = get_enroll_token()
     if enroll_token is None:
         return
-    logger.info("Enroll token found. Trying to automatically enroll the device.")
+    logger.info("Enroll token found. Trying to automatically enroll the node.")
 
     setup_endpoints(dev)
-    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
+    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Node Claim Info")
     if response is None or not response.ok:
         logger.error('Did not manage to get claim info from the server.')
         return
-    logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
+    logger.debug("[RECEIVED] Get Node Claim Info: {}".format(response))
     claim_info = response.json()
     if claim_info['claimed']:
-        logger.info('The device is already claimed. No enrolling required.')
+        logger.info('The node is already claimed. No enrolling required.')
     else:
         claim_token = claim_info['claim_token']
         if not enroll_device(enroll_token, claim_token, device_id):
-            logger.error('Device enrolling failed. Will try next time.')
+            logger.error('Node enrolling failed. Will try next time.')
             return
 
     logger.info("Update config...")
@@ -310,16 +310,16 @@ def get_claim_token(dev=False):
     setup_endpoints(dev)
     can_read_cert()
 
-    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Device Claim Info")
+    response = mtls_request('get', 'claimed', dev=dev, requester_name="Get Node Claim Info")
     if response is None or not response.ok:
         logger.error('Did not manage to get claim info from the server.')
         exit(2)
 
-    logger.debug("[RECEIVED] Get Device Claim Info: {}".format(response))
+    logger.debug("[RECEIVED] Get Node Claim Info: {}".format(response))
 
     claim_info = response.json()
     if claim_info['claimed']:
-        logger.error('The device is already claimed.')
+        logger.error('The node is already claimed.')
         exit(1)
     return claim_info['claim_token']
 
@@ -567,10 +567,10 @@ def fetch_device_metadata(dev, logger=logger):
 
     with Locker('dev.metadata'):
         setup_endpoints(dev)
-        logger.info('Fetching device metadata...')
+        logger.info('Fetching node metadata...')
         can_read_cert()
 
-        dev_md_req = mtls_request('get', 'device-metadata', dev=dev, requester_name="Fetching device metadata")
+        dev_md_req = mtls_request('get', 'device-metadata', dev=dev, requester_name="Fetching node metadata")
         if dev_md_req is None or not dev_md_req.ok:
             logger.error('Fetching failed.')
             return
@@ -713,12 +713,12 @@ def enroll_device(enroll_token, claim_token, device_id):
             json=payload
         )
         if not enroll_req.ok:
-            logger.error('Failed to enroll device...')
+            logger.error('Failed to enroll node...')
             _log_request_errors(enroll_req)
             req_error_log('post', 'Enroll by token', enroll_req, caller='enroll-device')
             return False
         else:
-            logger.info('Device {} enrolled successfully.'.format(device_id))
+            logger.info('Node {} enrolled successfully.'.format(device_id))
             return True
     except requests.exceptions.RequestException:
         logger.exception("enroll_device :: rises exception:")
@@ -771,7 +771,7 @@ def run(ping=True, dev=False, logger=logger):
             crt = sign_cert(gen_key['csr'], device_id)
             enroll_token = get_enroll_token()
             if enroll_token is not None:
-                logger.info('Device enrollment token found...')
+                logger.info('Node enrollment token found...')
         elif is_certificate_expired():
             crt = renew_expired_cert(gen_key['csr'], device_id)
         else:
@@ -784,7 +784,7 @@ def run(ping=True, dev=False, logger=logger):
         if enroll_token is None:
             logger.info('Got Claim Token: {}'.format(crt['claim_token']))
             logger.info(
-                'Claim your device: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
+                'Claim your node: {WOTT_ENDPOINT}/claim-device?device_id={device_id}&claim_token={claim_token}'.format(
                     WOTT_ENDPOINT=DASH_ENDPOINT,
                     device_id=device_id,
                     claim_token=crt['claim_token']
@@ -812,7 +812,7 @@ def run(ping=True, dev=False, logger=logger):
         send_ping(dev=dev)
 
         if enroll_token is not None:
-            logger.info('Enroll device by token...')
+            logger.info('Enroll node by token...')
             if enroll_device(enroll_token, crt['claim_token'], device_id):
                 enroll_token = None
 

@@ -39,7 +39,5 @@ Depends: ghostunnel,
  python3.5-pycparser,
  python3.5-ply,
  python3.5-apt,
- python3.5-selinux,
- python3.5-apparmor,
  systemd, systemd-sysv
 Description: Let's Encrypt for IoT (with more bells and whistles).

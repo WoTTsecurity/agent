@@ -415,7 +415,8 @@ def send_ping(dev=False):
     if CONFINEMENT == Confinement.NONE:
         payload.update({
             'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
-            'audit_files': security_helper.audit_config_files()
+            'audit_files': security_helper.audit_config_files(),
+            'auto_upgrades': rpi_helper.auto_upgrades_enabled()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

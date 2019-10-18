@@ -133,10 +133,14 @@ def auto_upgrades_enabled():
     apt_pkg.init_config()
 
     config = apt_pkg.config
-    unattended_upgrade = config.get('APT::Periodic::Unattended-Upgrade')
-    update_package_lists = config.get('APT::Periodic::Update-Package-Lists')
-    allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
-    return unattended_upgrade == '1' and \
-        update_package_lists == '1' and \
-        '${distro_id}:${distro_codename}' in allowed_origins and \
-        '${distro_id}:${distro_codename}-security' in allowed_origins
+    if 'Unattended-Upgrade' in config and 'APT::Periodic' in config:
+        apt_periodic = config.subtree('APT::Periodic')
+        unattended_upgrade = apt_periodic.get('Unattended-Upgrade')
+        update_package_lists = apt_periodic.get('Update-Package-Lists')
+        allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
+        return unattended_upgrade == '1' and \
+            update_package_lists == '1' and \
+            '${distro_id}:${distro_codename}' in allowed_origins and \
+            '${distro_id}:${distro_codename}-security' in allowed_origins
+    else:
+        return False

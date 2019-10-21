@@ -74,9 +74,13 @@ def process_scan():
     processes = []
     for proc in psutil.process_iter():
         try:
-            processes.append(proc.as_dict(attrs=[
-                'pid', 'name', 'cmdline', 'username'
-            ]))
+            proc_info = proc.as_dict(attrs=['pid', 'name', 'cmdline', 'username'])
+            cpuset = Path('/proc/{}/cpuset'.format(proc_info['pid']))
+            if cpuset.exists():
+                with cpuset.open() as cpuset_file:
+                    if cpuset_file.read().startswith('/docker/'):
+                        proc_info['container'] = 'docker'
+            processes.append(proc_info)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return processes

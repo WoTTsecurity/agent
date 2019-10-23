@@ -416,7 +416,8 @@ def send_ping(dev=False):
         payload.update({
             'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
             'audit_files': security_helper.audit_config_files(),
-            'auto_upgrades': rpi_helper.auto_upgrades_enabled()
+            'auto_upgrades': rpi_helper.auto_upgrades_enabled(),
+            'mysql_root_access': security_helper.mysql_root_access()
         })
 
     rpi_metadata = rpi_helper.detect_raspberry_pi()

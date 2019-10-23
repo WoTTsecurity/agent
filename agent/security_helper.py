@@ -1,10 +1,11 @@
+import copy
 import crypt
-from hashlib import sha256
-import socket
 import os
+import socket
+import subprocess
+from hashlib import sha256
 from pathlib import Path
 from socket import SocketKind
-import copy
 
 import psutil
 import spwd
@@ -249,3 +250,17 @@ def audit_sshd():
         if insecure_params[param] != config[param][1]:
             issues[param] = insecure_params[param]
     return issues
+
+
+def mysql_root_access():
+    try:
+        subprocess.check_call(["mysql", "-uroot", "-eSHOW DATABASES;"], timeout=5,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError as e:
+        # Non-zero exit code: can't connect to server, root password is set (code 1 in both cases), or SIGSEGV.
+        if e.returncode == 1:
+            return False
+    except (FileNotFoundError, PermissionError):
+        # Can't execute mysql client.
+        pass

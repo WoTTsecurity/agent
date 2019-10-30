@@ -1,6 +1,7 @@
 import hashlib
 import os
 import platform
+import re
 from pathlib import Path
 from enum import Enum
 import pkg_resources
@@ -147,4 +148,36 @@ def auto_upgrades_enabled():
 
 
 def kernel_cmdline():
-    cmdline_re = r"[\w\-\.]+(\=(\"[\w\W]+\"|[\w\S]+)?)?"
+    """
+    Parses kernel parameters (aka cmdline).
+    :return: A dict where 'name' is kernel parameter name and 'value' is its value or empty string if no value provided.
+    """
+    cmdline_path = Path('/proc/cmdline')
+    cmdline_matches = re.compile(r"([\w\-\.]+)(\=(\"[\w\W]+\"|[\w\S]+)?)?").findall(cmdline_path.read_text())
+    return {name: value.strip('"') for name, _, value in cmdline_matches}
+
+
+def kernel_deb_package():
+    """
+    Finds which currently installed deb package contains the currently running kernel.
+    :return:
+        If the currently running kernel was installed by deb package:
+            a dict where 'source_name' and 'source_version' are the same as returned by get_deb_packages().
+        Otherwise: None
+    """
+    import apt
+
+    boot_image = kernel_cmdline().get('BOOT_IMAGE')
+    if not boot_image:
+        return
+
+    class FileFilter(apt.cache.Filter):
+        def apply(self, pkg):
+            return pkg.is_installed and boot_image in pkg.installed_files
+
+    cache = apt.cache.FilteredCache(apt.Cache())
+    cache.set_filter(FileFilter())
+    kernel_deb = list(cache)
+    if kernel_deb:
+        kernel_package = kernel_deb[0].installed
+        return {'source_name': kernel_package.source_name, 'source_version': kernel_package.source_version}

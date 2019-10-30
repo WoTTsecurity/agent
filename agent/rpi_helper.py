@@ -144,3 +144,7 @@ def auto_upgrades_enabled():
             '${distro_id}:${distro_codename}-security' in allowed_origins
     else:
         return False
+
+
+def kernel_cmdline():
+    cmdline_re = r"[\w\-\.]+(\=(\"[\w\W]+\"|[\w\S]+)?)?"

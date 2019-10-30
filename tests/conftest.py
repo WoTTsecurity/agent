@@ -252,3 +252,8 @@ Protocol  "2,1"
 
 AnotherOption another value
 """
+
+
+@pytest.fixture
+def cmdline():
+    return """one t-wo= fo_ur="fix 1-2asqwe six+\\0123!@#$%^%^&*()_=" se.ven=eight,nine+ten*eleven -"""

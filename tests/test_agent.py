@@ -1016,3 +1016,7 @@ def test_selinux_status():
 
         selinux_enabled.return_value = 0
         assert selinux_status() == {'enabled': False, 'mode': None}
+
+
+def test_kernel_cmdline(cmdline):
+    pass

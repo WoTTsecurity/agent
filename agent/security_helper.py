@@ -1,14 +1,18 @@
 import copy
 import crypt
+import json
 import os
 import socket
 import subprocess
 from hashlib import sha256
 from pathlib import Path
+from sh import lscpu
 from socket import SocketKind
 
 import psutil
 import spwd
+
+from . import rpi_helper
 
 
 def check_for_default_passwords(config_path):
@@ -264,3 +268,65 @@ def mysql_root_access():
     except (FileNotFoundError, PermissionError):
         # Can't execute mysql client.
         pass
+
+
+def cpu_vulnerabilities():
+    """
+    Query sysfs for CPU vulnerabilities mitigation.
+    :return: A dict where
+        'vendor': "Vendor ID" field returned by lscpu.
+        'vulnerable': False if not vulnerable, True if vulnerable, None if in doubt. Present if vendor is GenuineIntel.
+        'mitigations_disabled': whether any mitigation was disabled in kernel cmdline. Present if vulnerable is None.
+    """
+    lscpu_stdout = lscpu('-J').stdout
+    lscpu_json = json.loads(lscpu_stdout)
+    vendor_id = next(e['data'] for e in lscpu_json['lscpu'] if e['field'] == "Vendor ID:")
+    res = {'vendor': vendor_id}
+    if vendor_id != "GenuineIntel":
+        # Not an Intel CPU, most probably not vulnerable
+        return res
+
+    sys_vulnerabilities = Path('/sys/devices/system/cpu/vulnerabilities')
+    if not sys_vulnerabilities.is_dir():
+        # Directory does not exist: either smth is bind-mounted over it or the kernel is too old.
+        vulnerable = None
+    else:
+        vulnerable = False
+        for name in ('l1tf', 'mds', 'meltdown', 'spectre_v1', 'spectre_v2', 'spec_store_bypass'):
+            f = sys_vulnerabilities / name
+            if f.exists():
+                # If CPU is not prone to this vulnerability the status file will start with
+                # 'Not affected' or 'Mitigation: ...'. Otherwise it will start with 'Vulnerable: ...'.
+                if f.read_text().startswith('Vulnerable'):
+                    vulnerable = True
+                    break
+            else:
+                # Status file does not exist: smth is bind-mounted over it or the kernel is not completely patched.
+                vulnerable = None
+                break
+
+    res['vulnerable'] = vulnerable
+
+    # If we can't confidently tell if CPU is vulnerable we search cmdline for mitigation disablement params and let
+    # the server do the rest.
+    if vulnerable is None:
+        mitigations_disabled = False
+        mitigation_cmdline_params = {
+            'nopti': '',
+            'nospectre_v1': '',
+            'nospectre_v2': '',
+            'mds': 'off',
+            'pti': 'off',
+            'mitigations': 'off',
+            'spectre_v2': 'off',
+            'spectre_v2_user': 'off',
+            'spec_store_bypass_disable': 'off'
+        }
+        cmdline = rpi_helper.kernel_cmdline()
+        for pname, pvalue in mitigation_cmdline_params.items():
+            if cmdline.get(pname) == pvalue:
+                mitigations_disabled = True
+                break
+        res['mitigations_disabled'] = mitigations_disabled
+
+    return res

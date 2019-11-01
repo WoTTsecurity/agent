@@ -6,7 +6,6 @@ import socket
 import subprocess
 from hashlib import sha256
 from pathlib import Path
-from sh import lscpu
 from socket import SocketKind
 
 import psutil
@@ -278,6 +277,8 @@ def cpu_vulnerabilities():
         'vulnerable': False if not vulnerable, True if vulnerable, None if in doubt. Present if vendor is GenuineIntel.
         'mitigations_disabled': whether any mitigation was disabled in kernel cmdline. Present if vulnerable is None.
     """
+    from sh import lscpu
+
     lscpu_stdout = lscpu('-J').stdout
     lscpu_json = json.loads(lscpu_stdout)
     vendor_id = next(e['data'] for e in lscpu_json['lscpu'] if e['field'] == "Vendor ID:")

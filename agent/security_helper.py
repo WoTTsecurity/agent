@@ -273,7 +273,7 @@ def cpu_vulnerabilities():
     """
     Query sysfs for CPU vulnerabilities mitigation.
     :return: A dict where
-        'vendor': "Vendor ID" field returned by lscpu.
+        'vendor': "Vendor ID" field returned by lscpu. Possible values: GenuineIntel, AuthenticAMD, ARM.
         'vulnerable': False if not vulnerable, True if vulnerable, None if in doubt. Present if vendor is GenuineIntel.
         'mitigations_disabled': whether any mitigation was disabled in kernel cmdline. Present if vulnerable is None.
     """

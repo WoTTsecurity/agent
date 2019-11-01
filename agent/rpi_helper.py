@@ -180,4 +180,8 @@ def kernel_deb_package():
     kernel_deb = list(cache)
     if kernel_deb:
         kernel_package = kernel_deb[0].installed
-        return {'source_name': kernel_package.source_name, 'source_version': kernel_package.source_version}
+        return {
+            'source_name': kernel_package.source_name,
+            'source_version': kernel_package.source_version,
+            'arch': kernel_package.architecture,
+        }

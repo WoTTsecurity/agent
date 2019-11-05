@@ -1,0 +1,7 @@
+[Unit]
+Description=wott-agent self update
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wott-agent-self-update.sh
+RemainAfterExit=True

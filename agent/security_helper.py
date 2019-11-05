@@ -294,11 +294,11 @@ def cpu_vulnerabilities():
     else:
         vulnerable = False
         for name in ('l1tf', 'mds', 'meltdown', 'spectre_v1', 'spectre_v2', 'spec_store_bypass'):
-            f = sys_vulnerabilities / name
-            if f.exists():
+            status_file = sys_vulnerabilities / name
+            if status_file.is_file():
                 # If CPU is not prone to this vulnerability the status file will start with
                 # 'Not affected' or 'Mitigation: ...'. Otherwise it will start with 'Vulnerable: ...'.
-                if f.read_text().startswith('Vulnerable'):
+                if status_file.read_text().startswith('Vulnerable'):
                     vulnerable = True
                     break
             else:

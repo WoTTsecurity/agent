@@ -1,4 +1,4 @@
 misc/pass_hashes.txt opt/wott
 debian/wott-agent-self-update.timer lib/systemd/system
 debian/wott-agent-self-update.service lib/systemd/system
-debian/wott-agent-self-update.sh usr/local/bin
+debian/wott-agent-self-update.sh opt/wott

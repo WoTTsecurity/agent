@@ -10,7 +10,7 @@ import freezegun
 
 import agent
 from agent.journal_helper import logins_last_hour
-from agent.rpi_helper import detect_raspberry_pi
+from agent.rpi_helper import detect_raspberry_pi, kernel_cmdline
 from agent.iptables_helper import block_networks, block_ports, OUTPUT_CHAIN, INPUT_CHAIN
 from agent.security_helper import check_for_default_passwords, selinux_status
 from agent import executor
@@ -1016,3 +1016,16 @@ def test_selinux_status():
 
         selinux_enabled.return_value = 0
         assert selinux_status() == {'enabled': False, 'mode': None}
+
+
+def test_kernel_cmdline(cmdline):
+    class mockPath():
+        def __init__(self, filename):
+            self._filename = filename
+
+        def read_text(self):
+            return cmdline
+
+    with mock.patch('agent.rpi_helper.Path', mockPath):
+        cmdline = kernel_cmdline()
+        assert cmdline['one'] == ''

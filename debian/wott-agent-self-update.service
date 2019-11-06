@@ -3,5 +3,5 @@ Description=wott-agent self update
 
 [Service]
 Type=oneshot
-ExecStart=/opt/wott/wott-agent-self-update.sh
+ExecStart=/opt/wott/bin/wott-agent-self-update.sh
 RemainAfterExit=True

@@ -1,0 +1,9 @@
+[Unit]
+Description=wott-agent self update daily timer
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,6 +1,5 @@
 import copy
 import crypt
-import json
 import os
 import socket
 import subprocess
@@ -278,10 +277,15 @@ def cpu_vulnerabilities():
         'mitigations_disabled': whether any mitigation was disabled in kernel cmdline. Present if vulnerable is None.
     """
     from sh import lscpu
+    os.environ['LC_ALL'] = 'en_US'  # switch language to English to be able to parse lscpu output.
+    vendor_id = None
+    for line in lscpu().stdout.decode().split('\n'):
+        param = line.split(':', 1)
+        if param and param[0] == 'Vendor ID':
+            vendor_id = param[1].strip()
+            break
+    # TODO: switch LC_ALL back?
 
-    lscpu_stdout = lscpu('-J').stdout
-    lscpu_json = json.loads(lscpu_stdout)
-    vendor_id = next(e['data'] for e in lscpu_json['lscpu'] if e['field'] == "Vendor ID:")
     res = {'vendor': vendor_id}
     if vendor_id != "GenuineIntel":
         # Not an Intel CPU, most probably not vulnerable

@@ -1,7 +1,8 @@
 import pytest
 import socket
-from agent.iptables_helper import DROP_CHAIN
 from unittest.mock import Mock
+
+from agent.iptables_helper import DROP_CHAIN
 
 
 RASPBERRY_FIXTURE = """

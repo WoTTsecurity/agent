@@ -380,7 +380,7 @@ def test_check_for_default_passwords_pos():
                 sp_namp='pi'
             )
         ]
-        assert check_for_default_passwords('/doesntmatter/file.txt')
+        assert check_for_default_passwords('/doesntmatter/file.txt') == ['pi']
 
 
 def test_check_for_default_passwords_neg():
@@ -393,7 +393,7 @@ def test_check_for_default_passwords_neg():
                 sp_namp='pi'
             )
         ]
-        assert not check_for_default_passwords('/doesntmatter/file.txt')
+        assert check_for_default_passwords('/doesntmatter/file.txt') == []
 
 
 def test_audit_config_files(sshd_config):

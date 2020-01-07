@@ -38,14 +38,15 @@ def check_for_default_passwords(config_path):
         crypted = crypt.crypt(plaintext_password, salt)
         return crypted == pwdp
 
+    usernames = set()
     for shadow in spwd.getspall():
         encrypted_password = shadow.sp_pwdp
 
         for password in known_passwords.get(shadow.sp_namp, []):
             if hash_matches(encrypted_password, password):
-                return True
+                usernames.add(shadow.sp_namp)
 
-    return False
+    return list(usernames)
 
 
 def netstat_scan():

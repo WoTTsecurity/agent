@@ -414,7 +414,7 @@ def send_ping(dev=False):
 
     if CONFINEMENT == Confinement.NONE:
         payload.update({
-            'default_password': security_helper.check_for_default_passwords(CONFIG_PATH),
+            'default_password_users': security_helper.check_for_default_passwords(CONFIG_PATH),
             'audit_files': security_helper.audit_config_files(),
             'auto_upgrades': rpi_helper.auto_upgrades_enabled(),
             'mysql_root_access': security_helper.mysql_root_access(),

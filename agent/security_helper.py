@@ -1,6 +1,8 @@
 import copy
 import crypt
+import logging
 import os
+import shutil
 import socket
 import subprocess
 from hashlib import sha256
@@ -11,6 +13,8 @@ import psutil
 import spwd
 
 from . import rpi_helper
+
+logger = logging.getLogger('agent')
 
 
 def check_for_default_passwords(config_path):
@@ -336,3 +340,32 @@ def cpu_vulnerabilities():
         res['mitigations_disabled'] = mitigations_disabled
 
     return res
+
+
+def patch_sshd_config(patch_param, safe_value):
+    if not os.path.isfile(SSHD_CONFIG_PATH):
+        return
+    with open(SSHD_CONFIG_PATH, 'r+') as sshd_config:
+        replaced = False
+        lines = sshd_config.readlines()
+        patched_lines = []
+        for line in lines:
+            patched_lines.append(line)
+            line = line.strip()
+            if not line or line[0] == '#':
+                # skip empty lines and comments
+                continue
+            line_split = line.split(maxsplit=1)
+            if len(line_split) != 2:
+                continue
+            param, value = line_split
+            value = value.strip('"')
+            if param == patch_param and value != safe_value:
+                logger.info('{}: replacing "{}" with "{}"'.format(param, value, safe_value))
+                patched_lines[-1] = param + ' ' + safe_value + '\n'
+                replaced = True
+        if replaced:
+            shutil.copy(SSHD_CONFIG_PATH, SSHD_CONFIG_PATH + '.bup')
+            sshd_config.seek(0, 0)
+            sshd_config.truncate()
+            sshd_config.writelines(patched_lines)

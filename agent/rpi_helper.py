@@ -2,6 +2,7 @@ import hashlib
 import os
 import platform
 import re
+from os.path import isfile
 from pathlib import Path
 from enum import Enum
 import pkg_resources
@@ -46,7 +47,7 @@ class Installation(Enum):
 def detect_confinement():
     if os.getenv('SNAP'):
         return Confinement.SNAP
-    is_docker = 'docker' in open('/proc/1/cgroup', 'rt').read()
+    is_docker = isfile('/proc/1/cgroup') and 'docker' in open('/proc/1/cgroup', 'rt').read()
     if is_docker:
         if os.getenv('BALENA') or os.getenv('RESIN'):
             return Confinement.BALENA

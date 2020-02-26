@@ -830,6 +830,19 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
 
+def patch(name, dev=False):
+    openssh_params = {
+        'openssh-empty-password': ('PermitEmptyPasswords', 'no'),
+        'openssh-root-login': ('PermitRootLogin', 'no'),
+        'openssh-password-auth': ('PasswordAuthentication', 'no'),
+        'openssh-agent-forwarding': ('AllowAgentForwarding', 'no'),
+        'openssh-protocol': ('Protocol', '2')
+    }
+    param, value = openssh_params[name]
+    logger.info('patch "{}"'.format(param))
+    security_helper.patch_sshd_config(param, value)
+
+
 def setup_logging(level=None, log_format="%(message)s", daemon=True):
     """
     Setup logging configuration

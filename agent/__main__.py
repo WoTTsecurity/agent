@@ -2,8 +2,10 @@ import argparse
 import asyncio
 import logging
 
-from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
-from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
+from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, patch, executor
+from . import fetch_credentials, fetch_device_metadata, setup_logging
+
+logger = logging.getLogger('agent')
 
 
 def main():
@@ -17,8 +19,13 @@ def main():
         'node-metadata': (fetch_device_metadata, "Fetch node specific, secret metadata."),
         'credentials': (fetch_credentials, "Fetch credentials."),
     }
-    help_string = "One of the following:\n\n" + "\n".join(
-        ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])
+
+    patches = {
+        'openssh-password-auth': 'Disable password authentication'
+    }
+    patch_help_string = "One of the following:\n" + "\n".join(
+        ["{}\t{}".format(k, v) for k, v in patches.items()])
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description="""
@@ -27,11 +34,15 @@ When called without arguments, generates node certificate
 or renews it if necessary.
 """,
         prog="wott-agent")
-    parser.add_argument('action',
-                        nargs='?',
-                        choices=actions.keys(),
-                        metavar='action',
-                        help=help_string)
+    subparsers = parser.add_subparsers(help='Choose one of the following:', dest='action')
+    for action, desc in actions.items():
+        subparsers.add_parser(action, help=desc[1],
+                              formatter_class=argparse.RawTextHelpFormatter)
+    parser_patch = subparsers.add_parser('patch', help='patch the system', formatter_class=argparse.RawTextHelpFormatter)
+    parser_patch.add_argument('patch_name',
+                        choices=patches.keys(),
+                        metavar='patch_name',
+                        help=patch_help_string)
     parser.add_argument(
         '--dev',
         required=False,
@@ -57,6 +68,8 @@ or renews it if necessary.
     elif args.action == 'daemon':
         logger.info("start in daemon mode...")
         run_daemon(dev=args.dev)
+    elif args.action == 'patch':
+        patch(args.patch_name, dev=args.dev)
     else:
         run(ping=False, dev=args.dev)
         print(actions[args.action][0](dev=args.dev))

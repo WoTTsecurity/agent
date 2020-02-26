@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import logging
 
-from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, executor
+from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, patch, executor
 from . import fetch_credentials, fetch_device_metadata, setup_logging, logger
 
 
@@ -16,9 +16,17 @@ def main():
         'daemon': (run_daemon, "Run as daemon"),
         'node-metadata': (fetch_device_metadata, "Fetch node specific, secret metadata."),
         'credentials': (fetch_credentials, "Fetch credentials."),
+        # 'patch': (patch, "Patch the system")
     }
     help_string = "One of the following:\n\n" + "\n".join(
         ["{: <12} {: <}".format(k, v[1]) for k, v in actions.items()])
+
+    patches = {
+        'openssh-disable-password-auth': 'Disable password authentication'
+    }
+    patch_help_string = "One of the following:\n\n" + "\n".join(
+        ["{} {}".format(k, v) for k, v in patches.items()])
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description="""
@@ -32,6 +40,13 @@ or renews it if necessary.
                         choices=actions.keys(),
                         metavar='action',
                         help=help_string)
+    subparsers = parser.add_subparsers(help='sub-command help')
+    parser_patch = subparsers.add_parser('patch', help='a help')
+    parser_patch.add_argument('patch_name',
+                        nargs='?',
+                        choices=patches.keys(),
+                        metavar='patch',
+                        help=patch_help_string)
     parser.add_argument(
         '--dev',
         required=False,
@@ -57,6 +72,8 @@ or renews it if necessary.
     elif args.action == 'daemon':
         logger.info("start in daemon mode...")
         run_daemon(dev=args.dev)
+    elif args.action == 'patch':
+        print(actions[args.action][0](dev=args.dev))
     else:
         run(ping=False, dev=args.dev)
         print(actions[args.action][0](dev=args.dev))

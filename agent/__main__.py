@@ -21,7 +21,11 @@ def main():
     }
 
     patches = {
-        'openssh-password-auth': 'Disable password authentication'
+        'openssh-empty-password': 'OpenSSH: Disable logins with empty password',
+        'openssh-root-login': 'OpenSSH: Disable root login',
+        'openssh-password-auth': 'OpenSSH: Disable password authentication',
+        'openssh-agent-forwarding': 'OpenSSH: Disable agent forwarding',
+        'openssh-protocol': '\tOpenSSH: Force protocol version 2'
     }
     patch_help_string = "One of the following:\n" + "\n".join(
         ["{}\t{}".format(k, v) for k, v in patches.items()])
@@ -40,9 +44,9 @@ or renews it if necessary.
                               formatter_class=argparse.RawTextHelpFormatter)
     parser_patch = subparsers.add_parser('patch', help='patch the system', formatter_class=argparse.RawTextHelpFormatter)
     parser_patch.add_argument('patch_name',
-                        choices=patches.keys(),
-                        metavar='patch_name',
-                        help=patch_help_string)
+                              choices=patches.keys(),
+                              metavar='patch_name',
+                              help=patch_help_string)
     parser.add_argument(
         '--dev',
         required=False,
@@ -70,6 +74,7 @@ or renews it if necessary.
         run_daemon(dev=args.dev)
     elif args.action == 'patch':
         patch(args.patch_name, dev=args.dev)
+        run(ping=True, dev=args.dev)
     else:
         run(ping=False, dev=args.dev)
         print(actions[args.action][0](dev=args.dev))

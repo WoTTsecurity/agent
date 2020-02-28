@@ -879,3 +879,5 @@ def setup_logging(level=None, log_format="%(message)s", daemon=True):
     logging.getLogger('agent').setLevel(log_level)
     logging.getLogger('agent.iptables_helper').setLevel(log_level)
     logging.getLogger('agent.executor').setLevel(log_level)
+    if log_level != logging.DEBUG:
+        logging.getLogger('sh.command').setLevel(logging.ERROR)

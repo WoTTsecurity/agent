@@ -54,6 +54,7 @@ if CONFINEMENT == Confinement.SNAP:
     Locker.LOCKDIR = CONFIG_PATH
 CERT_PATH = os.getenv('CERT_PATH', os.path.join(CONFIG_PATH, 'certs'))
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', os.path.join(CONFIG_PATH, 'credentials'))
+BACKUPS_PATH = os.path.join(CONFIG_PATH, 'backups')
 
 CLIENT_CERT_PATH = os.path.join(CERT_PATH, 'client.crt')
 CLIENT_KEY_PATH = os.path.join(CERT_PATH, 'client.key')
@@ -65,6 +66,8 @@ SECRET_DEV_METADATA_PATH = os.path.join(CONFIG_PATH, 'device_metadata.json')
 if not os.path.isdir(CONFIG_PATH):
     os.makedirs(CONFIG_PATH)
     os.chmod(CONFIG_PATH, 0o711)
+if not os.path.isdir(BACKUPS_PATH):
+    os.makedirs(BACKUPS_PATH, 0o711)
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
@@ -832,15 +835,15 @@ def run(ping=True, dev=False, logger=logger):
 
 def patch(name, dev=False):
     openssh_params = {
-        'openssh-empty-password': ('PermitEmptyPasswords', 'no'),
-        'openssh-root-login': ('PermitRootLogin', 'no'),
-        'openssh-password-auth': ('PasswordAuthentication', 'no'),
-        'openssh-agent-forwarding': ('AllowAgentForwarding', 'no'),
-        'openssh-protocol': ('Protocol', '2')
+        'openssh-empty-password': 'PermitEmptyPasswords',
+        'openssh-root-login': 'PermitRootLogin',
+        'openssh-password-auth': 'PasswordAuthentication',
+        'openssh-agent-forwarding': 'AllowAgentForwarding',
+        'openssh-protocol': 'Protocol'
     }
-    param, value = openssh_params[name]
+    param = openssh_params[name]
     logger.info('patch "{}"'.format(param))
-    security_helper.patch_sshd_config(param, value)
+    security_helper.patch_sshd_config(param)
 
 
 def setup_logging(level=None, log_format="%(message)s", daemon=True):

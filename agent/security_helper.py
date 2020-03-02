@@ -389,6 +389,12 @@ def patch_sshd_config(patch_param):
             patched_lines.append(safe_value_string)
             replaced = True
         if replaced:
+            if patch_param == 'PasswordAuthentication':
+                yesno = input("Warning: Before you disable password authentication, make sure that you have generated "
+                              "and installed your SSH keys on this server. Failure to do so will result in that you "
+                              "will be locked out. I have have my SSH key(s) installed: [y/N]")
+                if yesno.strip() != 'y':
+                    return
             logger.info('Backing up {} as {}'.format(SSHD_CONFIG_PATH, backup_filename))
             shutil.copy(SSHD_CONFIG_PATH, backup_filename)
             logger.info('Writing {}'.format(SSHD_CONFIG_PATH))

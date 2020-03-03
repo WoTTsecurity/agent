@@ -29,7 +29,7 @@ from agent import journal_helper
 from agent import rpi_helper
 from agent import security_helper
 from agent.executor import Locker
-from agent.rpi_helper import Confinement, detect_confinement, detect_installation, get_deb_packages
+from agent.rpi_helper import Confinement, detect_cloud, detect_confinement, detect_installation, get_deb_packages
 
 
 CONFINEMENT = detect_confinement()
@@ -391,6 +391,7 @@ def send_ping(dev=False):
         'uptime': get_uptime(),
         'agent_version': str(__version__),
         'confinement': CONFINEMENT.name,
+        'cloud': detect_cloud().name,
         'installation': detect_installation().name,
         'os_release': rpi_helper.get_os_release()
     }

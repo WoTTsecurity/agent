@@ -1,3 +1,4 @@
+import email.utils
 import textwrap
 from os import getenv
 
@@ -46,6 +47,6 @@ def write_changelog():
                  distributions='stable',
                  urgency='medium',
                  author="%s <%s>" % debian.changelog.get_maintainer(),
-                 date=debian.changelog.format_date())
+                 date=email.utils.formatdate(None, True))
     ch.add_change(textwrap.indent(msg, '  * '))
     ch.write_to_open_file(open('debian/changelog', 'w'))

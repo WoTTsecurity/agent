@@ -1,16 +1,22 @@
 import copy
 import crypt
+import logging
 import os
+import shutil
 import socket
 import subprocess
+import time
 from hashlib import sha256
 from pathlib import Path
 from socket import SocketKind
 
 import psutil
 import spwd
+from sh import ErrorReturnCode_1, ErrorReturnCode_255
 
 from . import rpi_helper
+
+logger = logging.getLogger('agent')
 
 
 def check_for_default_passwords(config_path):
@@ -336,3 +342,85 @@ def cpu_vulnerabilities():
         res['mitigations_disabled'] = mitigations_disabled
 
     return res
+
+
+def patch_sshd_config(patch_param):
+    from . import BACKUPS_PATH
+
+    default_value, safe_value = SSHD_CONFIG_PARAMS_INFO[patch_param]
+    if not os.path.isfile(SSHD_CONFIG_PATH):
+        logger.error('{} not found'.format(SSHD_CONFIG_PATH))
+        return
+    try:
+        from sh import sshd, service
+    except ImportError:
+        logger.exception('sshd or service executable not found')
+        return
+
+    safe_value_string = '\n# Added by wott-agent on {}\n{} {}\n'.format(time.ctime(), patch_param, safe_value)
+    backup_filename = os.path.join(BACKUPS_PATH, 'sshd_config.' + str(int(time.time())))
+    replaced = False
+
+    with open(SSHD_CONFIG_PATH, 'r+') as sshd_config:
+        safe = False
+        lines = sshd_config.readlines()
+        patched_lines = []
+        for line in lines:
+            patched_lines.append(line)
+            line = line.strip()
+            if not line or line[0] == '#':
+                # skip empty lines and comments
+                continue
+            line_split = line.split(maxsplit=1)
+            if len(line_split) != 2:
+                continue
+            param, value = line_split
+            value = value.strip('"')
+            if param == patch_param:
+                if value != safe_value:
+                    logger.info('{}: replacing "{}" with "{}"'.format(param, value, safe_value))
+                    patched_lines[-1] = safe_value_string
+                    replaced = True
+                    safe = False
+                else:
+                    safe = True
+        if not replaced and not safe and default_value != safe_value:
+            logger.info('{}: replacing default "{}" with "{}"'.format(patch_param, default_value, safe_value))
+            patched_lines.append(safe_value_string)
+            replaced = True
+        if replaced:
+            if patch_param == 'PasswordAuthentication':
+                yesno = input("Warning: Before you disable password authentication, make sure that you have generated "
+                              "and installed your SSH keys on this server. Failure to do so will result in that you "
+                              "will be locked out. I have have my SSH key(s) installed: [y/N]")
+                if yesno.strip() != 'y':
+                    return
+            logger.info('Backing up {} as {}'.format(SSHD_CONFIG_PATH, backup_filename))
+            shutil.copy(SSHD_CONFIG_PATH, backup_filename)
+            logger.info('Writing {}'.format(SSHD_CONFIG_PATH))
+            sshd_config.seek(0, 0)
+            sshd_config.truncate()
+            sshd_config.writelines(patched_lines)
+        else:
+            logger.info('Nothing to patch.')
+            return
+
+    try:
+        sshd('-t')
+    except ErrorReturnCode_255 as e:
+        if e.stderr.startswith(SSHD_CONFIG_PATH.encode()):
+            logger.exception('{} is invalid. Restoring from backup.'.format(SSHD_CONFIG_PATH))
+            shutil.copy(backup_filename, SSHD_CONFIG_PATH)
+        else:
+            logger.exception('something went wrong')
+        return
+
+    try:
+        os_release = rpi_helper.get_os_release()
+        is_debian = os_release.get('distro_root', os_release['distro']) == 'debian'
+        service_name = 'ssh' if is_debian else 'sshd'
+        service([service_name, 'reload'])
+    except ErrorReturnCode_1:
+        logger.exception('failed to reload sshd.')
+    else:
+        logger.info('sshd reloaded.')

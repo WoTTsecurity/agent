@@ -304,7 +304,12 @@ def cpu_vulnerabilities():
         vulnerable = None
     else:
         vulnerable = False
-        for name in ('l1tf', 'mds', 'meltdown', 'spectre_v1', 'spectre_v2', 'spec_store_bypass'):
+        vulns = ['l1tf', 'mds', 'meltdown', 'spectre_v1', 'spectre_v2']
+        if rpi_helper.detect_cloud() != rpi_helper.CloudProvider.AMAZON:
+            # AWS reports no mitigation for those vulnerabilities, as if they are not mitigated at all.
+            # But we decided to trust AWS and assume it's not vulnerable.
+            vulns += ['spec_store_bypass', 'mds']
+        for name in vulns:
             status_file = sys_vulnerabilities / name
             if status_file.is_file():
                 # If CPU is not prone to this vulnerability the status file will start with

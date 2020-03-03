@@ -44,6 +44,13 @@ class Installation(Enum):
     PYTHON_PACKAGE = 2
 
 
+class CloudProvider(Enum):
+    NONE = 0
+    AMAZON = 1
+    GOOGLE = 2
+    MICROSOFT = 3
+
+
 def detect_confinement():
     if os.getenv('SNAP'):
         return Confinement.SNAP
@@ -67,6 +74,21 @@ def detect_installation():
         if isinstance(agent.__version__, pkg_resources.Distribution):
             return Installation.PYTHON_PACKAGE
         return Installation.NONE
+
+
+def detect_cloud():
+    bios_version = Path('/sys/devices/virtual/dmi/id/bios_version')
+    if bios_version.is_file():
+        bios_version = bios_version.read_text().strip()
+        if bios_version == 'Google':
+            return CloudProvider.GOOGLE
+        elif bios_version.endswith('.amazon'):
+            return CloudProvider.AMAZON
+        else:
+            chassis = Path('/sys/devices/virtual/dmi/id/chassis_asset_tag')
+            if chassis.is_file() and chassis.read_text().strip() == '7783-7084-3265-9085-8269-3286-77':
+                return CloudProvider.MICROSOFT
+    return CloudProvider.NONE
 
 
 def get_deb_packages():

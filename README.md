@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/WoTTsecurity/agent.svg?style=svg)](https://circleci.com/gh/WoTTsecurity/agent) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9e165c20e9b04d62a15d1ff7c4736878)](https://www.codacy.com/app/vpetersson/agent) [![wott-agent](https://snapcraft.io/wott-agent/badge.svg)](https://snapcraft.io/wott-agent)
+[![CircleCI](https://circleci.com/gh/WoTTsecurity/agent.svg?style=svg)](https://circleci.com/gh/WoTTsecurity/agent) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9e165c20e9b04d62a15d1ff7c4736878)](https://www.codacy.com/app/vpetersson/agent) [![Known Vulnerabilities](https://snyk.io/test/github/WoTTsecurity/agent/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/WoTTsecurity/agent?targetFile=requirements.txt)
 
 # WoTT Agent
 

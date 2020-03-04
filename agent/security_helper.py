@@ -14,7 +14,7 @@ import psutil
 import spwd
 from sh import ErrorReturnCode_1, ErrorReturnCode_255
 
-from . import rpi_helper
+from .os_helper import kernel_cmdline
 
 logger = logging.getLogger('agent')
 
@@ -339,7 +339,7 @@ def cpu_vulnerabilities():
             'spectre_v2_user': 'off',
             'spec_store_bypass_disable': 'off'
         }
-        cmdline = rpi_helper.kernel_cmdline()
+        cmdline = kernel_cmdline()
         for pname, pvalue in mitigation_cmdline_params.items():
             if cmdline.get(pname) == pvalue:
                 mitigations_disabled = True

@@ -1,5 +1,49 @@
 version: 2
 jobs:
+  build_amazon_linux:
+    docker:
+      - image: amazonlinux:2
+    steps:
+      - checkout
+      - run:
+          name: Install deps
+          command: |
+            yum install -y python3 git  libffi-devel python3-devel systemd-devel python3-rpm ruby-devel gcc gcc-c++ make rpm-build rubygems openssl-devel
+            gem install --no-document fpm
+            pip3 install -U pip wheel setuptools
+      - run:
+          name: Build rpms
+          command: |
+            pkgs=(certifi
+            cffi
+            chardet
+            cryptography
+            idna
+            netifaces
+            psutil
+            pyopenssl
+            python-iptables
+            requests
+            sh
+            pytz
+            setuptools
+            systemd-python
+            ply
+            six
+            pycparser
+            urllib3)
+
+            fpm_cmd="fpm -s python -t rpm --python-bin python3 --python-pip pip3 --log info --python-package-name-prefix=python3"
+            for p in ${pkgs[@]}; do
+              $fpm_cmd $p
+            done
+            $fpm_cmd -d python3-rpm ./setup.py
+
+            mkdir -p /tmp/rpm/amzn
+            mv *.rpm /tmp/rpm/amzn/
+      - store_artifacts:
+          path: /tmp/rpm
+
   build_debian_stretch:
     docker:
       - image: debian:stretch
@@ -58,4 +102,5 @@ workflows:
   version: 2
   build_all:
     jobs:
-      - build_debian_stretch
+      - build_amazon_linux
+#      - build_debian_stretch

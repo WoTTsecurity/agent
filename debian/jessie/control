@@ -40,4 +40,4 @@ Depends: ghostunnel,
  python3.5-ply,
  python3.5-apt,
  systemd, systemd-sysv
-Description: Let's Encrypt for IoT (with more bells and whistles).
+Description: Streamlined security audit for your infrastructure.

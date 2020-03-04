@@ -33,7 +33,7 @@ def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description="""
-Let's Encrypt for IoT (with more bells and whistles).
+Streamlined security audit for your infrastructure.
 When called without arguments, generates node certificate
 or renews it if necessary.
 """,

@@ -304,7 +304,7 @@ def cpu_vulnerabilities():
         vulnerable = None
     else:
         vulnerable = False
-        vulns = ['l1tf', 'mds', 'meltdown', 'spectre_v1', 'spectre_v2']
+        vulns = ['l1tf', 'meltdown', 'spectre_v1', 'spectre_v2']
         if rpi_helper.detect_cloud() != rpi_helper.CloudProvider.AMAZON:
             # AWS reports no mitigation for those vulnerabilities, as if they are not mitigated at all.
             # But we decided to trust AWS and assume it's not vulnerable.

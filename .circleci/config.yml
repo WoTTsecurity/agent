@@ -8,7 +8,9 @@ jobs:
       - run:
           name: Install deps
           command: |
-            yum install -y python3 git  libffi-devel python3-devel systemd-devel python3-rpm ruby-devel gcc gcc-c++ make rpm-build rubygems openssl-devel
+            yum install -y python3 git  libffi-devel python3-devel systemd-devel python3-rpm ruby-devel gcc gcc-c++ make rpm-build rubygems openssl-devel which tar gzip procps
+            gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+            curl -sSL https://get.rvm.io | bash -s stable
             gem install --no-document fpm
             pip3 install -U pip wheel setuptools
       - run:
@@ -33,16 +35,24 @@ jobs:
             pycparser
             urllib3)
 
-            fpm_cmd="fpm -s python -t rpm --python-bin python3 --python-pip pip3 --log info --python-package-name-prefix=python3"
+            fpm_cmd="fpm -s python -t rpm --python-bin python3 --python-pip pip3 --log info --python-package-name-prefix=python3 -d python3"
             for p in ${pkgs[@]}; do
               $fpm_cmd $p
             done
-            $fpm_cmd -d python3-rpm ./setup.py
+            $fpm_cmd -d python3-rpm --iteration $CIRCLE_BUILD_NUM ./setup.py
 
             mkdir -p /tmp/rpm/amzn
             mv *.rpm /tmp/rpm/amzn/
       - store_artifacts:
           path: /tmp/rpm
+      - deploy:
+          command: |
+            bash --login -c "
+              rvm install ruby-2.2
+              rvm --default use ruby-2.2
+              gem install rake package_cloud
+              package_cloud push wott/agent/el/7 /tmp/rpm/amzn/*.rpm
+            "
 
   build_debian_stretch:
     docker:

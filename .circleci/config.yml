@@ -47,12 +47,14 @@ jobs:
           path: /tmp/rpm
       - deploy:
           command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
             bash --login -c "
               rvm install ruby-2.2
               rvm --default use ruby-2.2
               gem install rake package_cloud
-              package_cloud push wott/agent/el/7 /tmp/rpm/amzn/*.rpm
+              package_cloud push wott/agent/el/7 /tmp/rpm/amzn/*.rpm --skip-errors
             "
+            fi
 
   build_debian_stretch:
     docker:

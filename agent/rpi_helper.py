@@ -210,3 +210,15 @@ def kernel_deb_package():
             'source_version': kernel_package.source_version,
             'arch': kernel_package.architecture,
         }
+
+
+def auditd_status():
+    """
+    Check if the `auditd` package is installed.
+    """
+    import apt
+    cache = apt.Cache()
+    try:
+        return cache['auditd'].is_installed
+    except KeyError:
+        return

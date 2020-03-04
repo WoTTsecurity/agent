@@ -422,6 +422,7 @@ def send_ping(dev=False):
             'audit_files': security_helper.audit_config_files(),
             'auto_upgrades': rpi_helper.auto_upgrades_enabled(),
             'mysql_root_access': security_helper.mysql_root_access(),
+            'auditd': rpi_helper.auditd_status(),
             'kernel_package': rpi_helper.kernel_deb_package(),
             'cpu': security_helper.cpu_vulnerabilities()
         })

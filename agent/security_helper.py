@@ -14,7 +14,7 @@ import psutil
 import spwd
 from sh import ErrorReturnCode_1, ErrorReturnCode_255
 
-from .os_helper import kernel_cmdline
+from .os_helper import CloudProvider, detect_cloud, is_debian, kernel_cmdline
 
 logger = logging.getLogger('agent')
 
@@ -305,7 +305,7 @@ def cpu_vulnerabilities():
     else:
         vulnerable = False
         vulns = ['l1tf', 'meltdown', 'spectre_v1', 'spectre_v2']
-        if rpi_helper.detect_cloud() != rpi_helper.CloudProvider.AMAZON:
+        if detect_cloud() != CloudProvider.AMAZON:
             # AWS reports no mitigation for those vulnerabilities, as if they are not mitigated at all.
             # But we decided to trust AWS and assume it's not vulnerable.
             vulns += ['spec_store_bypass', 'mds']
@@ -421,9 +421,7 @@ def patch_sshd_config(patch_param):
         return
 
     try:
-        os_release = rpi_helper.get_os_release()
-        is_debian = os_release.get('distro_root', os_release['distro']) == 'debian'
-        service_name = 'ssh' if is_debian else 'sshd'
+        service_name = 'ssh' if is_debian() else 'sshd'
         service([service_name, 'reload'])
     except ErrorReturnCode_1:
         logger.exception('failed to reload sshd.')

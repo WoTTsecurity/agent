@@ -22,9 +22,10 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 import pytz
 
-from agent import iptables_helper, journal_helper, os_helper, security_helper
+from agent import iptables_helper, journal_helper, security_helper
 from agent.executor import Locker
-from agent.os_helper import Confinement, detect_confinement, detect_cloud, detect_installation, get_packages
+from agent.os_helper import Confinement, auto_upgrades_enabled, detect_confinement, detect_cloud, detect_installation, \
+    detect_raspberry_pi, get_packages, get_os_release, kernel_package
 
 
 CONFINEMENT = detect_confinement()
@@ -127,8 +128,8 @@ def get_certificate_expiration_date():
 
 def time_for_certificate_renewal():
     """ Check if it's time for certificate renewal """
-    return (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) >
-            get_certificate_expiration_date())
+    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) > \
+        get_certificate_expiration_date()
 
 
 def is_certificate_expired():
@@ -389,7 +390,7 @@ def send_ping(dev=False):
         'confinement': CONFINEMENT.name,
         'cloud': detect_cloud().name,
         'installation': detect_installation().name,
-        'os_release': os_helper.get_os_release()
+        'os_release': get_os_release()
     }
 
     if CONFINEMENT != Confinement.SNAP:
@@ -416,13 +417,13 @@ def send_ping(dev=False):
         payload.update({
             'default_password_users': security_helper.check_for_default_passwords(CONFIG_PATH),
             'audit_files': security_helper.audit_config_files(),
-            'auto_upgrades': os_helper.auto_upgrades_enabled(),
+            'auto_upgrades': auto_upgrades_enabled(),
             'mysql_root_access': security_helper.mysql_root_access(),
-            'kernel_package': os_helper.kernel_package(),
+            'kernel_package': kernel_package(),
             'cpu': security_helper.cpu_vulnerabilities()
         })
 
-    rpi_metadata = os_helper.detect_raspberry_pi()
+    rpi_metadata = detect_raspberry_pi()
     if rpi_metadata['is_raspberry_pi']:
         payload.update({
             'device_manufacturer': 'Raspberry Pi',

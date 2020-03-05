@@ -2,6 +2,7 @@ import hashlib
 import os
 import platform
 import re
+from os.path import isfile
 from pathlib import Path
 from enum import Enum
 import pkg_resources
@@ -41,13 +42,19 @@ class Installation(Enum):
     NONE = 0
     DEB = 1
     PYTHON_PACKAGE = 2
-    RPM = 3
+
+
+class CloudProvider(Enum):
+    NONE = 0
+    AMAZON = 1
+    GOOGLE = 2
+    MICROSOFT = 3
 
 
 def detect_confinement():
     if os.getenv('SNAP'):
         return Confinement.SNAP
-    is_docker = 'docker' in open('/proc/1/cgroup', 'rt').read()
+    is_docker = isfile('/proc/1/cgroup') and 'docker' in open('/proc/1/cgroup', 'rt').read()
     if is_docker:
         if os.getenv('BALENA') or os.getenv('RESIN'):
             return Confinement.BALENA
@@ -57,15 +64,27 @@ def detect_confinement():
     return Confinement.NONE
 
 
+def is_debian():
+    os_release = get_os_release()
+    return os_release.get('distro_root', os_release['distro']) == 'debian'
+
+
 def detect_installation():
-    # For apt-based distros.
-    try:
-        import apt
-    except ModuleNotFoundError:
+    if is_debian():
+        # For apt-based distros.
+        try:
+            import apt
+        except ImportError:
+            pass
+        else:
+            cache = apt.Cache()
+            if __file__ in cache['wott-agent'].installed_files:
+                return Installation.DEB
+    else:
         # For rpm-based distros.
         try:
             import rpm
-        except ModuleNotFoundError:
+        except ImportError:
             pass
         else:
             ts = rpm.ts()
@@ -74,21 +93,46 @@ def detect_installation():
                 package_header = mi.__next__()
                 if __file__.encode() in package_header[rpm.RPMTAG_FILENAMES]:
                     return Installation.RPM
-    else:
-        cache = apt.Cache()
-        if __file__ in cache['wott-agent'].installed_files:
-            return Installation.DEB
     # Other.
     if isinstance(agent.__version__, pkg_resources.Distribution):
         return Installation.PYTHON_PACKAGE
     return Installation.NONE
 
 
+def detect_cloud():
+    bios_version = Path('/sys/devices/virtual/dmi/id/bios_version')
+    if bios_version.is_file():
+        bios_version = bios_version.read_text().strip()
+        if bios_version == 'Google':
+            return CloudProvider.GOOGLE
+        elif bios_version.endswith('.amazon'):
+            return CloudProvider.AMAZON
+        else:
+            chassis = Path('/sys/devices/virtual/dmi/id/chassis_asset_tag')
+            if chassis.is_file() and chassis.read_text().strip() == '7783-7084-3265-9085-8269-3286-77':
+                return CloudProvider.MICROSOFT
+    return CloudProvider.NONE
+
+
 def get_packages():
-    # For apt-based distros.
-    try:
+    if is_debian():
+        # For apt-based distros.
         import apt
-    except ModuleNotFoundError:
+        cache = apt.Cache()
+        packages = [deb for deb in cache if deb.is_installed]
+        packages_str = str(sorted((deb.installed.package.name, deb.installed.version) for deb in packages))
+        packages_hash = hashlib.md5(packages_str.encode()).hexdigest()
+        return {
+            'hash': packages_hash,
+            'packages': [{
+                'name': deb.installed.package.name,
+                'version': deb.installed.version,
+                'arch': deb.installed.architecture,
+                'source_name': deb.installed.source_name,
+                'source_version': deb.installed.source_version
+            } for deb in packages]
+        }
+    else:
         # For rpm-based distros.
         import rpm
         ts = rpm.ts()
@@ -110,21 +154,6 @@ def get_packages():
                 'source_name': package_header[rpm.RPMTAG_NAME].decode(),
                 'source_version': package_header[rpm.RPMTAG_EVR].decode()
             } for package_header in packages]
-        }
-    else:
-        cache = apt.Cache()
-        packages = [deb for deb in cache if deb.is_installed]
-        packages_str = str(sorted((deb.installed.package.name, deb.installed.version) for deb in packages))
-        packages_hash = hashlib.md5(packages_str.encode()).hexdigest()
-        return {
-            'hash': packages_hash,
-            'packages': [{
-                'name': deb.installed.package.name,
-                'version': deb.installed.version,
-                'arch': deb.installed.architecture,
-                'source_name': deb.installed.source_name,
-                'source_version': deb.installed.source_version
-            } for deb in packages]
         }
 
 
@@ -175,16 +204,34 @@ def auto_upgrades_enabled():
     Checks if auto-updates are enabled on a system.
     :return: boolean
     """
-    # For apt-based distros.
-    try:
+    if is_debian():
+        # For apt-based distros.
         import apt_pkg
-    except ModuleNotFoundError:
+        apt_pkg.init_config()
+        config = apt_pkg.config
+        if 'Unattended-Upgrade' in config and 'APT::Periodic' in config:
+            apt_periodic = config.subtree('APT::Periodic')
+            unattended_upgrade = apt_periodic.get('Unattended-Upgrade')
+            update_package_lists = apt_periodic.get('Update-Package-Lists')
+            allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
+
+            # The following construction is impossible to get right with flake8. Its either E502, or W504, or E127.
+            return unattended_upgrade == '1' and \
+                update_package_lists == '1' and \
+                '${distro_id}:${distro_codename}' in allowed_origins and \
+                '${distro_id}:${distro_codename}-security' in allowed_origins
+    else:
         # For rpm-based distros.
         # 1. check if yum-cron installed
         # 2. check if it's running
         # 3. check if it has proper values in its config file
         import rpm
-        from sh import systemctl
+        try:
+            from sh import systemctl
+        except ImportError:
+            # No systemd - probably yum-cron is not running
+            # TODO: use "service" executable which also works without systemd and on older systems
+            return False
         ts = rpm.ts()
         mi = ts.dbMatch('name', 'yum-cron')
         if mi.count() > 0:  # Package is installed.
@@ -193,18 +240,6 @@ def auto_upgrades_enabled():
                 config = open('/etc/yum/yum-cron.conf').read()
                 if '\ndownload_updates = yes' in config and '\napply_updates = yes' in config:
                     return True
-    else:
-        apt_pkg.init_config()
-        config = apt_pkg.config
-        if 'Unattended-Upgrade' in config and 'APT::Periodic' in config:
-            apt_periodic = config.subtree('APT::Periodic')
-            unattended_upgrade = apt_periodic.get('Unattended-Upgrade')
-            update_package_lists = apt_periodic.get('Update-Package-Lists')
-            allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
-            return unattended_upgrade == '1' and \
-                update_package_lists == '1' and \
-                '${distro_id}:${distro_codename}' in allowed_origins and \
-                '${distro_id}:${distro_codename}-security' in allowed_origins
     return False
 
 
@@ -230,9 +265,26 @@ def kernel_package():
     if not boot_image:
         return
     # For apt-based distros.
-    try:
+    if is_debian():
         import apt
-    except ModuleNotFoundError:
+
+        class FileFilter(apt.cache.Filter):
+            def apply(self, pkg):
+                return pkg.is_installed and boot_image in pkg.installed_files
+
+        cache = apt.cache.FilteredCache(apt.Cache())
+        cache.set_filter(FileFilter())
+        kernel_deb = list(cache)
+        if kernel_deb:
+            kernel_pkg = kernel_deb[0].installed
+            return {
+                'name': kernel_pkg.package.name,
+                'version': kernel_pkg.version,
+                'source_name': kernel_pkg.source_name,
+                'source_version': kernel_pkg.source_version,
+                'arch': kernel_pkg.architecture,
+            }
+    else:
         # For rpm-based distros.
         import rpm
         ts = rpm.ts()
@@ -250,20 +302,4 @@ def kernel_package():
                 # TEMP: pass package name and version.
                 'source_name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
                 'source_version': kernel_pkg[rpm.RPMTAG_EVR].decode()
-            }
-    else:
-        class FileFilter(apt.cache.Filter):
-            def apply(self, pkg):
-                return pkg.is_installed and boot_image in pkg.installed_files
-        cache = apt.cache.FilteredCache(apt.Cache())
-        cache.set_filter(FileFilter())
-        kernel_deb = list(cache)
-        if kernel_deb:
-            kernel_pkg = kernel_deb[0].installed
-            return {
-                'name': kernel_pkg.package.name,
-                'version': kernel_pkg.version,
-                'source_name': kernel_pkg.source_name,
-                'source_version': kernel_pkg.source_version,
-                'arch': kernel_pkg.architecture,
             }

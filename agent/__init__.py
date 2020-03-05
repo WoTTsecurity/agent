@@ -127,8 +127,8 @@ def get_certificate_expiration_date():
 
 def time_for_certificate_renewal():
     """ Check if it's time for certificate renewal """
-    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) > \
-           get_certificate_expiration_date()
+    return (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=RENEWAL_THRESHOLD) >
+            get_certificate_expiration_date())
 
 
 def is_certificate_expired():

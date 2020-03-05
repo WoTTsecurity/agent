@@ -115,4 +115,4 @@ workflows:
   build_all:
     jobs:
       - build_amazon_linux
-#      - build_debian_stretch
+      - build_debian_stretch

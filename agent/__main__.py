@@ -42,7 +42,8 @@ or renews it if necessary.
     for action, desc in actions.items():
         subparsers.add_parser(action, help=desc[1],
                               formatter_class=argparse.RawTextHelpFormatter)
-    parser_patch = subparsers.add_parser('patch', help='patch the system', formatter_class=argparse.RawTextHelpFormatter)
+    parser_patch = subparsers.add_parser('patch', help='patch the system',
+                                         formatter_class=argparse.RawTextHelpFormatter)
     parser_patch.add_argument('patch_name',
                               choices=patches.keys(),
                               metavar='patch_name',

@@ -8,10 +8,11 @@ from typing import Callable
 from typing import Dict
 from typing import Any
 import logging
+
 logger = logging.getLogger('agent.executor')
 
 
-class Executor():
+class Executor:
     MAX_WORKERS = 10
     processes = MAX_WORKERS or os.cpu_count()
     executor = ThreadPoolExecutor(max_workers=processes)

@@ -10,7 +10,7 @@ import freezegun
 
 import agent
 from agent.journal_helper import logins_last_hour
-from agent.rpi_helper import detect_raspberry_pi, kernel_cmdline
+from agent.os_helper import detect_raspberry_pi, kernel_cmdline
 from agent.iptables_helper import block_networks, block_ports, OUTPUT_CHAIN, INPUT_CHAIN
 from agent.security_helper import check_for_default_passwords, selinux_status
 from agent import executor
@@ -45,7 +45,7 @@ def test_detect_raspberry_pi():
         file_object.__iter__.return_value = content.splitlines(True)
         return file_object
 
-    with mock.patch('agent.rpi_helper.Path', mockPath):
+    with mock.patch('agent.os_helper.Path', mockPath):
         metadata = detect_raspberry_pi()
         assert metadata['is_raspberry_pi']
         assert metadata['hardware_model'] == 'Raspberry Pi 3 Model B Plus Rev 1.3'
@@ -1026,6 +1026,6 @@ def test_kernel_cmdline(cmdline):
         def read_text(self):
             return cmdline
 
-    with mock.patch('agent.rpi_helper.Path', mockPath):
+    with mock.patch('agent.os_helper.Path', mockPath):
         cmdline = kernel_cmdline()
         assert cmdline['one'] == ''

@@ -44,7 +44,7 @@ jobs:
             mkdir -p /opt/wott/bin
             cp misc/pass_hashes.txt /opt/wott/
             cp debian/wott-agent-self-update.sh /opt/wott/bin/
-            $fpm_cmd -d python3-rpm --config-files /opt/wott/pass_hashes.txt --config-files /opt/wott/bin/wott-agent-self-update.sh --rpm-systemd debian/wott-agent.service --rpm-systemd debian/wott-agent-self-update.service ./setup.py
+            $fpm_cmd -d python3-rpm --config-files /opt/wott/pass_hashes.txt --config-files /opt/wott/bin/wott-agent-self-update.sh --rpm-systemd debian/wott-agent.service --rpm-systemd debian/wott-agent-self-update.service --python-install-bin /usr/bin --after-install bin/wott-agent.sh ./setup.py
 
             mkdir -p /tmp/rpm/amzn
             mv *.rpm /tmp/rpm/amzn/

@@ -78,7 +78,7 @@ def detect_installation():
             pass
         else:
             cache = apt.Cache()
-            if __file__ in cache['wott-agent'].installed_files:
+            if 'wott-agent' in cache and __file__ in cache['wott-agent'].installed_files:
                 return Installation.DEB
     else:
         # For rpm-based distros.

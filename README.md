@@ -31,9 +31,10 @@ You can also browser our [Use Cases](https://wott.io/documentation/use-cases) fo
 
 | Linux Distribution | Version                              | Comment                                                                                                                                  |
 | -------------      | -------------                        | ----                                                                                                                                     |
-| Ubuntu             | 16.04, 18.04                         |
+| Ubuntu             | 16.04, 18.04                         |                                                                                                                                          |
 | Ubuntu Core        | 16, 18                               | Only works with  [Snap version](https://github.com/WoTTsecurity/agent/blob/master/docs/alternative_installation_methods.md#snap-runtime) |
-| Debian/Raspbian    | Jessie (8), Stretch (9), Buster (10) |
+| Debian/Raspbian    | Jessie (8), Stretch (9), Buster (10) |                                                                                                                                          |
+| Amazon Linux       | 2                                    |                                                                                                                                          |
 
 
 ### Alternative runtime environments

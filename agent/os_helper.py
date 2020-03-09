@@ -7,7 +7,7 @@ from pathlib import Path
 from enum import Enum
 import pkg_resources
 
-import agent
+debian_kernel_pkg_name_re = re.compile(r'(.+-\d+.\d+.\d+-)(\d+)(-.+)')
 
 
 def detect_raspberry_pi():
@@ -94,6 +94,7 @@ def detect_installation():
                 if __file__.encode() in package_header[rpm.RPMTAG_FILENAMES]:
                     return Installation.RPM
     # Other.
+    import agent
     if isinstance(agent.__version__, pkg_resources.Distribution):
         return Installation.PYTHON_PACKAGE
     return Installation.NONE
@@ -253,6 +254,20 @@ def kernel_cmdline():
     return {name: value.strip('"') for name, _, value in cmdline_matches}
 
 
+def get_kernel_deb_package(boot_image_path):
+    import apt
+
+    class FileFilter(apt.cache.Filter):
+        def apply(self, pkg):
+            return pkg.is_installed and boot_image_path in pkg.installed_files
+
+    cache = apt.cache.FilteredCache(apt.Cache())
+    cache.set_filter(FileFilter())
+    kernel_debs = list(cache)
+    if kernel_debs:
+        return kernel_debs[0]
+
+
 def kernel_package():
     """
     Finds which currently installed deb package contains the currently running kernel.
@@ -261,35 +276,26 @@ def kernel_package():
             a dict where 'source_name' and 'source_version' are the same as returned by get_packages().
         Otherwise: None
     """
-    boot_image = kernel_cmdline().get('BOOT_IMAGE')
-    if not boot_image:
+    boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
+    if boot_image_path is None:
         return
-    # For apt-based distros.
     if is_debian():
-        import apt
-
-        class FileFilter(apt.cache.Filter):
-            def apply(self, pkg):
-                return pkg.is_installed and boot_image in pkg.installed_files
-
-        cache = apt.cache.FilteredCache(apt.Cache())
-        cache.set_filter(FileFilter())
-        kernel_deb = list(cache)
-        if kernel_deb:
-            kernel_pkg = kernel_deb[0].installed
+        # For apt-based distros.
+        kernel_pkg = get_kernel_deb_package(boot_image_path)
+        if kernel_pkg is not None:
             return {
-                'name': kernel_pkg.package.name,
-                'version': kernel_pkg.version,
-                'source_name': kernel_pkg.source_name,
-                'source_version': kernel_pkg.source_version,
-                'arch': kernel_pkg.architecture,
+                'name': kernel_pkg.name,
+                'version': kernel_pkg.installed.version,
+                'source_name': kernel_pkg.installed.source_name,
+                'source_version': kernel_pkg.installed.source_version,
+                'arch': kernel_pkg.installed.architecture
             }
     else:
         # For rpm-based distros.
         import rpm
         ts = rpm.ts()
         mi = ts.dbMatch()
-        packages = [package_header for package_header in mi if boot_image.encode() in
+        packages = [package_header for package_header in mi if boot_image_path.encode() in
                     package_header[rpm.RPMTAG_FILENAMES]]
         if packages:
             kernel_pkg = packages[0]
@@ -303,3 +309,72 @@ def kernel_package():
                 'source_name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
                 'source_version': kernel_pkg[rpm.RPMTAG_EVR].decode()
             }
+
+
+def get_latest_same_kernel_deb(name_part0, name_part2):
+    import apt
+    search_pattern = re.compile(name_part0 + r'(\d+)' + name_part2)
+
+    class KernelFilter(apt.cache.Filter):
+        def apply(self, pkg):
+            return pkg.is_installed and search_pattern.match(pkg.name)
+
+    cache = apt.cache.FilteredCache(apt.Cache())
+    cache.set_filter(KernelFilter())
+    return sorted([(int(search_pattern.match(deb.name).group(1)), deb) for deb in cache], reverse=True)[0][1]
+
+
+def get_deb_package_parents(package, packages):
+    parents = set()
+    for deb in packages:
+        found = False
+        for d in deb.installed.dependencies:
+            if found:
+                break
+            for x in d:
+                if x.name == package.name:
+                    parents.add(deb)
+                    found = True
+                    break
+    return parents
+
+
+def get_highest_parents(package, packages, results):
+    """
+    Recursive function for collecting all highest parents of given package.
+    """
+    parents = get_deb_package_parents(package, packages)
+    if parents:
+        for p in parents:
+            get_highest_parents(p, packages, results)
+    else:
+        results.add(package)
+
+
+def kernel_meta_package():
+    """
+    Find currently running kernel package's meta-package name.
+    Currently supports all actual Debian/Ubuntu versions.
+    Steps:
+    1. Find currently running kernel package;
+    2. Find most highest installed version of the same kernel version;
+    3. Find its highest independent (having no parents) parent package in the packages dependencies hierarchy.
+    """
+    import apt
+    boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
+    if boot_image_path is None:
+        return
+    if is_debian():
+        # For apt-based distros.
+        kernel_pkg = get_kernel_deb_package(boot_image_path)
+        if kernel_pkg is not None:
+            match = debian_kernel_pkg_name_re.match(kernel_pkg.name)
+            if match:
+                name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
+                latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])
+                cache = apt.Cache()
+                packages = [deb for deb in cache if deb.is_installed and
+                            deb.installed.package.name.startswith('linux-')]
+                results = set()
+                get_highest_parents(latest_kernel_pkg, packages, results)
+                return results.pop().name

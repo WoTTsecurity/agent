@@ -390,3 +390,4 @@ def kernel_meta_package():
                 results = set()
                 get_highest_parents(latest_kernel_pkg, packages, results)
                 return results.pop().name
+    return None

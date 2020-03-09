@@ -7,7 +7,7 @@ from pathlib import Path
 from enum import Enum
 import pkg_resources
 
-debian_kernel_pkg_name_re = re.compile(r'(.+-\d+.\d+.\d+-)(\d+)(-.+)')
+DEBIAN_KERNEL_PKG_NAME_RE = re.compile(r'(.+-\d+.\d+.\d+-)(\d+)(-.+)')
 
 
 def detect_raspberry_pi():
@@ -255,6 +255,9 @@ def kernel_cmdline():
 
 
 def get_kernel_deb_package(boot_image_path):
+    """
+    Return a deb package instance for the currently running kernel.
+    """
     import apt
 
     class FileFilter(apt.cache.Filter):
@@ -312,27 +315,35 @@ def kernel_package():
 
 
 def get_latest_same_kernel_deb(name_part0, name_part2):
+    """
+    Return the latest version of a deb package for given name parts.
+    """
     import apt
     search_pattern = re.compile(name_part0 + r'(\d+)' + name_part2)
 
     class KernelFilter(apt.cache.Filter):
+        """Filter class for checking for matching with a RE search pattern."""
         def apply(self, pkg):
             return pkg.is_installed and search_pattern.match(pkg.name)
 
     cache = apt.cache.FilteredCache(apt.Cache())
     cache.set_filter(KernelFilter())
-    return sorted([(int(search_pattern.match(deb.name).group(1)), deb) for deb in cache], reverse=True)[0][1]
+    return sorted([(int(search_pattern.match(deb.name).group(1)), deb) for deb in cache],
+                  reverse=True)[0][1]
 
 
 def get_deb_package_parents(package, packages):
+    """
+    Return a set of parent packages for the given package.
+    """
     parents = set()
     for deb in packages:
         found = False
-        for d in deb.installed.dependencies:
+        for dep_list in deb.installed.dependencies:
             if found:
                 break
-            for x in d:
-                if x.name == package.name:
+            for dep in dep_list:
+                if dep.name == package.name:
                     parents.add(deb)
                     found = True
                     break
@@ -345,8 +356,8 @@ def get_highest_parents(package, packages, results):
     """
     parents = get_deb_package_parents(package, packages)
     if parents:
-        for p in parents:
-            get_highest_parents(p, packages, results)
+        for parent in parents:
+            get_highest_parents(parent, packages, results)
     else:
         results.add(package)
 
@@ -358,17 +369,18 @@ def kernel_meta_package():
     Steps:
     1. Find currently running kernel package;
     2. Find most highest installed version of the same kernel version;
-    3. Find its highest independent (having no parents) parent package in the packages dependencies hierarchy.
+    3. Find its highest independent (having no parents) parent package in the
+     packages dependencies hierarchy.
     """
     import apt
     boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
     if boot_image_path is None:
-        return
+        return None
     if is_debian():
         # For apt-based distros.
         kernel_pkg = get_kernel_deb_package(boot_image_path)
         if kernel_pkg is not None:
-            match = debian_kernel_pkg_name_re.match(kernel_pkg.name)
+            match = DEBIAN_KERNEL_PKG_NAME_RE.match(kernel_pkg.name)
             if match:
                 name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
                 latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])

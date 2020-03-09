@@ -1,2 +1,2 @@
 [MESSAGES CONTROL]
-disable=R0201
+disable=R0201,R0903

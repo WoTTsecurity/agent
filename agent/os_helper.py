@@ -373,8 +373,8 @@ def kernel_meta_package():
                 name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
                 latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])
                 cache = apt.Cache()
-                packages = [deb for deb in cache if deb.is_installed and
-                            deb.installed.package.name.startswith('linux-')]
+                packages = [deb for deb in cache
+                            if deb.is_installed and deb.installed.package.name.startswith('linux-')]
                 results = set()
                 get_highest_parents(latest_kernel_pkg, packages, results)
                 return results.pop().name

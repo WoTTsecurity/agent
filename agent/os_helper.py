@@ -7,7 +7,7 @@ from pathlib import Path
 from enum import Enum
 import pkg_resources
 
-DEBIAN_KERNEL_PKG_NAME_RE = re.compile(r'(.+-\d+.\d+.\d+-)(\d+)([\.-].+)')
+DEBIAN_KERNEL_PKG_NAME_RE = re.compile(r'(.+-\d+\.\d+\.\d+-)(\d+)([.-].+)')
 
 
 def detect_raspberry_pi():

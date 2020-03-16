@@ -364,7 +364,7 @@ def get_highest_parents(package, packages, results):
 
 def kernel_meta_package():
     """
-    Find currently running kernel package's meta-package name.
+    Find currently running kernel package's meta-package and return its info.
     Currently supports all actual Debian/Ubuntu versions.
     Steps:
     1. Find currently running kernel package;
@@ -389,5 +389,12 @@ def kernel_meta_package():
                             if deb.is_installed and deb.installed.package.name.startswith('linux-')]
                 results = set()
                 get_highest_parents(latest_kernel_pkg, packages, results)
-                return results.pop().name
+                meta_package = results.pop()
+                return {
+                    'name': meta_package.name,
+                    'version': meta_package.installed.version,
+                    'source_name': meta_package.installed.source_name,
+                    'source_version': meta_package.installed.source_version,
+                    'arch': meta_package.installed.architecture
+                }
     return None

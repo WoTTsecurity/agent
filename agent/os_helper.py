@@ -373,6 +373,8 @@ def kernel_meta_package():
      packages dependencies hierarchy.
     """
     import apt
+    import apt_pkg
+    apt_pkg.init()
     boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
     if boot_image_path is None:
         return None
@@ -395,6 +397,8 @@ def kernel_meta_package():
                     'version': meta_package.installed.version,
                     'source_name': meta_package.installed.source_name,
                     'source_version': meta_package.installed.source_version,
-                    'arch': meta_package.installed.architecture
+                    'arch': meta_package.installed.architecture,
+                    # Latest installed kernel package is newer than running kernel's package.
+                    'reboot_required': apt_pkg.version_compare(latest_kernel_pkg.version, kernel_pkg.version) > 0
                 }
     return None

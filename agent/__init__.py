@@ -59,11 +59,12 @@ COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
 SECRET_DEV_METADATA_PATH = os.path.join(CONFIG_PATH, 'device_metadata.json')
 
-if not os.path.isdir(CONFIG_PATH):
-    os.makedirs(CONFIG_PATH)
-    os.chmod(CONFIG_PATH, 0o711)
-if not os.path.isdir(BACKUPS_PATH):
-    os.makedirs(BACKUPS_PATH, 0o711)
+with Locker('config'):
+    if not os.path.isdir(CONFIG_PATH):
+        os.makedirs(CONFIG_PATH)
+        os.chmod(CONFIG_PATH, 0o711)
+    if not os.path.isdir(BACKUPS_PATH):
+        os.makedirs(BACKUPS_PATH, 0o711)
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.

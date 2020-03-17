@@ -223,13 +223,14 @@ def auto_upgrades_enabled():
             apt_periodic = config.subtree('APT::Periodic')
             unattended_upgrade = apt_periodic.get('Unattended-Upgrade')
             update_package_lists = apt_periodic.get('Update-Package-Lists')
-            allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')
+            allowed_origins = config.subtree('Unattended-Upgrade').value_list('Allowed-Origins')    # Ubuntu
+            origins_pattern = config.subtree('Unattended-Upgrade').value_list('Origins-Pattern')    # Debian
 
-            # The following construction is impossible to get right with flake8. Its either E502, or W504, or E127.
             return unattended_upgrade == '1' and \
                 update_package_lists == '1' and \
-                '${distro_id}:${distro_codename}' in allowed_origins and \
-                '${distro_id}:${distro_codename}-security' in allowed_origins
+                (('${distro_id}:${distro_codename}' in allowed_origins
+                  and '${distro_id}:${distro_codename}-security' in allowed_origins)
+                 or 'origin=Debian,codename=${distro_codename},label=Debian-Security' in origins_pattern)
         return False
     elif is_amazon_linux2():  # For Amazon Linux 2.
         # 1. check if yum-cron installed

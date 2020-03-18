@@ -52,6 +52,7 @@ jobs:
                                     --python-install-bin /usr/bin \
                                     --after-install bin/wott-agent-install.sh \
                                     --before-remove bin/wott-agent-remove.sh \
+                                    --after-upgrade bin/wott-agent-upgrade.sh \
                                     ./setup.py
             mkdir -p /tmp/rpm/amzn
             mv *.rpm /tmp/rpm/amzn/

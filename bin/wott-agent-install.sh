@@ -1,3 +1,4 @@
+#!/bin/bash
 /usr/bin/wott-agent
 systemctl enable wott-agent.service
 systemctl start wott-agent.service

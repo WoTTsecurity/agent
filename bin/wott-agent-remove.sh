@@ -1,3 +1,4 @@
+#!/bin/bash
 systemctl stop wott-agent.service
 systemctl disable wott-agent.service
 systemctl stop wott-agent-self-update.timer

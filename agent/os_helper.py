@@ -330,6 +330,7 @@ def kernel_package_info():
                 'source_name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
                 'source_version': kernel_pkg[rpm.RPMTAG_EVR].decode()
             }
+    return None
 
 
 def get_latest_same_kernel_deb(name_part0, name_part2):

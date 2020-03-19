@@ -25,7 +25,7 @@ import pytz
 from agent import iptables_helper, journal_helper, security_helper
 from agent.executor import Locker
 from agent.os_helper import Confinement, auto_upgrades_enabled, detect_confinement, detect_cloud, detect_installation, \
-    detect_raspberry_pi, get_packages, get_os_release, kernel_package
+    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required
 
 
 CONFINEMENT = detect_confinement()
@@ -419,7 +419,8 @@ def send_ping(dev=False):
             'audit_files': security_helper.audit_config_files(),
             'auto_upgrades': auto_upgrades_enabled(),
             'mysql_root_access': security_helper.mysql_root_access(),
-            'kernel_package': kernel_package(),
+            'kernel_package': kernel_package_info(),
+            'reboot_required': reboot_required(),
             'cpu': security_helper.cpu_vulnerabilities()
         })
 

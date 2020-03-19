@@ -5,9 +5,12 @@ import re
 from os.path import isfile
 from pathlib import Path
 from enum import Enum
+from functools import cmp_to_key
+
 import pkg_resources
 
-import agent
+
+DEBIAN_KERNEL_PKG_NAME_RE = re.compile(r'(linux-image-\d+\.\d+\.\d+-)(\d+)([.-].+)')
 
 
 def detect_raspberry_pi():
@@ -42,6 +45,7 @@ class Installation(Enum):
     NONE = 0
     DEB = 1
     PYTHON_PACKAGE = 2
+    RPM = 3
 
 
 class CloudProvider(Enum):
@@ -69,32 +73,31 @@ def is_debian():
     return os_release.get('distro_root', os_release['distro']) == 'debian'
 
 
+def is_amazon_linux2():
+    """
+    Check if the node is running Amazon Linux 2.
+    """
+    os_release = get_os_release()
+    return os_release.get('codename') == 'amzn2'
+
+
 def detect_installation():
-    if is_debian():
-        # For apt-based distros.
-        try:
-            import apt
-        except ImportError:
-            pass
-        else:
-            cache = apt.Cache()
-            if 'wott-agent' in cache and __file__ in cache['wott-agent'].installed_files:
-                return Installation.DEB
-    else:
-        # For rpm-based distros.
-        try:
-            import rpm
-        except ImportError:
-            pass
-        else:
-            ts = rpm.ts()
-            mi = ts.dbMatch('name', 'wott-agent')
-            if mi.count() > 0:
-                package_header = mi.__next__()
-                if __file__.encode() in package_header[rpm.RPMTAG_FILENAMES]:
-                    return Installation.RPM
+    if is_debian():  # For apt-based distros.
+        import apt
+        cache = apt.Cache()
+        if 'wott-agent' in cache and __file__ in cache['wott-agent'].installed_files:
+            return Installation.DEB
+    elif is_amazon_linux2():  # For Amazon Linux 2.
+        import rpm
+        ts = rpm.ts()
+        package_iterator = ts.dbMatch('name', 'python3-wott-agent')
+        if package_iterator.count() > 0:
+            package_header = next(package_iterator)
+            if __file__.encode() in package_header[rpm.RPMTAG_FILENAMES]:
+                return Installation.RPM
     # Other.
-    if isinstance(agent.__version__, pkg_resources.Distribution):
+    from agent import __version__
+    if isinstance(__version__, pkg_resources.Distribution):
         return Installation.PYTHON_PACKAGE
     return Installation.NONE
 
@@ -115,11 +118,11 @@ def detect_cloud():
 
 
 def get_packages():
-    if is_debian():
-        # For apt-based distros.
+    if is_debian():  # For apt-based distros.
         import apt
         cache = apt.Cache()
         packages = [deb for deb in cache if deb.is_installed]
+        # Calculate packages hash.
         packages_str = str(sorted((deb.installed.package.name, deb.installed.version) for deb in packages))
         packages_hash = hashlib.md5(packages_str.encode()).hexdigest()
         return {
@@ -132,12 +135,19 @@ def get_packages():
                 'source_version': deb.installed.source_version
             } for deb in packages]
         }
-    else:
-        # For rpm-based distros.
+    elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
         ts = rpm.ts()
-        mi = ts.dbMatch()
-        packages = [package_header for package_header in mi]
+        package_iterator = ts.dbMatch()
+        # All packages except for kernel.
+        packages = [package_header for package_header in package_iterator if
+                    package_header[rpm.RPMTAG_NAME].decode() != 'kernel']
+        # Find the newest kernel package.
+        package_iterator = ts.dbMatch('name', 'kernel')
+        kernel_package = sorted([package_header for package_header in package_iterator],
+                                key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
+        packages.append(kernel_package)
+        # Calculate packages hash.
         packages_str = str(
             sorted((package_header[rpm.RPMTAG_NAME].decode(), package_header[rpm.RPMTAG_EVR].decode())
                    for package_header in packages))
@@ -147,14 +157,14 @@ def get_packages():
             'packages': [{
                 'name': package_header[rpm.RPMTAG_NAME].decode(),
                 'version': package_header[rpm.RPMTAG_EVR].decode(),
-                'arch': package_header[rpm.RPMTAG_ARCH].decode() if package_header[rpm.RPMTAG_ARCH] is not None
-                else 'noarch',
+                'arch': package_header[rpm.RPMTAG_ARCH].decode() if package_header[rpm.RPMTAG_ARCH] else 'noarch',
                 # Looks like there's no source name/version in the rpm package info.
                 # TEMP: pass package name and version.
                 'source_name': package_header[rpm.RPMTAG_NAME].decode(),
                 'source_version': package_header[rpm.RPMTAG_EVR].decode()
             } for package_header in packages]
         }
+    return None
 
 
 def get_os_release():
@@ -204,8 +214,7 @@ def auto_upgrades_enabled():
     Checks if auto-updates are enabled on a system.
     :return: boolean
     """
-    if is_debian():
-        # For apt-based distros.
+    if is_debian():  # For apt-based distros.
         import apt_pkg
         apt_pkg.init_config()
         config = apt_pkg.config
@@ -220,8 +229,8 @@ def auto_upgrades_enabled():
                 update_package_lists == '1' and \
                 '${distro_id}:${distro_codename}' in allowed_origins and \
                 '${distro_id}:${distro_codename}-security' in allowed_origins
-    else:
-        # For rpm-based distros.
+        return False
+    elif is_amazon_linux2():  # For Amazon Linux 2.
         # 1. check if yum-cron installed
         # 2. check if it's running
         # 3. check if it has proper values in its config file
@@ -233,14 +242,15 @@ def auto_upgrades_enabled():
             # TODO: use "service" executable which also works without systemd and on older systems
             return False
         ts = rpm.ts()
-        mi = ts.dbMatch('name', 'yum-cron')
-        if mi.count() > 0:  # Package is installed.
+        package_iterator = ts.dbMatch('name', 'yum-cron')
+        if package_iterator.count() > 0:  # Package is installed.
             result = systemctl(['is-active', 'yum-cron'], _ok_code=[0, 3]).stdout.decode().strip()
             if result == 'active':
                 config = open('/etc/yum/yum-cron.conf').read()
                 if '\ndownload_updates = yes' in config and '\napply_updates = yes' in config:
                     return True
-    return False
+        return False
+    return None
 
 
 def kernel_cmdline():
@@ -253,7 +263,39 @@ def kernel_cmdline():
     return {name: value.strip('"') for name, _, value in cmdline_matches}
 
 
-def kernel_package():
+def get_kernel_deb_package(boot_image_path):
+    """
+    Return a deb package instance for the currently running kernel.
+    """
+    import apt
+
+    class FileFilter(apt.cache.Filter):
+        def apply(self, pkg):
+            return pkg.is_installed and boot_image_path in pkg.installed_files
+
+    cache = apt.cache.FilteredCache(apt.Cache())
+    cache.set_filter(FileFilter())
+    kernel_debs = list(cache)
+    if kernel_debs:
+        return kernel_debs[0]
+
+
+def get_kernel_rpm_package(boot_image_path):
+    """
+    Return an rpm package instance for the currently running kernel.
+    """
+    import rpm
+    ts = rpm.ts()
+    package_iterator = ts.dbMatch()
+    boot_image_path_bytes = boot_image_path.encode()
+    packages = [package_header for package_header in package_iterator if boot_image_path_bytes in
+                package_header[rpm.RPMTAG_FILENAMES]]
+    if packages:
+        return packages[0]
+    return None
+
+
+def kernel_package_info():
     """
     Finds which currently installed deb package contains the currently running kernel.
     :return:
@@ -261,38 +303,23 @@ def kernel_package():
             a dict where 'source_name' and 'source_version' are the same as returned by get_packages().
         Otherwise: None
     """
-    boot_image = kernel_cmdline().get('BOOT_IMAGE')
-    if not boot_image:
-        return
-    # For apt-based distros.
-    if is_debian():
-        import apt
-
-        class FileFilter(apt.cache.Filter):
-            def apply(self, pkg):
-                return pkg.is_installed and boot_image in pkg.installed_files
-
-        cache = apt.cache.FilteredCache(apt.Cache())
-        cache.set_filter(FileFilter())
-        kernel_deb = list(cache)
-        if kernel_deb:
-            kernel_pkg = kernel_deb[0].installed
+    boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
+    if boot_image_path is None:
+        return None
+    if is_debian():  # For apt-based distros.
+        kernel_pkg = get_kernel_deb_package(boot_image_path)
+        if kernel_pkg is not None:
             return {
-                'name': kernel_pkg.package.name,
-                'version': kernel_pkg.version,
-                'source_name': kernel_pkg.source_name,
-                'source_version': kernel_pkg.source_version,
-                'arch': kernel_pkg.architecture,
+                'name': kernel_pkg.name,
+                'version': kernel_pkg.installed.version,
+                'source_name': kernel_pkg.installed.source_name,
+                'source_version': kernel_pkg.installed.source_version,
+                'arch': kernel_pkg.installed.architecture
             }
-    else:
-        # For rpm-based distros.
+    else:  # For Amazon Linux 2.
         import rpm
-        ts = rpm.ts()
-        mi = ts.dbMatch()
-        packages = [package_header for package_header in mi if boot_image.encode() in
-                    package_header[rpm.RPMTAG_FILENAMES]]
-        if packages:
-            kernel_pkg = packages[0]
+        kernel_pkg = get_kernel_rpm_package(boot_image_path)
+        if kernel_pkg is not None:
             return {
                 'name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
                 'version': kernel_pkg[rpm.RPMTAG_EVR].decode(),
@@ -303,3 +330,53 @@ def kernel_package():
                 'source_name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
                 'source_version': kernel_pkg[rpm.RPMTAG_EVR].decode()
             }
+    return None
+
+
+def get_latest_same_kernel_deb(name_part0, name_part2):
+    """
+    Return the latest version of a deb package for given name parts.
+    """
+    import apt
+    search_pattern = re.compile(name_part0 + r'(\d+)' + name_part2)
+
+    class KernelFilter(apt.cache.Filter):
+        """Filter class for checking for matching with a RE search pattern."""
+        def apply(self, pkg):
+            return pkg.is_installed and search_pattern.match(pkg.name)
+
+    cache = apt.cache.FilteredCache(apt.Cache())
+    cache.set_filter(KernelFilter())
+    return sorted([(int(search_pattern.match(deb.name).group(1)), deb) for deb in cache],
+                  reverse=True)[0][1]
+
+
+def reboot_required():
+    """
+    Check if reboot required by comparing running kernel package's version
+     with the newest installed kernel package's one.
+    """
+    boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
+    if boot_image_path is None:
+        return None
+    if is_debian():  # For apt-based distros.
+        import apt_pkg
+        apt_pkg.init()
+        kernel_pkg = get_kernel_deb_package(boot_image_path)
+        if kernel_pkg is not None:
+            match = DEBIAN_KERNEL_PKG_NAME_RE.match(kernel_pkg.name)
+            if match:
+                name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
+                latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])
+                return apt_pkg.version_compare(latest_kernel_pkg.installed.version, kernel_pkg.installed.version) > 0
+    else:  # For Amazon Linux 2.
+        import rpm
+        kernel_pkg = get_kernel_rpm_package(boot_image_path)
+        if kernel_pkg is not None:
+            ts = rpm.ts()
+            # Find the newest kernel package.
+            package_iterator = ts.dbMatch('name', 'kernel')
+            latest_kernel_pkg = sorted([package_header for package_header in package_iterator],
+                                       key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
+            return rpm.versionCompare(latest_kernel_pkg, kernel_pkg) > 0
+    return None

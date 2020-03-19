@@ -305,7 +305,7 @@ def kernel_package_info():
     """
     boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
     if boot_image_path is None:
-        return
+        return None
     if is_debian():  # For apt-based distros.
         kernel_pkg = get_kernel_deb_package(boot_image_path)
         if kernel_pkg is not None:

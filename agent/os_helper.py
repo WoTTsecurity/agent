@@ -345,7 +345,6 @@ def reboot_required():
     if boot_image_path is None:
         return None
     if is_debian():  # For apt-based distros.
-        import apt
         import apt_pkg
         apt_pkg.init()
         kernel_pkg = get_kernel_deb_package(boot_image_path)

@@ -84,7 +84,7 @@ jobs:
       - run:
           name: Run linting and metrics
           command: |
-            flake8 ./ --exclude=venv --ignore=E501 --output-file test-reports
+            flake8 ./ --exclude=venv --ignore=E501,W503 --output-file test-reports
       - run:
           name: Run tests
           command: |

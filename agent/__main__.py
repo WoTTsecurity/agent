@@ -2,8 +2,8 @@ import argparse
 import asyncio
 import logging
 
-from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, patch, executor
-from . import fetch_credentials, fetch_device_metadata, setup_logging
+from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, patch, upgrade, executor
+from . import fetch_credentials, fetch_device_metadata, setup_logging, __version__
 
 logger = logging.getLogger('agent')
 
@@ -48,6 +48,9 @@ or renews it if necessary.
                               choices=patches.keys(),
                               metavar='patch_name',
                               help=patch_help_string)
+    parser_upgrade = subparsers.add_parser('upgrade', help='upgrade packages',
+                                           formatter_class=argparse.RawTextHelpFormatter)
+    parser_upgrade.add_argument('packages', metavar='pkg', nargs='+', help='packages to upgrade')
     parser.add_argument(
         '--dev',
         required=False,
@@ -67,14 +70,19 @@ or renews it if necessary.
         setup_logging(level=level, daemon=False,
                       log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    if not args.action:
+    logger.info("wott-agent version "+__version__)
+    action = args.action
+    if not action:
         logger.info("start in ping mode...")
         run(ping=True, dev=args.dev)
-    elif args.action == 'daemon':
+    elif action == 'daemon':
         logger.info("start in daemon mode...")
         run_daemon(dev=args.dev)
-    elif args.action == 'patch':
-        patch(args.patch_name, dev=args.dev)
+    elif action == 'patch':
+        patch(args.patch_name)
+        run(ping=True, dev=args.dev)
+    elif action == 'upgrade':
+        upgrade(args.packages)
         run(ping=True, dev=args.dev)
     else:
         run(ping=False, dev=args.dev)

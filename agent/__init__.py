@@ -833,7 +833,7 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
 
-def patch(name, dev=False):
+def patch(name):
     openssh_params = {
         'openssh-empty-password': 'PermitEmptyPasswords',
         'openssh-root-login': 'PermitRootLogin',
@@ -844,6 +844,11 @@ def patch(name, dev=False):
     param = openssh_params[name]
     logger.info('patch "{}"'.format(param))
     security_helper.patch_sshd_config(param)
+
+
+def upgrade(packages):
+    logger.info('upgrade packages: {}'.format(packages))
+    os_helper.upgrade_packages(packages)
 
 
 def setup_logging(level=None, log_format="%(message)s", daemon=True):

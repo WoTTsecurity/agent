@@ -385,3 +385,19 @@ def reboot_required():
                                            key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
                 return rpm.versionCompare(latest_kernel_pkg, kernel_pkg) > 0
     return None
+
+
+def upgrade_packages(pkg_names):
+    if is_debian():
+        import apt
+        cache = apt.cache.Cache()
+        cache.update(apt.progress.text.AcquireProgress())
+        cache.open()
+        for pkg_name in pkg_names:
+            pkg = cache.get(pkg_name)
+            if pkg and pkg.is_installed and pkg.is_upgradable:
+                pkg.mark_upgrade()
+        cache.commit()
+    else:
+        # TODO: implement for rpm
+        raise NotImplementedError

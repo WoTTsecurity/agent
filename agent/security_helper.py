@@ -14,7 +14,7 @@ import psutil
 import spwd
 from sh import ErrorReturnCode_1, ErrorReturnCode_255
 
-from .os_helper import CloudProvider, detect_cloud, is_debian, kernel_cmdline
+from .os_helper import CloudProvider, detect_cloud, is_debian, kernel_cmdline, confirmation
 
 logger = logging.getLogger('agent')
 
@@ -395,10 +395,10 @@ def patch_sshd_config(patch_param):
             replaced = True
         if replaced:
             if patch_param == 'PasswordAuthentication':
-                yesno = input("Warning: Before you disable password authentication, make sure that you have generated "
-                              "and installed your SSH keys on this server. Failure to do so will result in that you "
-                              "will be locked out. I have have my SSH key(s) installed: [y/N]")
-                if yesno.strip() != 'y':
+                if not confirmation(
+                        "Warning: Before you disable password authentication, make sure that you have generated "
+                        "and installed your SSH keys on this server. Failure to do so will result in that you "
+                        "will be locked out. I have have my SSH key(s) installed:"):
                     return
             logger.info('Backing up {} as {}'.format(SSHD_CONFIG_PATH, backup_filename))
             shutil.copy(SSHD_CONFIG_PATH, backup_filename)

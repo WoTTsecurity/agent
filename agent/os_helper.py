@@ -387,11 +387,18 @@ def reboot_required():
     return None
 
 
+def confirmation(message):
+    yesno = input(message+" [y/N]")
+    return yesno.strip() == 'y'
+
+
 def upgrade_packages(pkg_names):
     """
     Update all passed (as a list) OS packages.
     """
     unique_names = set(pkg_names)
+    message = "The following packages will be upgraded:\n\t{}\nConfirm:"
+    packages = []
     if is_debian():  # For apt-based distros.
         import apt
         cache = apt.cache.Cache()
@@ -400,8 +407,10 @@ def upgrade_packages(pkg_names):
         for pkg_name in unique_names:
             pkg = cache.get(pkg_name)
             if pkg and pkg.is_installed and pkg.is_upgradable:
+                packages.append(pkg_name)
                 pkg.mark_upgrade()
-        cache.commit()
+        if confirmation(message.format(', '.join(packages))):
+            cache.commit()
     elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
         from sh import yum  # pylint: disable=E0401
@@ -409,4 +418,6 @@ def upgrade_packages(pkg_names):
         for pkg_name in unique_names:
             package_iterator = ts.dbMatch('name', pkg_name)
             if package_iterator.count() > 0:
-                yum(['update', '-q', '-y', pkg_name])
+                packages.append(pkg_name)
+        if confirmation(message.format(', '.join(packages))):
+            yum(['update', '-y']+packages)

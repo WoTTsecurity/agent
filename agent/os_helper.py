@@ -318,7 +318,7 @@ def kernel_package_info():
                     'source_version': latest_kernel_pkg.installed.source_version,
                     'arch': latest_kernel_pkg.installed.architecture
                 }
-    else:  # For Amazon Linux 2.
+    elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
         ts = rpm.ts()
         package_iterator = ts.dbMatch('name', 'kernel')
@@ -374,7 +374,7 @@ def reboot_required():
                 name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
                 latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])
                 return apt_pkg.version_compare(latest_kernel_pkg.installed.version, kernel_pkg.installed.version) > 0
-    else:  # For Amazon Linux 2.
+    elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
         kernel_pkg = get_kernel_rpm_package(boot_image_path)
         if kernel_pkg is not None:
@@ -386,3 +386,49 @@ def reboot_required():
                                            key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
                 return rpm.versionCompare(latest_kernel_pkg, kernel_pkg) > 0
     return None
+
+
+def confirmation(message):
+    yesno = input(message + " [y/N]")
+    return yesno.strip() == 'y'
+
+
+def upgrade_packages(pkg_names):
+    """
+    Update all passed (as a list) OS packages.
+    """
+    unique_names = set(pkg_names)
+    message = "The following packages will be upgraded:\n\t{}\nConfirm:"
+    packages = []
+    if is_debian():  # For apt-based distros.
+        import apt
+        cache = apt.cache.Cache()
+        cache.update(apt.progress.text.AcquireProgress())
+        cache.open()
+        for pkg_name in unique_names:
+            pkg = cache.get(pkg_name)
+            if pkg and pkg.is_installed and pkg.is_upgradable:
+                packages.append(pkg_name)
+                pkg.mark_upgrade()
+        if confirmation(message.format(', '.join(packages))):
+            cache.commit()
+    elif is_amazon_linux2():  # For Amazon Linux 2.
+        import rpm
+        from sh import yum  # pylint: disable=E0401
+        ts = rpm.ts()
+
+        # This will be a list like:
+        # package.arch    version    repo
+        list_updates = yum(['list', 'updates', '-q']).stdout
+
+        # This will get a list of "package.arch"
+        updates = [line.split(maxsplit=1)[0] for line in list_updates.splitlines()[1:]]
+        for pkg_name in unique_names:
+            package_iterator = ts.dbMatch('name', pkg_name)
+            for package in package_iterator:
+                # Package may be installed for multiple architectures. Get them all.
+                fullname = b'.'.join((package[rpm.RPMTAG_NAME], package[rpm.RPMTAG_ARCH]))
+                if fullname in updates:
+                    packages.append(fullname.decode())
+        if confirmation(message.format(', '.join(packages))):
+            yum(['update', '-y'] + packages)

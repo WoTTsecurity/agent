@@ -25,7 +25,7 @@ import pytz
 from agent import iptables_helper, journal_helper, security_helper
 from agent.executor import Locker
 from agent.os_helper import Confinement, auto_upgrades_enabled, detect_confinement, detect_cloud, detect_installation, \
-    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required
+    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required, upgrade_packages
 
 
 CONFINEMENT = detect_confinement()
@@ -834,7 +834,7 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
 
-def patch(name, dev=False):
+def patch(name):
     openssh_params = {
         'openssh-empty-password': 'PermitEmptyPasswords',
         'openssh-root-login': 'PermitRootLogin',
@@ -845,6 +845,11 @@ def patch(name, dev=False):
     param = openssh_params[name]
     logger.info('patch "{}"'.format(param))
     security_helper.patch_sshd_config(param)
+
+
+def upgrade(packages):
+    logger.info('upgrade packages: {}'.format(packages))
+    upgrade_packages(packages)
 
 
 def setup_logging(level=None, log_format="%(message)s", daemon=True):

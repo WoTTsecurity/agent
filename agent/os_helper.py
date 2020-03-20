@@ -144,9 +144,10 @@ def get_packages():
                     package_header[rpm.RPMTAG_NAME].decode() != 'kernel']
         # Find the newest kernel package.
         package_iterator = ts.dbMatch('name', 'kernel')
-        kernel_package = sorted([package_header for package_header in package_iterator],
-                                key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
-        packages.append(kernel_package)
+        if package_iterator.count() > 0:
+            kernel_package = sorted([package_header for package_header in package_iterator],
+                                    key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
+            packages.append(kernel_package)
         # Calculate packages hash.
         packages_str = str(
             sorted((package_header[rpm.RPMTAG_NAME].decode(), package_header[rpm.RPMTAG_EVR].decode())
@@ -297,11 +298,7 @@ def get_kernel_rpm_package(boot_image_path):
 
 def kernel_package_info():
     """
-    Finds which currently installed deb package contains the currently running kernel.
-    :return:
-        If the currently running kernel was installed by deb package:
-            a dict where 'source_name' and 'source_version' are the same as returned by get_packages().
-        Otherwise: None
+    Return the newest installed version of the currently running kernel package's info.
     """
     boot_image_path = kernel_cmdline().get('BOOT_IMAGE')
     if boot_image_path is None:
@@ -309,26 +306,33 @@ def kernel_package_info():
     if is_debian():  # For apt-based distros.
         kernel_pkg = get_kernel_deb_package(boot_image_path)
         if kernel_pkg is not None:
-            return {
-                'name': kernel_pkg.name,
-                'version': kernel_pkg.installed.version,
-                'source_name': kernel_pkg.installed.source_name,
-                'source_version': kernel_pkg.installed.source_version,
-                'arch': kernel_pkg.installed.architecture
-            }
+            match = DEBIAN_KERNEL_PKG_NAME_RE.match(kernel_pkg.name)
+            if match:
+                name_parts = match.groups()  # E.g. ('linux-image-4.4.0-', '174', '-generic')
+                latest_kernel_pkg = get_latest_same_kernel_deb(name_parts[0], name_parts[2])
+                return {
+                    'name': latest_kernel_pkg.name,
+                    'version': latest_kernel_pkg.installed.version,
+                    'source_name': latest_kernel_pkg.installed.source_name,
+                    'source_version': latest_kernel_pkg.installed.source_version,
+                    'arch': latest_kernel_pkg.installed.architecture
+                }
     else:  # For Amazon Linux 2.
         import rpm
-        kernel_pkg = get_kernel_rpm_package(boot_image_path)
-        if kernel_pkg is not None:
+        ts = rpm.ts()
+        package_iterator = ts.dbMatch('name', 'kernel')
+        if package_iterator.count() > 0:
+            latest_kernel_pkg = sorted([package_header for package_header in package_iterator],
+                                       key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
             return {
-                'name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
-                'version': kernel_pkg[rpm.RPMTAG_EVR].decode(),
-                'arch': kernel_pkg[rpm.RPMTAG_ARCH].decode() if kernel_pkg[rpm.RPMTAG_ARCH] is not None
+                'name': latest_kernel_pkg[rpm.RPMTAG_NAME].decode(),
+                'version': latest_kernel_pkg[rpm.RPMTAG_EVR].decode(),
+                'arch': latest_kernel_pkg[rpm.RPMTAG_ARCH].decode() if latest_kernel_pkg[rpm.RPMTAG_ARCH] is not None
                 else 'noarch',
                 # Looks like there's no source name/version in the rpm package info.
                 # TEMP: pass package name and version.
-                'source_name': kernel_pkg[rpm.RPMTAG_NAME].decode(),
-                'source_version': kernel_pkg[rpm.RPMTAG_EVR].decode()
+                'source_name': latest_kernel_pkg[rpm.RPMTAG_NAME].decode(),
+                'source_version': latest_kernel_pkg[rpm.RPMTAG_EVR].decode()
             }
     return None
 
@@ -376,7 +380,8 @@ def reboot_required():
             ts = rpm.ts()
             # Find the newest kernel package.
             package_iterator = ts.dbMatch('name', 'kernel')
-            latest_kernel_pkg = sorted([package_header for package_header in package_iterator],
-                                       key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
-            return rpm.versionCompare(latest_kernel_pkg, kernel_pkg) > 0
+            if package_iterator.count() > 0:
+                latest_kernel_pkg = sorted([package_header for package_header in package_iterator],
+                                           key=cmp_to_key(rpm.versionCompare), reverse=True)[0]
+                return rpm.versionCompare(latest_kernel_pkg, kernel_pkg) > 0
     return None

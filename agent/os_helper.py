@@ -388,6 +388,9 @@ def reboot_required():
 
 
 def upgrade_packages(pkg_names):
+    """
+    Update all passed (as a list) OS packages.
+    """
     unique_names = set(pkg_names)
     if is_debian():  # For apt-based distros.
         import apt
@@ -401,7 +404,7 @@ def upgrade_packages(pkg_names):
         cache.commit()
     elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
-        from sh import yum
+        from sh import yum  # pylint: disable=E0401
         ts = rpm.ts()
         for pkg_name in unique_names:
             package_iterator = ts.dbMatch('name', pkg_name)

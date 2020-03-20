@@ -70,7 +70,7 @@ or renews it if necessary.
         setup_logging(level=level, daemon=False,
                       log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    logger.info("wott-agent version "+__version__)
+    logger.info("wott-agent version %s", __version__)
     action = args.action
     if not action:
         logger.info("start in ping mode...")

@@ -25,7 +25,7 @@ import pytz
 from agent import iptables_helper, journal_helper, security_helper
 from agent.executor import Locker
 from agent.os_helper import Confinement, auto_upgrades_enabled, detect_confinement, detect_cloud, detect_installation, \
-    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required
+    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required, upgrade_packages
 
 
 CONFINEMENT = detect_confinement()
@@ -848,7 +848,7 @@ def patch(name):
 
 def upgrade(packages):
     logger.info('upgrade packages: {}'.format(packages))
-    os_helper.upgrade_packages(packages)
+    upgrade_packages(packages)
 
 
 def setup_logging(level=None, log_format="%(message)s", daemon=True):

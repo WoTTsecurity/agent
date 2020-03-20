@@ -317,7 +317,7 @@ def kernel_package_info():
                     'source_version': latest_kernel_pkg.installed.source_version,
                     'arch': latest_kernel_pkg.installed.architecture
                 }
-    elif is_amazon_linux2()::  # For Amazon Linux 2.
+    elif is_amazon_linux2():  # For Amazon Linux 2.
         import rpm
         ts = rpm.ts()
         package_iterator = ts.dbMatch('name', 'kernel')
@@ -415,9 +415,19 @@ def upgrade_packages(pkg_names):
         import rpm
         from sh import yum  # pylint: disable=E0401
         ts = rpm.ts()
+
+        # This will be a list like:
+        # package.arch    version    repo
+        list_updates = yum(['list', 'updates', '-q']).stdout
+
+        # This will get a list of "package.arch"
+        updates = [line.split(maxsplit=1)[0] for line in list_updates.splitlines()[1:]]
         for pkg_name in unique_names:
             package_iterator = ts.dbMatch('name', pkg_name)
-            if package_iterator.count() > 0:
-                packages.append(pkg_name)
+            for package in package_iterator:
+                # Package may be installed for multiple architectures. Get them all.
+                fullname = b'.'.join((package[rpm.RPMTAG_NAME], package[rpm.RPMTAG_ARCH]))
+                if fullname in updates:
+                    packages.append(fullname.decode())
         if confirmation(message.format(', '.join(packages))):
             yum(['update', '-y']+packages)

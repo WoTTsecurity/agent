@@ -388,7 +388,7 @@ def reboot_required():
 
 
 def confirmation(message):
-    yesno = input(message+" [y/N]")
+    yesno = input(message + " [y/N]")
     return yesno.strip() == 'y'
 
 
@@ -430,4 +430,4 @@ def upgrade_packages(pkg_names):
                 if fullname in updates:
                     packages.append(fullname.decode())
         if confirmation(message.format(', '.join(packages))):
-            yum(['update', '-y']+packages)
+            yum(['update', '-y'] + packages)

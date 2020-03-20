@@ -68,3 +68,4 @@ ubnt:ubnt
 user:user
 vcloud:VCloud
 vmware:vmware
+ec2-user:plain_text_password

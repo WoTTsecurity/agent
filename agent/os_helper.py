@@ -406,7 +406,9 @@ def upgrade_packages(pkg_names):
         cache.update(apt.progress.text.AcquireProgress())
         cache.open()
         for pkg_name in unique_names:
-            pkg = cache.get(pkg_name)
+            # Older versions of python3-apt don't provide full dict interface, namely .get().
+            # The result of this expression will either be False or a apt.package.Package instance.
+            pkg = pkg_name in cache and cache[pkg_name]
             if pkg and pkg.is_installed and pkg.is_upgradable:
                 packages.append(pkg_name)
                 pkg.mark_upgrade()

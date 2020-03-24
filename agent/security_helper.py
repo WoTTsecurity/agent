@@ -174,17 +174,22 @@ class SshdConfigParam:
         RANGE = 2
 
     def match(self, val: str) -> bool:
-        return self.safe == val
+        return self._safe == val
 
     def range(self, val: str) -> bool:
-        vmin, vmax = self.safe
+        vmin, vmax = self._safe
         return vmin <= int(val) <= vmax
+
+    @property
+    def safe_value(self) -> str:
+        return self._safe_value
 
     def __init__(self, default, safe, compare=COMPARE.MATCH):
         self.default = default
-        self.safe = safe
+        self._safe = safe
         self.is_safe = {self.COMPARE.MATCH: self.match,
                         self.COMPARE.RANGE: self.range}[compare]
+        self._safe_value = (safe if compare == self.COMPARE.MATCH else str(self._safe[1]))
 
 
 SSHD_CONFIG_PARAMS_INFO = {
@@ -380,7 +385,7 @@ def cpu_vulnerabilities():
 def patch_sshd_config(patch_param):
     from . import BACKUPS_PATH
 
-    default_value, safe_value = SSHD_CONFIG_PARAMS_INFO[patch_param]
+    param_info = SSHD_CONFIG_PARAMS_INFO[patch_param]
     if not os.path.isfile(SSHD_CONFIG_PATH):
         logger.error('{} not found'.format(SSHD_CONFIG_PATH))
         return
@@ -390,7 +395,7 @@ def patch_sshd_config(patch_param):
         logger.exception('sshd or service executable not found')
         return
 
-    safe_value_string = '\n# Added by wott-agent on {}\n{} {}\n'.format(time.ctime(), patch_param, safe_value)
+    safe_value_string = '\n# Added by wott-agent on {}\n{} {}\n'.format(time.ctime(), patch_param, param_info.safe_value)
     backup_filename = os.path.join(BACKUPS_PATH, 'sshd_config.' + str(int(time.time())))
     replaced = False
 
@@ -410,15 +415,15 @@ def patch_sshd_config(patch_param):
             param, value = line_split
             value = value.strip('"')
             if param == patch_param:
-                if value != safe_value:
-                    logger.info('{}: replacing "{}" with "{}"'.format(param, value, safe_value))
+                if not param_info.is_safe(value):
+                    logger.info('{}: replacing "{}" with "{}"'.format(param, value, param_info.safe_value))
                     patched_lines[-1] = safe_value_string
                     replaced = True
                     safe = False
                 else:
                     safe = True
-        if not replaced and not safe and default_value != safe_value:
-            logger.info('{}: replacing default "{}" with "{}"'.format(patch_param, default_value, safe_value))
+        if not replaced and not safe and not param_info.is_safe(param_info.default):
+            logger.info('{}: replacing default "{}" with "{}"'.format(patch_param, param_info.default, param_info.safe_value))
             patched_lines.append(safe_value_string)
             replaced = True
         if replaced:

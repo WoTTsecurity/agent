@@ -6,6 +6,7 @@ import shutil
 import socket
 import subprocess
 import time
+from enum import IntEnum
 from hashlib import sha256
 from pathlib import Path
 from socket import SocketKind
@@ -163,18 +164,45 @@ AUDITED_CONFIG_FILES = [
     '/etc/shadow',
     '/etc/group'
 ]
-
-SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
-# Value: (default, safe).
-SSHD_CONFIG_PARAMS_INFO = {
-    'PermitEmptyPasswords': ['no', 'no'],
-    'PermitRootLogin': ['yes', 'no'],
-    'PasswordAuthentication': ['yes', 'no'],
-    'AllowAgentForwarding': ['yes', 'no'],
-    'Protocol': ['2', '2']
-}
-
 BLOCK_SIZE = 64 * 1024
+SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
+
+
+class SshdConfigParam:
+    class COMPARE(IntEnum):
+        MATCH = 1
+        RANGE = 2
+
+    def match(self, val: str) -> bool:
+        return self.safe == val
+
+    def range(self, val: str) -> bool:
+        vmin, vmax = self.safe
+        return vmin <= int(val) <= vmax
+
+    def __init__(self, default, safe, compare=COMPARE.MATCH):
+        self.default = default
+        self.safe = safe
+        self.is_safe = {self.COMPARE.MATCH: self.match,
+                        self.COMPARE.RANGE: self.range}[compare]
+
+
+SSHD_CONFIG_PARAMS_INFO = {
+    'PermitEmptyPasswords': SshdConfigParam('no', 'no'),
+    'PermitRootLogin': SshdConfigParam('yes', 'no'),
+    'PasswordAuthentication': SshdConfigParam('yes', 'no'),
+    'AllowAgentForwarding': SshdConfigParam('yes', 'no'),
+    'Protocol': SshdConfigParam('2', '2'),
+    'ClientAliveInterval': SshdConfigParam('0', (1, 300), SshdConfigParam.COMPARE.RANGE),
+    'ClientAliveCountMax': SshdConfigParam('3', (0, 3), SshdConfigParam.COMPARE.RANGE),
+    'HostbasedAuthentication': SshdConfigParam('no', 'no'),
+    'IgnoreRhosts': SshdConfigParam('yes', 'yes'),
+    'LogLevel': SshdConfigParam('INFO', 'INFO'),
+    'LoginGraceTime': SshdConfigParam('120', (1, 60), SshdConfigParam.COMPARE.RANGE),
+    'MaxAuthTries': SshdConfigParam('6', (0, 4), SshdConfigParam.COMPARE.RANGE),
+    'PermitUserEnvironment': SshdConfigParam('no', 'no'),
+    'X11Forwarding': SshdConfigParam('no', 'no')
+}
 
 
 def audit_config_files():
@@ -234,10 +262,10 @@ def audit_sshd():
     if sshd_version is not None and sshd_version >= 7.0:
         # According to https://www.openssh.com/releasenotes.html those things were changed in 7.0.
         del (config['Protocol'])
-        config['PermitRootLogin'][0] = 'prohibit-password'
+        config['PermitRootLogin'].default = 'prohibit-password'
 
-    # Fill the dict with default values which are gonna be updated with found config parameters' values.
-    insecure_params = {k: config[k][0] for k in config}
+    # Fill the dict with default values which will be updated with found config parameters' values.
+    insecure_params = {k: config[k].default for k in config}
     with open(SSHD_CONFIG_PATH) as sshd_config:
         for line in sshd_config:
             line = line.strip()
@@ -256,7 +284,7 @@ def audit_sshd():
                 insecure_params[parameter] = value
     issues = {}
     for param in insecure_params:
-        if insecure_params[param] != config[param][1]:
+        if not config[param].is_safe(insecure_params[param]):
             issues[param] = insecure_params[param]
     return issues
 

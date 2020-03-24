@@ -245,11 +245,21 @@ def sshd_config():
     return """
 # a comment
 PermitEmptyPasswords no
-
-# another comment
 PermitRootLogin   "yes"
+
+# Ignored with OpenSSH >= 7.0
 Protocol  "2,1"
-# PasswordAuthentication param's default value is gonna be checked
+
+# PasswordAuthentication param's default value will be checked
+LoginGraceTime 60
+
+# outside of range
+MaxAuthTries 5
+
+# inside the range
+ClientAliveCountMax 1
+
+# default: ClientAliveInterval 0
 
 AnotherOption another value
 """

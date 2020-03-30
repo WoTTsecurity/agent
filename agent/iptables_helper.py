@@ -1,10 +1,10 @@
 from typing import List, Tuple
 from itertools import product
 import logging
+import ctypes as ct
 
-from iptc import IPTCError
-
-from . import iptc_helper
+import iptc
+from pkg_resources import parse_version
 
 logger = logging.getLogger('agent.iptables_helper')
 
@@ -12,6 +12,57 @@ TABLE = 'filter'
 DROP_CHAIN = 'WOTT_LOG_DROP'
 OUTPUT_CHAIN = 'WOTT_OUTPUT'
 INPUT_CHAIN = 'WOTT_INPUT'
+
+# Fix a bug in python-iptables by monkey-patching a couple of methods.
+# The bug is actually fixed in:
+#  https://github.com/chruss2/python-iptables/commit/282c790738a111b1ddc27b43ecb0acfab8b09024
+#  and the bugfix is gonna be released in the next (after 0.14.0) release of python-iptables.
+if parse_version(iptc.version.__version__) <= parse_version('0.14.0'):
+    def find_match(self, name):
+        if isinstance(name, str):
+            name = name.encode()
+        name = self._check_extname(name)
+
+        ext = self._get_loaded_ext(name)
+        if ext is not None:
+            return ext
+
+        match = iptc.xtables.xtables._xtables_find_match(name, iptc.xtables.XTF_TRY_LOAD, None)
+        if not match:
+            self._try_register(name)
+            match = iptc.xtables.xtables._xtables_find_match(name, iptc.xtables.XTF_DONT_LOAD, None)
+            if not match:
+                return match
+
+        m = ct.cast(match, ct.POINTER(self._match_struct))
+        self._loaded(m[0].name, m)
+        return m
+
+    def find_target(self, name):
+        if isinstance(name, str):
+            name = name.encode()
+        name = self._check_extname(name)
+
+        ext = self._get_loaded_ext(name)
+        if ext is not None:
+            return ext
+
+        target = iptc.xtables.xtables._xtables_find_target(name, iptc.xtables.XTF_TRY_LOAD)
+        if not target:
+            self._try_register(name)
+            target = iptc.xtables.xtables._xtables_find_target(name, iptc.xtables.XTF_DONT_LOAD)
+            if not target:
+                return target
+
+        t = ct.cast(target, ct.POINTER(self._target_struct))
+        self._loaded(t[0].name, t)
+        return t
+
+    iptc.xtables.xtables.find_match = iptc.xtables.set_nfproto(find_match)
+    iptc.xtables.xtables.find_target = iptc.xtables.set_nfproto(find_target)
+    from . import iptc_helper
+else:
+    from . import iptc_helper
 
 
 def dump():
@@ -158,7 +209,7 @@ def block(blocklist):
             add_block_rules()
         else:
             logger.error('Error: unknown policy "{}"'.format(policy))
-    except IPTCError as e:
+    except iptc.IPTCError as e:
         logger.error('Error while updating iptables: %s', str(e))
         logger.debug(exc_info=True)
         if 'insmod' in str(e):

@@ -37,7 +37,6 @@ if iptc.version.__version__ <= '0.14.0':
         self._loaded(m[0].name, m)
         return m
 
-
     def find_target(self, name):
         if isinstance(name, str):
             name = name.encode()
@@ -58,11 +57,11 @@ if iptc.version.__version__ <= '0.14.0':
         self._loaded(t[0].name, t)
         return t
 
-
     iptc.xtables.xtables.find_match = iptc.xtables.set_nfproto(find_match)
     iptc.xtables.xtables.find_target = iptc.xtables.set_nfproto(find_target)
-
-from . import iptc_helper
+    from . import iptc_helper
+else:
+    from . import iptc_helper
 
 
 def dump():

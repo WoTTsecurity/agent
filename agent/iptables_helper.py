@@ -4,6 +4,7 @@ import logging
 import ctypes as ct
 
 import iptc
+from pkg_resources import parse_version
 
 logger = logging.getLogger('agent.iptables_helper')
 
@@ -16,7 +17,7 @@ INPUT_CHAIN = 'WOTT_INPUT'
 # The bug is actually fixed in:
 #  https://github.com/chruss2/python-iptables/commit/282c790738a111b1ddc27b43ecb0acfab8b09024
 #  and the bugfix is gonna be released in the next (after 0.14.0) release of python-iptables.
-if iptc.version.__version__ <= '0.14.0':
+if parse_version(iptc.version.__version__) <= parse_version('0.14.0'):
     def find_match(self, name):
         if isinstance(name, str):
             name = name.encode()

@@ -421,7 +421,7 @@ def upgrade_packages(pkg_names):
 
         # This will be a list like:
         # package.arch    version    repo
-        list_updates = yum(['list', 'updates', '-q']).stdout
+        list_updates = yum(['list', 'updates', '-q', '--color=no']).stdout
 
         # This will get a list of "package.arch"
         updates = [line.split(maxsplit=1)[0] for line in list_updates.splitlines()[1:]]

@@ -169,27 +169,39 @@ SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
 
 
 class SshdConfigParam:
+    """
+    Encapsulates safe and default values for an OpenSSH parameter.
+    """
     class COMPARE(IntEnum):
+        """
+        Supported comparsions.
+        MATCH: exact match
+        RANGE: inclusive integer range (min, max)
+        """
         MATCH = 1
         RANGE = 2
 
-    def match(self, val: str) -> bool:
+    def _match(self, val: str) -> bool:
         return self._safe == val
 
-    def range(self, val: str) -> bool:
+    def _range(self, val: str) -> bool:
         vmin, vmax = self._safe
         return vmin <= int(val) <= vmax
 
     @property
     def safe_value(self) -> str:
+        """
+        :return: safe value
+        """
         return self._safe_value
 
     def __init__(self, default, safe, compare=COMPARE.MATCH):
         self.default = default
         self._safe = safe
-        self.is_safe = {self.COMPARE.MATCH: self.match,
-                        self.COMPARE.RANGE: self.range}[compare]
-        self._safe_value = (safe if compare == self.COMPARE.MATCH else str(self._safe[1]))
+        # select compare function which decides if the value is safe.
+        self.is_safe = {self.COMPARE.MATCH: self._match,
+                        self.COMPARE.RANGE: self._range}[compare]
+        self._safe_value = safe if compare == self.COMPARE.MATCH else str(self._safe[1])
 
 
 SSHD_CONFIG_PARAMS_INFO = {
@@ -387,7 +399,7 @@ def patch_sshd_config(patch_param):
 
     param_info = SSHD_CONFIG_PARAMS_INFO[patch_param]
     if not os.path.isfile(SSHD_CONFIG_PATH):
-        logger.error('{} not found'.format(SSHD_CONFIG_PATH))
+        logger.error('%s not found', SSHD_CONFIG_PATH)
         return
     try:
         from sh import sshd, service
@@ -395,7 +407,8 @@ def patch_sshd_config(patch_param):
         logger.exception('sshd or service executable not found')
         return
 
-    safe_value_string = '\n# Added by wott-agent on {}\n{} {}\n'.format(time.ctime(), patch_param, param_info.safe_value)
+    safe_value_string = '\n# Added by wott-agent on {}\n{} {}\n'.format(
+        time.ctime(), patch_param, param_info.safe_value)
     backup_filename = os.path.join(BACKUPS_PATH, 'sshd_config.' + str(int(time.time())))
     replaced = False
 
@@ -416,14 +429,14 @@ def patch_sshd_config(patch_param):
             value = value.strip('"')
             if param == patch_param:
                 if not param_info.is_safe(value):
-                    logger.info('{}: replacing "{}" with "{}"'.format(param, value, param_info.safe_value))
+                    logger.info('%s: replacing "%s" with "%s"', param, value, param_info.safe_value)
                     patched_lines[-1] = safe_value_string
                     replaced = True
                     safe = False
                 else:
                     safe = True
         if not replaced and not safe and not param_info.is_safe(param_info.default):
-            logger.info('{}: replacing default "{}" with "{}"'.format(patch_param, param_info.default, param_info.safe_value))
+            logger.info('%s: replacing default "%s" with "%s"', patch_param, param_info.default, param_info.safe_value)
             patched_lines.append(safe_value_string)
             replaced = True
         if replaced:
@@ -433,9 +446,9 @@ def patch_sshd_config(patch_param):
                         "and installed your SSH keys on this server. Failure to do so will result in that you "
                         "will be locked out. I have have my SSH key(s) installed:"):
                     return
-            logger.info('Backing up {} as {}'.format(SSHD_CONFIG_PATH, backup_filename))
+            logger.info('Backing up %s as %s', SSHD_CONFIG_PATH, backup_filename)
             shutil.copy(SSHD_CONFIG_PATH, backup_filename)
-            logger.info('Writing {}'.format(SSHD_CONFIG_PATH))
+            logger.info('Writing %s', SSHD_CONFIG_PATH)
             sshd_config.seek(0, 0)
             sshd_config.truncate()
             sshd_config.writelines(patched_lines)
@@ -447,7 +460,7 @@ def patch_sshd_config(patch_param):
         sshd('-t')
     except ErrorReturnCode_255 as e:
         if e.stderr.startswith(SSHD_CONFIG_PATH.encode()):
-            logger.exception('{} is invalid. Restoring from backup.'.format(SSHD_CONFIG_PATH))
+            logger.exception('%s is invalid. Restoring from backup.', SSHD_CONFIG_PATH)
             shutil.copy(backup_filename, SSHD_CONFIG_PATH)
         else:
             logger.exception('something went wrong')

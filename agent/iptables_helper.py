@@ -5,6 +5,7 @@ import ctypes as ct
 
 import iptc
 from pkg_resources import parse_version
+from sh import iptables
 
 logger = logging.getLogger('agent.iptables_helper')
 
@@ -17,7 +18,12 @@ INPUT_CHAIN = 'WOTT_INPUT'
 # The bug is actually fixed in:
 #  https://github.com/chruss2/python-iptables/commit/282c790738a111b1ddc27b43ecb0acfab8b09024
 #  and the bugfix is gonna be released in the next (after 0.14.0) release of python-iptables.
-if parse_version(iptc.version.__version__) <= parse_version('0.14.0'):
+iptables_version = iptables('--version').split(maxsplit=2)[1]
+upgrade = parse_version(iptc.version.__version__) <= parse_version('0.14.0') \
+    and parse_version(iptables_version) >= parse_version('1.8.0')
+downgrade = parse_version(iptc.version.__version__) >= parse_version('0.15.0-dev') \
+    and parse_version(iptables_version) < parse_version('1.8.0')
+if upgrade or downgrade:
     def find_match(self, name):
         if isinstance(name, str):
             name = name.encode()
@@ -26,6 +32,11 @@ if parse_version(iptc.version.__version__) <= parse_version('0.14.0'):
         ext = self._get_loaded_ext(name)
         if ext is not None:
             return ext
+
+        if downgrade:
+            iptc.xtables.xtables._xtables_matches.value = ct.c_void_p(None).value
+            if iptc.xtables.xtables._xtables_pending_matches:
+                iptc.xtables.xtables._xtables_pending_matches.value = ct.c_void_p(None).value
 
         match = iptc.xtables.xtables._xtables_find_match(name, iptc.xtables.XTF_TRY_LOAD, None)
         if not match:
@@ -46,6 +57,11 @@ if parse_version(iptc.version.__version__) <= parse_version('0.14.0'):
         ext = self._get_loaded_ext(name)
         if ext is not None:
             return ext
+
+        if downgrade:
+            iptc.xtables.xtables._xtables_targets.value = ct.c_void_p(None).value
+            if iptc.xtables.xtables._xtables_pending_targets:
+                iptc.xtables.xtables._xtables_pending_targets.value = ct.c_void_p(None).value
 
         target = iptc.xtables.xtables._xtables_find_target(name, iptc.xtables.XTF_TRY_LOAD)
         if not target:

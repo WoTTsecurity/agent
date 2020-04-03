@@ -2,8 +2,9 @@ import argparse
 import asyncio
 import logging
 
-from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, patch, executor
+from . import run, get_device_id, get_open_ports, say_hello, get_claim_token, get_claim_url, upgrade, executor
 from . import fetch_credentials, fetch_device_metadata, setup_logging
+from .security_helper import patch_sshd_config
 
 logger = logging.getLogger('agent')
 
@@ -21,14 +22,37 @@ def main():
     }
 
     patches = {
-        'openssh-empty-password': 'OpenSSH: Disable logins with empty password',
-        'openssh-root-login': 'OpenSSH: Disable root login',
-        'openssh-password-auth': 'OpenSSH: Disable password authentication',
-        'openssh-agent-forwarding': 'OpenSSH: Disable agent forwarding',
-        'openssh-protocol': '\tOpenSSH: Force protocol version 2'
+        'openssh-empty-password':
+            ('OpenSSH: Disable logins with empty password', 'PermitEmptyPasswords'),
+        'openssh-root-login':
+            ('OpenSSH: Disable root login', 'PermitRootLogin'),
+        'openssh-password-auth':
+            ('OpenSSH: Disable password authentication', 'PasswordAuthentication'),
+        'openssh-agent-forwarding':
+            ('OpenSSH: Disable agent forwarding', 'AllowAgentForwarding'),
+        'openssh-protocol':
+            ('\tOpenSSH: Force protocol version 2', 'Protocol'),
+        'openssh-client-alive-interval':
+            ('OpenSSH: Active Client Interval', 'ClientAliveInterval'),
+        'openssh-client-alive-count-max':
+            ('OpenSSH: Active Client Max Count', 'ClientAliveCountMax'),
+        'openssh-host-based-auth':
+            ('OpenSSH: Host-based Authentication', 'HostbasedAuthentication'),
+        'openssh-ignore-rhosts':
+            ('OpenSSH: Ignore rhosts', 'IgnoreRhosts'),
+        'openssh-log-level':
+            ('\tOpenSSH: Log Level', 'LogLevel'),
+        'openssh-login-grace-time':
+            ('OpenSSH: Login Grace Time', 'LoginGraceTime'),
+        'openssh-max-auth-tries':
+            ('OpenSSH: Max Auth Tries', 'MaxAuthTries'),
+        'openssh-permit-user-env':
+            ('OpenSSH: Permit User Environment', 'PermitUserEnvironment'),
+        'openssh-x11-forwarding':
+            ('OpenSSH: X11 Forwarding', 'X11Forwarding')
     }
     patch_help_string = "One of the following:\n" + "\n".join(
-        ["{}\t{}".format(k, v) for k, v in patches.items()])
+        ["{}\t{}".format(k, v[0]) for k, v in patches.items()])
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
@@ -48,6 +72,9 @@ or renews it if necessary.
                               choices=patches.keys(),
                               metavar='patch_name',
                               help=patch_help_string)
+    parser_upgrade = subparsers.add_parser('upgrade', help='upgrade packages',
+                                           formatter_class=argparse.RawTextHelpFormatter)
+    parser_upgrade.add_argument('packages', metavar='pkg', nargs='+', help='packages to upgrade')
     parser.add_argument(
         '--dev',
         required=False,
@@ -67,14 +94,18 @@ or renews it if necessary.
         setup_logging(level=level, daemon=False,
                       log_format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    if not args.action:
+    action = args.action
+    if not action:
         logger.info("start in ping mode...")
         run(ping=True, dev=args.dev)
-    elif args.action == 'daemon':
+    elif action == 'daemon':
         logger.info("start in daemon mode...")
         run_daemon(dev=args.dev)
-    elif args.action == 'patch':
-        patch(args.patch_name, dev=args.dev)
+    elif action == 'patch':
+        patch_sshd_config(patches[args.patch_name][1])
+        run(ping=True, dev=args.dev)
+    elif action == 'upgrade':
+        upgrade(args.packages)
         run(ping=True, dev=args.dev)
     else:
         run(ping=False, dev=args.dev)

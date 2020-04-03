@@ -25,7 +25,7 @@ import pytz
 from agent import iptables_helper, journal_helper, security_helper
 from agent.executor import Locker
 from agent.os_helper import Confinement, auto_upgrades_enabled, detect_confinement, detect_cloud, detect_installation, \
-    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required
+    detect_raspberry_pi, get_packages, get_os_release, kernel_package_info, reboot_required, upgrade_packages
 
 
 CONFINEMENT = detect_confinement()
@@ -59,11 +59,12 @@ COMBINED_PEM_PATH = os.path.join(CERT_PATH, 'combined.pem')
 INI_PATH = os.path.join(CONFIG_PATH, 'config.ini')
 SECRET_DEV_METADATA_PATH = os.path.join(CONFIG_PATH, 'device_metadata.json')
 
-if not os.path.isdir(CONFIG_PATH):
-    os.makedirs(CONFIG_PATH)
-    os.chmod(CONFIG_PATH, 0o711)
-if not os.path.isdir(BACKUPS_PATH):
-    os.makedirs(BACKUPS_PATH, 0o711)
+with Locker('config'):
+    if not os.path.isdir(CONFIG_PATH):
+        os.makedirs(CONFIG_PATH)
+        os.chmod(CONFIG_PATH, 0o711)
+    if not os.path.isdir(BACKUPS_PATH):
+        os.makedirs(BACKUPS_PATH, 0o711)
 
 # This needs to be adjusted once we have
 # changed the certificate life span from 7 days.
@@ -833,17 +834,9 @@ def run(ping=True, dev=False, logger=logger):
         os.chmod(INI_PATH, 0o600)
 
 
-def patch(name, dev=False):
-    openssh_params = {
-        'openssh-empty-password': 'PermitEmptyPasswords',
-        'openssh-root-login': 'PermitRootLogin',
-        'openssh-password-auth': 'PasswordAuthentication',
-        'openssh-agent-forwarding': 'AllowAgentForwarding',
-        'openssh-protocol': 'Protocol'
-    }
-    param = openssh_params[name]
-    logger.info('patch "{}"'.format(param))
-    security_helper.patch_sshd_config(param)
+def upgrade(packages):
+    logger.info('upgrade packages: {}'.format(packages))
+    upgrade_packages(packages)
 
 
 def setup_logging(level=None, log_format="%(message)s", daemon=True):

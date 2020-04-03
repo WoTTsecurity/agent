@@ -423,7 +423,9 @@ def test_audit_config_files(sshd_config):
             audit[3]['issues'] == {'PermitRootLogin': 'yes',
                                    'PasswordAuthentication': 'yes',
                                    'Protocol': '2,1',
-                                   'AllowAgentForwarding': 'yes'}
+                                   'AllowAgentForwarding': 'yes',
+                                   'ClientAliveInterval': '0',
+                                   'MaxAuthTries': '5'}
 
 
 def test_block_networks(ipt_networks, ipt_rules):

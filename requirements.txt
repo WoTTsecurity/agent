@@ -12,3 +12,5 @@ requests==2.20.1
 sh==1.12.14
 systemd-python==234
 
+
+urllib3>=1.25.9 # not directly required, pinned by Snyk to avoid a vulnerability
